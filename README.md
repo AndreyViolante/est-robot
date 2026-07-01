@@ -4,7 +4,7 @@ Engenharia reversa do robô educacional **Dr. Luck EST** para programá-lo via P
 
 ## O que é
 
-O robô EST usa um protocolo HID USB proprietário e uma IDE fechada para upload de programas. Este projeto reverse-engineerou o protocolo e o formato binário dos programas, permitindo escrever e enviar código diretamente do Python.
+O robô EST usa um protocolo HID USB proprietário e uma IDE fechada para upload de programas. Este projeto realizou a engenharia reversa do protocolo e do formato binário dos programas, permitindo escrever e enviar código diretamente do Python.
 
 ## Estrutura
 
