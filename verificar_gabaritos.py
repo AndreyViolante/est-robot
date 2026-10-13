@@ -226,9 +226,52 @@ def verificar_robo():
     espera_erro('senao separado do se', SyntaxError, senao_depois_de_outro_comando)
     espera_erro('if do Python com sensor', TypeError, if_com_sensor)
     espera_erro('andar sem dizer quanto', ValueError, lambda: robo.andar())
+    falhas += not verificar_mensagens()
     robo.novo_programa()
     blocos.MOTORS = 'B+C'
     return falhas == 0
+
+
+def verificar_mensagens():
+    """Erros tipicos de aluno viram mensagens em portugues com a linha certa."""
+    import tempfile
+    from enviar import carregar, explicar
+    casos = [
+        ('andr(rotacoes=2)', 3, 'Você quis dizer "andar"'),
+        ('with repetir(4)\n    andar_cm(30)', 3, 'faltou o ":"'),
+        ('with repetir(4):\nandar_cm(30)', 4, 'precisam começar com espaços'),
+        ('andar(rotacao=2)', 3, 'Você quis dizer "rotacoes"'),
+        ('andar(rotacoes=0,5)', 3, 'use ponto'),
+        ('mostrar("Ola)', 3, 'faltou fechar as aspas'),
+        ('esperar()', 3, 'faltou informar segundos'),
+        ('if distancia(4) < 20:\n    parar()', 3, 'use "with se(...)"'),
+    ]
+    ok = True
+    with tempfile.TemporaryDirectory() as pasta:
+        for i, (codigo, linha_esperada, trecho) in enumerate(casos):
+            arq = os.path.join(pasta, f'aluno{i}.py')
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write('from robo import *\n\n' + codigo + '\n')
+            try:
+                carregar(arq)
+                linha, texto = None, 'nenhum erro'
+            except Exception as e:
+                linha, _, texto = explicar(e, arq)
+            certo = linha == linha_esperada and trecho in texto
+            ok &= certo
+            print(f'  {"OK   " if certo else "FALHA"} mensagem: {codigo.splitlines()[0]!r} -> linha {linha}: {texto}')
+        arq = os.path.join(pasta, 'sem_import.py')
+        with open(arq, 'w', encoding='utf-8') as f:
+            f.write('andar(rotacoes=2)\n')
+        try:
+            carregar(arq)
+            texto = 'nenhum erro'
+        except Exception as e:
+            texto = explicar(e, arq)[2]
+        certo = 'from robo import *' in texto
+        ok &= certo
+        print(f'  {"OK   " if certo else "FALHA"} mensagem: esqueceu o import -> {texto}')
+    return ok
 
 
 def main():

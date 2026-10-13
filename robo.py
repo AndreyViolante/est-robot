@@ -1,4 +1,4 @@
-"""Linguagem em portugues para programar o robo EST (pensada para aulas).
+"""Linguagem em português para programar o robô EST (pensada para aulas).
 
 Cada comando entra no programa na ordem em que aparece. Exemplo:
 
@@ -46,15 +46,15 @@ _pilha = []
 
 
 def novo_programa():
-    """Comeca um programa vazio (o arquivo do aluno nao precisa chamar)."""
+    """Começa um programa vazio (o arquivo do aluno não precisa chamar)."""
     _pilha.clear()
     _pilha.append(_Trecho([_b.start()]))
 
 
 def programa():
-    """Lista de blocos do programa escrito ate aqui (usada por enviar.py)."""
+    """Lista de blocos do programa escrito até aqui (usada por enviar.py)."""
     if len(_pilha) != 1:
-        raise RuntimeError('algum "with" nao foi fechado')
+        raise RuntimeError('algum "with" não foi fechado')
     return _pilha[0].blocos
 
 
@@ -73,9 +73,9 @@ def configurar(esquerdo='B', direito='C', invertido=False, roda_cm=5.6, entre_ro
     """Ajusta o programa ao robo.
 
     esquerdo, direito   portas dos motores das rodas
-    invertido           True se o robo anda de re quando deveria ir para frente
-    roda_cm             diametro da roda (para andar_cm)
-    entre_rodas_cm      distancia entre as duas rodas (para virar_direita / virar_esquerda)
+    invertido           True se o robô anda de ré quando deveria ir para frente
+    roda_cm             diâmetro da roda (para andar_cm)
+    entre_rodas_cm      distância entre as duas rodas (para virar_direita / virar_esquerda)
     """
     _config.update(esquerdo=esquerdo.upper(), direito=direito.upper(), sentido=-1 if invertido else 1,
                    roda_cm=roda_cm, entre_rodas_cm=entre_rodas_cm)
@@ -115,12 +115,12 @@ def andar(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, fr
 
 
 def re(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, frear=True):
-    """Anda de re. Ex.: re(rotacoes=1)"""
+    """Anda de ré. Ex.: re(rotacoes=1)"""
     return _mover(-potencia, -potencia, rotacoes, graus, segundos, frear)
 
 
 def andar_cm(cm, potencia=POTENCIA_PADRAO, frear=True):
-    """Anda cm centimetros (negativo = re). Ajuste o tamanho da roda em configurar(roda_cm=...)."""
+    """Anda cm centímetros (negativo = ré). Ajuste o tamanho da roda em configurar(roda_cm=...)."""
     graus = abs(cm) / (_m.pi * _config['roda_cm']) * 360
     p = potencia if cm >= 0 else -potencia
     return _mover(p, p, None, round(graus, 1), None, frear)
@@ -128,7 +128,7 @@ def andar_cm(cm, potencia=POTENCIA_PADRAO, frear=True):
 
 def girar_direita(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, frear=True):
     """Gira no lugar para a direita (as rodas giram em sentidos opostos).
-    graus e rotacoes sao das rodas; para virar o robo um angulo, use virar_direita."""
+    graus e rotações são das rodas; para virar o robô um angulo, use virar_direita."""
     return _mover(potencia, -potencia, rotacoes, graus, segundos, frear)
 
 
@@ -142,17 +142,17 @@ def _graus_da_roda(angulo_robo):
 
 
 def virar_direita(angulo=90, potencia=30):
-    """Vira o robo angulo graus para a direita, no lugar. Calibre com configurar(entre_rodas_cm=...)."""
+    """Vira o robô angulo graus para a direita, no lugar. Calibre com configurar(entre_rodas_cm=...)."""
     return _mover(potencia, -potencia, None, _graus_da_roda(angulo), None, True)
 
 
 def virar_esquerda(angulo=90, potencia=30):
-    """Vira o robo angulo graus para a esquerda, no lugar."""
+    """Vira o robô angulo graus para a esquerda, no lugar."""
     return _mover(-potencia, potencia, None, _graus_da_roda(angulo), None, True)
 
 
 def motores(esquerdo, direito):
-    """Liga os dois motores e deixa ligados. Aceita numeros ou valores de sensor/contas."""
+    """Liga os dois motores e deixa ligados. Aceita números ou valores de sensor/contas."""
     esq, dir_ = _pot(esquerdo), _pot(direito)
     ce = 0 if isinstance(esq, Valor) else esq
     cd = 0 if isinstance(dir_, Valor) else dir_
@@ -174,7 +174,7 @@ def motor(porta, potencia=POTENCIA_PADRAO, rotacoes=None, graus=None, segundos=N
     """Gira um motor sozinho. Ex.: motor('A', 50, graus=180), motor('D', 30, segundos=2)"""
     dados = [v for v in (rotacoes, graus, segundos) if v is not None]
     if len(dados) > 1:
-        raise ValueError('use so um: rotacoes=..., graus=... ou segundos=...')
+        raise ValueError('use só um: rotacoes=..., graus=... ou segundos=...')
     p = porta.upper()
     if rotacoes is not None:
         return _adiciona(_b.motor_rot(p, potencia, rotacoes, frear))
@@ -202,14 +202,14 @@ def esperar(segundos):
 
 def _const(v):
     if isinstance(v, bool) or not isinstance(v, (int, float)):
-        raise TypeError(f'nao sei fazer conta com {v!r}')
+        raise TypeError(f'não sei fazer conta com {v!r}')
     return v
 
 
 class Valor:
-    """Um numero que so existe no robo (leitura de sensor ou resultado de conta)."""
-    def __init__(self, bloco, saida):
-        self.bloco, self.saida = bloco, saida
+    """Um número que só existe no robô (leitura de sensor ou resultado de conta)."""
+    def __init__(self, bloco, saida, byte=False):
+        self.bloco, self.saida, self.byte = bloco, saida, byte
 
     def _conta(self, op, outro, invertido=False):
         a, b = (outro, self) if invertido else (self, outro)
@@ -248,45 +248,45 @@ class Valor:
     __hash__ = object.__hash__
 
     def __bool__(self):
-        raise TypeError('valores do robo nao funcionam com "if" do Python: use "with se(...)"')
+        raise TypeError('valores do robô não funcionam com "if" do Python: use "with se(...)"')
 
 
 class Condicao:
-    """Resultado de uma comparacao feita no robo (ex.: distancia(4) < 20)."""
+    """Resultado de uma comparação feita no robô (ex.: distancia(4) < 20)."""
     def __init__(self, bloco):
         self.bloco, self.saida = bloco, 3
 
     def __bool__(self):
-        raise TypeError('comparacoes do robo nao funcionam com "if" do Python: use "with se(...)"')
+        raise TypeError('comparações do robô não funcionam com "if" do Python: use "with se(...)"')
 
 
 def luz_refletida(porta):
-    """Le a luz refletida (0 = escuro, 100 = claro) do sensor de cor na porta."""
+    """Lê a luz refletida (0 = escuro, 100 = claro) do sensor de cor na porta."""
     return Valor(_adiciona(_b.sensor_refl(porta)), 7)
 
 
 def cor_vista(porta):
-    """Le o numero da cor vista pelo sensor (PRETO = 1, VERDE = 3, BRANCO = 6...)."""
-    return Valor(_adiciona(_b.sensor_color_id(porta)), 5)
+    """Lê o número da cor vista pelo sensor (PRETO = 1, VERDE = 3, BRANCO = 6...)."""
+    return Valor(_adiciona(_b.sensor_color_id(porta)), 5, byte=True)
 
 
 def distancia(porta):
-    """Le a distancia em centimetros do sensor ultrassonico na porta."""
+    """Lê a distância em centímetros do sensor ultrassônico na porta."""
     return Valor(_adiciona(_b.ultrasonic_cm(porta)), 4)
 
 
 def tocado(porta):
-    """Le o sensor de toque: 1 = apertado, 0 = solto."""
-    return Valor(_adiciona(_b.touch_state(porta)), 2)
+    """Lê o sensor de toque: 1 = apertado, 0 = solto."""
+    return Valor(_adiciona(_b.touch_state(porta)), 2, byte=True)
 
 
 def ler(nome):
-    """Le o numero guardado numa variavel do robo. Ex.: ler('contador')"""
+    """Lê o número guardado numa variável do robô. Ex.: ler('contador')"""
     return Valor(_adiciona(_b.var_rn(nome)), 2)
 
 
 def guardar(nome, valor):
-    """Guarda um numero ou valor numa variavel do robo. Ex.: guardar('erro', erro)"""
+    """Guarda um número ou valor numa variável do robô. Ex.: guardar('erro', erro)"""
     if isinstance(valor, Valor):
         return _adiciona(_b.var_wn(nome, src=valor.bloco, out=valor.saida))
     return _adiciona(_b.var_wn(nome, _const(valor)))
@@ -298,7 +298,7 @@ def _cmp(comparacao):
     try:
         return _b.CMP_SENSOR[comparacao]
     except KeyError:
-        raise ValueError(f'comparacao {comparacao!r} invalida: use "<", "<=", ">", ">=", "=" ou "!="') from None
+        raise ValueError(f'comparação {comparacao!r} invalida: use "<", "<=", ">", ">=", "=" ou "!="') from None
 
 
 def esperar_toque(porta):
@@ -307,7 +307,7 @@ def esperar_toque(porta):
 
 
 def esperar_distancia(porta, comparacao, cm):
-    """Espera a distancia ficar menor/maior que cm. Ex.: esperar_distancia(4, '<', 20)"""
+    """Espera a distância ficar menor/maior que cm. Ex.: esperar_distancia(4, '<', 20)"""
     return _adiciona(_b.wait_dist(porta, _cmp(comparacao), cm))
 
 
@@ -332,6 +332,8 @@ def _ascii(texto):
 def mostrar(texto, x=0, y=0, limpar=True):
     """Escreve um texto ou um valor na tela do robo. Ex.: mostrar('Ola'), mostrar(distancia(4))"""
     if isinstance(texto, Valor):
+        if texto.byte:
+            texto = texto + 0        # a tela converte numero de 4 bytes em texto; leituras de 1 byte passam por uma conta
         return _adiciona(_b.display_val(texto.bloco, texto.saida, x, y, limpar))
     return _adiciona(_b.display(_ascii(texto), x, y, limpar))
 
@@ -350,7 +352,7 @@ _CORES_LUZ = {'verde': 0, 'laranja': 1, 'vermelho': 2}
 
 
 def luz(cor='verde', piscar=False):
-    """Acende a luz do robo: 'verde', 'laranja' ou 'vermelho'."""
+    """Acende a luz do robô: 'verde', 'laranja' ou 'vermelho'."""
     try:
         return _adiciona(_b.light_on(_CORES_LUZ[cor.lower()], piscar))
     except KeyError:
@@ -377,7 +379,7 @@ class _Bloco:
         if self.condicao_no_fim and tipo_erro is None:
             cond = self.condicao_no_fim()
             if not isinstance(cond, Condicao):
-                raise TypeError('repetir_ate precisa de uma comparacao, ex.: repetir_ate(lambda: distancia(4) < 20)')
+                raise TypeError('repetir_ate precisa de uma comparação, ex.: repetir_ate(lambda: distancia(4) < 20)')
             self.bloco.wires.append((13, cond.bloco, cond.saida))
         _pilha.pop()
         _pilha[-1].ultimo_switch = self.bloco if self.abre_senao else None
@@ -397,7 +399,7 @@ def repetir(vezes):
 
 
 def repetir_ate(condicao):
-    """Repete ate a condicao acontecer. A condicao vai num lambda para ser medida a cada volta:
+    """Repete até a condição acontecer. A condição vai num lambda para ser medida a cada volta:
     with repetir_ate(lambda: distancia(4) < 20): ..."""
     if not callable(condicao):
         raise TypeError('use repetir_ate(lambda: ...), ex.: repetir_ate(lambda: distancia(4) < 20)')
@@ -406,13 +408,13 @@ def repetir_ate(condicao):
 
 
 def repetir_ate_luz(porta, comparacao, valor):
-    """Repete ate a luz refletida passar de um valor. Ex.: repetir_ate_luz(1, '<', 30)"""
+    """Repete até a luz refletida passar de um valor. Ex.: repetir_ate_luz(1, '<', 30)"""
     blk = _adiciona(_b.loop_refl(porta, _cmp(comparacao), valor))
     return _Bloco(blk, blk.b1)
 
 
 def repetir_ate_cor(porta, cor):
-    """Repete ate o sensor ver a cor."""
+    """Repete até o sensor ver a cor."""
     blk = _adiciona(_b.loop_color(porta, cor))
     return _Bloco(blk, blk.b1)
 
@@ -422,9 +424,9 @@ def _se(blk):
 
 
 def se(condicao):
-    """Faz o que estiver dentro se a comparacao for verdadeira. Ex.: with se(distancia(4) < 20):"""
+    """Faz o que estiver dentro se a comparação for verdadeira. Ex.: with se(distancia(4) < 20):"""
     if not isinstance(condicao, Condicao):
-        raise TypeError('se(...) precisa de uma comparacao, ex.: se(distancia(4) < 20)')
+        raise TypeError('se(...) precisa de uma comparação, ex.: se(distancia(4) < 20)')
     return _se(_b.switch_logic(condicao.bloco, condicao.saida))
 
 
@@ -449,7 +451,7 @@ def se_luz(porta, comparacao, valor):
 
 
 def senao():
-    """O que fazer quando a condicao do "with se_..." logo acima nao acontece."""
+    """O que fazer quando a condição do "with se_..." logo acima não acontece."""
     sw = _pilha[-1].ultimo_switch
     if sw is None:
         raise SyntaxError('"with senao()" precisa vir logo depois de um "with se_..."')

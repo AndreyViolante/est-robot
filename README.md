@@ -24,20 +24,34 @@ O projeto tem um compilador próprio, que transforma o programa no bytecode que 
 um cliente USB que grava e executa o programa no robô. O compilador foi construído por engenharia
 reversa e é testado comparando, byte a byte, a saída dele com programas compilados pela IDE oficial.
 
-## Requisitos
+## Para professores
 
-- Windows (a comunicação USB usa a API HID do Windows)
-- Python 3.10 ou mais novo, com `pip install pywinusb`
-- VS Code com a extensão Python
-- Robô EST ligado e conectado por cabo USB
+| | |
+|---|---|
+| [INSTALAR.md](INSTALAR.md) | instalação passo a passo (Python, VS Code, `instalar.bat`, teste do robô) |
+| [docs/guia-do-professor.md](docs/guia-do-professor.md) | roteiro de 8 aulas, com objetivos, desafios e erros comuns |
+| [docs/cola-do-aluno.md](docs/cola-do-aluno.md) | uma página com todos os comandos, para imprimir |
 
 ## Uso
+
+Funciona no **Windows**, com Python 3.10+ e VS Code (veja o [INSTALAR.md](INSTALAR.md)).
 
 1. Abra esta pasta no VS Code.
 2. Crie um arquivo `.py` começando com `from robo import *` e escreva os comandos.
 3. Com o arquivo aberto, aperte **`Ctrl+Shift+B`**: ele compila, grava e já executa no robô.
 
 > **Atenção:** o robô começa a se mexer logo depois do envio. Deixe-o no chão ou segure-o.
+
+Se o programa tiver um erro, nada é enviado e aparece uma explicação em português com a linha:
+
+```
+ERRO na linha 3 de quadrado.py:
+    andr(rotacoes=2)
+  não conheço "andr". Você quis dizer "andar"?
+```
+
+Para conferir se o computador fala com o robô: **Terminal → Executar Tarefa → Testar conexão com o
+robô** (ele apita, acende a luz e escreve "Funcionou!").
 
 Pelo terminal:
 
@@ -132,6 +146,8 @@ oficial (fios entre saídas e entradas, parâmetros por número). Os dois podem 
 | [verificar_gabaritos.py](verificar_gabaritos.py) | testes: compara com a IDE oficial e confere a linguagem |
 | [gabaritos/](gabaritos/) | programas compilados pela IDE oficial, usados como referência |
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
+| [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
+| [instalar.bat](instalar.bat) | prepara um computador novo |
 | [docs/formato.md](docs/formato.md) | protocolo, estrutura do programa e instruções da VM |
 
 ```bash
@@ -144,7 +160,10 @@ O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: O
 e os comandos com sensores de toque e ultrassom (os bytes batem com a IDE, mas não foram vistos
 funcionando). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
 
-## Aviso
+## Licença e aviso
+
+Código e material sob a [licença MIT](LICENSE): pode usar, copiar e adaptar livremente, mantendo o
+aviso de licença.
 
 Projeto independente, sem relação com o fabricante do robô. O formato foi obtido por engenharia
 reversa, para interoperabilidade. Use por sua conta e risco.

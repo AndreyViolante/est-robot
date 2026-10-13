@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": ["${workspaceFolder}"],
+    "python.analysis.typeCheckingMode": "off",
+    "files.encoding": "utf8",
+    "files.exclude": {"**/__pycache__": true},
+    "[python]": {"editor.tabSize": 4, "editor.insertSpaces": true}
+}
