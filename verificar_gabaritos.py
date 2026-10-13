@@ -141,7 +141,7 @@ def _em_portugues():
 
     def l1():
         mostrar('Ola'); tocar(440, 1, 100); luz('vermelho'); esperar(1)
-        mostrar(luz_refletida(1), x=10, y=20); apagar_luz()
+        mostrar(luz_refletida(1), x=10, y=20, limpar=True); apagar_luz()
 
     def l3():
         guardar('toque', tocado(4)); guardar('dist', distancia(4))

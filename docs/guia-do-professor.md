@@ -111,18 +111,18 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 **Exemplo:** `6_botao_de_toque.py` · **Conceito:** esperar um evento; dar sinais para as pessoas.
 
-**Comandos:** `esperar_toque(porta)`, `with se_tocado(porta):`, `bip()`, `tocar(freq, seg)`, `luz(cor)`, `apagar_luz()`, `mostrar(texto)`
+**Comandos:** `esperar_toque(porta)`, `with se_tocado(porta):`, `bip()`, `tocar(freq, seg)`, `luz('azul' | 'roxo' | 'vermelho')`, `apagar_luz()`, `mostrar(texto, linha=1..3)`
 
 **Desafios**
 1. Campainha: cada toque faz um bip.
-2. Semáforo: luz verde, espera, laranja, espera, vermelho.
+2. Sinal de trânsito do robô: luz azul (pode ir), roxa (atenção), vermelha (pare), com esperas entre elas.
 3. Uma musiquinha com `tocar` (dó = 262, ré = 294, mi = 330, fá = 349, sol = 392 Hz).
 
 ## Aula 7: medindo com sensores
 
 **Exemplo:** `7_mostrar_sensor.py` · **Conceito:** observar dados antes de programar; escolher um limite.
 
-**Comandos:** `mostrar(valor)`, `esperar_luz(porta, '<', valor)`, `with se_luz(porta, '<', valor):`
+**Comandos:** `mostrar(valor, linha=2)` (a tela tem 3 linhas), `esperar_luz(porta, '<', valor)`, `with se_luz(porta, '<', valor):`
 
 **Roteiro**
 - Os alunos anotam numa tabela o valor da luz refletida em cima do preto e em cima do branco.
@@ -147,6 +147,11 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Ainda não conferido em todos os robôs
 
-O compilador gera exatamente os mesmos bytes que a IDE oficial, mas alguns comandos ainda não foram
-vistos funcionando no robô: a calibragem padrão de `andar_cm` e `virar_*`, as cores de `luz()` e os
-sensores de toque e ultrassom. Teste antes de levar para a turma.
+Já testados no robô: movimento, seguidor de linha, tela (3 linhas), som, luz (azul, roxo,
+vermelho) e esperar. Ainda não vistos funcionando: a calibragem padrão de `andar_cm` e `virar_*` e os
+sensores de toque e ultrassom (o compilador gera para eles os mesmos bytes que a IDE oficial).
+Teste antes de levar para a turma.
+
+**Bateria:** com a bateria fraca o robô mostra um aviso na tela, se desconecta do USB e deixa de
+executar partes do programa. Se algo estranho acontecer, carregue o robô antes de procurar erro no
+programa.

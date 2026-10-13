@@ -329,8 +329,21 @@ def _ascii(texto):
     return ''.join(c for c in t if ord(c) < 128)
 
 
-def mostrar(texto, x=0, y=0, limpar=True):
-    """Escreve um texto ou um valor na tela do robo. Ex.: mostrar('Ola'), mostrar(distancia(4))"""
+LINHAS_DA_TELA = {1: 0, 2: 20, 3: 40}     # conferido no robo em 2026-10-13: abaixo de y=40 o texto nao aparece
+
+
+def mostrar(texto, linha=1, x=0, limpar=None, y=None):
+    """Escreve um texto ou um valor na tela do robô, que tem 3 linhas.
+    Ex.: mostrar('Luz:'), mostrar(luz_refletida(1), linha=2)
+    Escrever na linha 1 apaga a tela antes; nas linhas 2 e 3 escreve sem apagar."""
+    if y is None:
+        if linha not in LINHAS_DA_TELA:
+            raise ValueError('a tela tem 3 linhas: use linha=1, linha=2 ou linha=3')
+        y = LINHAS_DA_TELA[linha]
+    elif not 0 <= y <= 40:
+        raise ValueError(f'y={y} não cabe na tela: use y de 0 a 40 (ou linha=1, 2, 3)')
+    if limpar is None:
+        limpar = y == 0
     if isinstance(texto, Valor):
         if texto.byte:
             texto = texto + 0        # a tela converte numero de 4 bytes em texto; leituras de 1 byte passam por uma conta
@@ -348,15 +361,15 @@ def bip():
     return tocar(880, 0.2)
 
 
-_CORES_LUZ = {'verde': 0, 'laranja': 1, 'vermelho': 2}
+_CORES_LUZ = {'azul': 0, 'roxo': 1, 'vermelho': 2}      # conferido no robo em 2026-10-13
 
 
-def luz(cor='verde', piscar=False):
-    """Acende a luz do robô: 'verde', 'laranja' ou 'vermelho'."""
+def luz(cor='azul', piscar=False):
+    """Acende a luz do robô: 'azul', 'roxo' ou 'vermelho'."""
     try:
         return _adiciona(_b.light_on(_CORES_LUZ[cor.lower()], piscar))
     except KeyError:
-        raise ValueError('cores da luz: "verde", "laranja" ou "vermelho"') from None
+        raise ValueError('cores da luz: "azul", "roxo" ou "vermelho"') from None
 
 
 def apagar_luz():

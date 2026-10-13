@@ -57,9 +57,9 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 
 | Comando | O que faz |
 |---|---|
-| `mostrar('Oi')` / `mostrar(distancia(4))` | escreve na tela do robô |
+| `mostrar('Oi')` / `mostrar(distancia(4), linha=2)` | escreve na tela (linhas 1, 2 e 3; a linha 1 apaga a tela) |
 | `bip()` / `tocar(440, 0.5)` | som (frequência, segundos) |
-| `luz('verde')` / `apagar_luz()` | luz do robô (`'verde'`, `'laranja'`, `'vermelho'`) |
+| `luz('azul')` / `apagar_luz()` | luz do robô (`'azul'`, `'roxo'`, `'vermelho'`) |
 | `guardar('pontos', 0)` / `ler('pontos')` | guarda e lê um número |
 
 ## Regras que evitam erro

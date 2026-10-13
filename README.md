@@ -98,9 +98,9 @@ python enviar.py exemplos/2_quadrado.py
 
 | Tela, som, luz e variáveis | |
 |---|---|
-| `mostrar('Ola')`, `mostrar(distancia(4), x=10, y=50)` | escreve texto ou valor na tela |
+| `mostrar('Oi')`, `mostrar(distancia(4), linha=2)` | escreve texto ou valor na tela (3 linhas; a linha 1 apaga a tela) |
 | `tocar(440, 0.5)`, `bip()` | som (frequência em Hz, duração em segundos) |
-| `luz('verde')`, `apagar_luz()` | luz do robô: `'verde'`, `'laranja'` ou `'vermelho'` |
+| `luz('azul')`, `apagar_luz()` | luz do robô: `'azul'`, `'roxo'` ou `'vermelho'` |
 | `guardar('contador', 0)`, `ler('contador')` | variáveis guardadas no robô |
 
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores funcionam dentro de `se(...)` e
@@ -156,9 +156,9 @@ python verificar_gabaritos.py
 
 O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: OK`.
 
-**Ainda não conferido no robô:** a calibragem padrão de `andar_cm` e `virar_*`, as cores de `luz()`
-e os comandos com sensores de toque e ultrassom (os bytes batem com a IDE, mas não foram vistos
-funcionando). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+**Já testado no robô:** movimento, seguidor de linha (liga-desliga e proporcional), tela, som, luz
+e esperar. **Ainda não visto funcionando:** a calibragem padrão de `andar_cm` e `virar_*` e os
+sensores de toque e ultrassom (os bytes batem com a IDE, mas não foram testados no robô). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
 
 ## Licença e aviso
 

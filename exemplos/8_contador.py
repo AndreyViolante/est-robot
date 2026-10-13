@@ -5,6 +5,7 @@ guardar('contador', 0)
 
 with repetir(10):
     guardar('contador', ler('contador') + 1)
-    mostrar(ler('contador'), x=10, y=50)
+    mostrar('Contando')
+    mostrar(ler('contador'), linha=2)
     bip()
     esperar(1)

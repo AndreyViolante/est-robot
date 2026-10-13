@@ -24,9 +24,9 @@ def main():
     print('Robô encontrado. Enviando o teste...\n')
 
     robo.novo_programa()
-    robo.luz('verde')
-    robo.bip()
-    robo.mostrar('Funcionou!', x=10, y=50)
+    robo.luz('azul')
+    robo.tocar(440, 0.5)
+    robo.mostrar('Funcionou!')
     robo.esperar(3)
     robo.apagar_luz()
     try:
