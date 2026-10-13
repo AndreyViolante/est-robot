@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Convite para professores testarem o est-robot: programe a controladora EST em Python, pelo VS Code, sem a IDE do fabricante.">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Convite est-robot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: a boot sequence read top to bottom. Hero = code compiling into real bytes and lighting the brick's
+   LCD; then status (LED colors), steps, the tester's checklist, and plain answers. */
+:root {
+  --bg: #f1f3f8;
+  --fg: #0d1222;
+  --muted: #586079;
+  --line: #d4d9e4;
+  --panel: #ffffff;
+  --code-bg: #0f1424;
+  --code-fg: #dfe5f5;
+  --led-azul: #2250ff;
+  --led-roxo: #7a3ee3;
+  --led-vermelho: #e2363a;
+  --lcd-bg: #c7d1cb;
+  --lcd-fg: #1c2722;
+  --lcd-edge: #8e9a93;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --pixel: "Silkscreen", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0d16; --fg: #e7ebf6; --muted: #98a1b8; --line: #232a3e; --panel: #121727;
+    --code-bg: #060912; --code-fg: #dfe5f5;
+    --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
+    --lcd-bg: #a3b4aa; --lcd-fg: #0f1713; --lcd-edge: #5f6c65;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0d16; --fg: #e7ebf6; --muted: #98a1b8; --line: #232a3e; --panel: #121727;
+  --code-bg: #060912; --code-fg: #dfe5f5;
+  --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
+  --lcd-bg: #a3b4aa; --lcd-fg: #0f1713; --lcd-edge: #5f6c65;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--fg); font: 400 1.05rem/1.6 var(--body); }
+a { color: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-within {
+  outline: 3px solid var(--led-azul); outline-offset: 3px; border-radius: 4px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
+
+/* ---- top bar ---- */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+.mark { display: flex; align-items: center; gap: 10px; font: 600 0.95rem var(--mono); letter-spacing: 0.02em; text-decoration: none; }
+.leds { display: inline-flex; gap: 5px; }
+.led { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.led.azul { background: var(--led-azul); }
+.led.roxo { background: var(--led-roxo); }
+.led.vermelho { background: var(--led-vermelho); }
+.bar a.gh { font: 600 0.9rem var(--mono); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+.bar a.gh:hover { border-color: var(--fg); }
+
+/* ---- hero ---- */
+.hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px);
+        align-items: center; padding-block: clamp(24px, 6vw, 72px) clamp(40px, 7vw, 96px); }
+.eyebrow { font: 600 0.78rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+           display: flex; align-items: center; gap: 10px; }
+h1 { font: 900 clamp(3.1rem, 8.4vw, 7.4rem)/0.88 var(--display); text-transform: uppercase; letter-spacing: -0.01em;
+     margin: 18px 0 22px; text-wrap: balance; }
+h1 .py { color: var(--led-azul); }
+.lede { font-size: clamp(1.08rem, 1.6vw, 1.28rem); max-width: 34ch; color: var(--fg); margin: 0 0 30px; }
+.lede strong { font-weight: 700; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px;
+       font: 700 1rem var(--body); text-decoration: none; border: 2px solid var(--fg); cursor: pointer; }
+.btn.solid { background: var(--fg); color: var(--bg); }
+.btn.solid:hover { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
+.btn.line { background: transparent; color: var(--fg); }
+.btn.line:hover { border-color: var(--led-azul); color: var(--led-azul); }
+
+/* the device composition */
+.rig { display: grid; gap: 14px; }
+.code { background: var(--code-bg); color: var(--code-fg); border-radius: 14px; padding: 18px 20px; font: 400 0.9rem/1.7 var(--mono);
+        overflow-x: auto; }
+.code .file { font-size: 0.72rem; letter-spacing: 0.08em; color: #8b95b4; margin-bottom: 8px; display: block; }
+.code pre { margin: 0; white-space: pre; }
+.code .k { color: #9fb4ff; } .code .f { color: #ffffff; font-weight: 600; } .code .n { color: #ffb4b6; } .code .c { color: #7f8aa8; }
+.code .ln { display: block; border-left: 2px solid transparent; padding-left: 10px; margin-left: -12px; transition: border-color .3s, background .3s; }
+.code .ln.hot { border-color: var(--led-azul); background: rgba(97, 135, 255, 0.12); }
+.flow { display: flex; align-items: center; gap: 10px; font: 600 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.flow::before, .flow::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+.bytes-box { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 14px 16px; overflow-x: auto; }
+.bytes { display: grid; grid-template-columns: repeat(12, 2.3ch); gap: 4px 8px; font: 400 0.82rem var(--mono); color: var(--muted); min-width: max-content; }
+.bytes span { transition: color .25s; }
+.bytes span.op48 { color: var(--led-azul); font-weight: 600; }
+.bytes span.op30 { color: var(--led-roxo); font-weight: 600; }
+.bytes span.lit { color: var(--fg); }
+.bytes-key { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 0.74rem var(--mono); color: var(--muted); }
+.bytes-key b { font-weight: 600; }
+.bytes-key .k48 { color: var(--led-azul); } .bytes-key .k30 { color: var(--led-roxo); }
+.brick { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; background: var(--panel);
+         border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+.lcd { background: var(--lcd-bg); color: var(--lcd-fg); border: 3px solid var(--lcd-edge); border-radius: 6px; padding: 10px 14px;
+       font: 400 clamp(0.95rem, 2.2vw, 1.15rem)/1.55 var(--pixel); min-height: 6.2em;
+       background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 3px); }
+.lcd div { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.brick-side { display: grid; justify-items: center; gap: 10px; font: 600 0.68rem var(--mono); letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+.status-led { width: 22px; height: 22px; border-radius: 50%; background: var(--led-azul);
+              box-shadow: 0 0 0 4px color-mix(in srgb, var(--led-azul) 22%, transparent), 0 0 22px var(--led-azul); }
+.blink { animation: blink 1.2s steps(2, jump-none) infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+
+/* ---- ribbon of real USB bytes ---- */
+.ribbon { border-block: 1px solid var(--line); overflow: hidden; padding-block: 12px; font: 400 0.82rem var(--mono); color: var(--muted); }
+.ribbon-track { display: flex; width: max-content; gap: 48px; animation: slide 38s linear infinite; }
+.ribbon-track span b { color: var(--fg); font-weight: 600; }
+@keyframes slide { to { transform: translateX(-50%); } }
+
+/* ---- sections ---- */
+section { padding-block: clamp(56px, 8vw, 110px); }
+.sec-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 24px 48px; align-items: end; margin-bottom: 40px; }
+h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: uppercase; margin: 10px 0 0; text-wrap: balance; }
+.sec-head p { margin: 0; color: var(--muted); max-width: 52ch; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-bottom: 26px; font-size: 0.95rem; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 0 40px; }
+.status li { list-style: none; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 14px; align-items: baseline;
+             padding-block: 14px; border-bottom: 1px solid var(--line); }
+.status li .led { transform: translateY(1px); }
+.status li b { display: block; font-weight: 700; }
+.status li small { color: var(--muted); font-size: 0.9rem; }
+.status ul { padding: 0; margin: 0; display: contents; }
+
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 0; counter-reset: passo;
+         border-top: 2px solid var(--fg); }
+.step { counter-increment: passo; padding: 22px 22px 26px 0; border-bottom: 1px solid var(--line); }
+.step::before { content: counter(passo); display: block; font: 900 3.4rem/1 var(--display); color: var(--led-azul); margin-bottom: 10px; }
+.step h3 { font: 700 1.12rem var(--body); margin: 0 0 6px; }
+.step p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.step code, .faq code, .lede code, .row code { font: 400 0.86em var(--mono); background: color-mix(in srgb, var(--fg) 8%, transparent);
+            padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+
+/* ---- tester checklist ---- */
+.tester { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px; margin-bottom: 24px; }
+.field label { display: block; font: 600 0.78rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.field input, .field textarea { width: 100%; font: 400 1rem var(--body); color: var(--fg); background: var(--panel);
+                                border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
+.field textarea { min-height: 96px; resize: vertical; }
+.rows { border-top: 2px solid var(--fg); }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 18px; align-items: center; padding-block: 14px; border-bottom: 1px solid var(--line); }
+.row b { display: block; }
+.row small { color: var(--muted); font-size: 0.88rem; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 7px 12px; font: 600 0.82rem var(--body); cursor: pointer; color: var(--muted); white-space: nowrap; }
+.seg label + input + label, .seg input + label + input + label { border-left: 1px solid var(--line); }
+.seg input:focus-visible + label { outline: 3px solid var(--led-azul); outline-offset: -3px; }
+.seg input:checked + label.ok { background: var(--led-azul); color: #fff; }
+.seg input:checked + label.no { background: var(--led-vermelho); color: #fff; }
+.seg input:checked + label.na { background: color-mix(in srgb, var(--fg) 12%, transparent); color: var(--fg); }
+.summary { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); background: var(--code-bg); color: var(--code-fg); border-radius: 16px; padding: 20px; }
+.summary h3 { font: 600 0.78rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: #8b95b4; margin: 0 0 12px; }
+.summary textarea { width: 100%; min-height: 300px; background: transparent; color: var(--code-fg); border: 1px dashed #2c3550;
+                    border-radius: 10px; padding: 12px; font: 400 0.84rem/1.55 var(--mono); resize: vertical; }
+.summary .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
+.summary .btn.solid { background: #fff; color: #0d1222; border-color: #fff; }
+.summary .btn.solid:hover { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
+.summary .btn.line { color: #fff; border-color: #3a4566; }
+.summary .btn.line:hover { border-color: #fff; color: #fff; }
+.copied { font: 600 0.85rem var(--mono); color: #9fb4ff; min-height: 1.2em; }
+.summary p { color: #9aa4c2; font-size: 0.88rem; margin: 14px 0 0; }
+
+/* ---- faq ---- */
+.faq { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 0 48px; }
+.faq div { padding-block: 20px; border-top: 1px solid var(--line); }
+.faq h3 { font: 700 1.1rem var(--body); margin: 0 0 6px; }
+.faq p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 8px; }
+
+@media (max-width: 860px) {
+  .hero, .tester, .sec-head { grid-template-columns: minmax(0, 1fr); }
+  .summary { position: static; }
+}
+@media (max-width: 460px) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .seg label { padding: 7px 10px; }
+  .brick { grid-template-columns: minmax(0, 1fr); }
+  .brick-side { grid-auto-flow: column; justify-content: start; align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .blink, .ribbon-track { animation: none; }
+  .code .ln, .bytes span { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <a class="mark" href="#topo" id="topo"><span class="leds"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>est-robot</a>
+    <a class="gh" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub ↗</a>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow"><i class="led azul blink"></i>Convite para professores de robótica</div>
+      <h1>Sua controladora EST, programada em <span class="py">Python</span>.</h1>
+      <p class="lede">Os alunos escrevem os comandos <strong>em português</strong>, no VS Code, apertam <code>Ctrl+Shift+B</code> e o programa vai direto para o robô, sem a IDE do fabricante. Funciona no nosso robô. <strong>Queremos saber se funciona no seu.</strong></p>
+      <div class="ctas">
+        <a class="btn solid" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Baixar o projeto</a>
+        <a class="btn line" href="#teste">Ver o que testar</a>
+      </div>
+    </div>
+
+    <div class="rig" aria-label="Exemplo: código em português compilado para os bytes que o robô executa">
+      <div class="code">
+        <span class="file">seguidor.py</span>
+<pre><span class="ln"><span class="k">from</span> robo <span class="k">import</span> *</span><span class="ln"> </span><span class="ln"><span class="k">with</span> <span class="f">para_sempre</span>():</span><span class="ln">    erro = <span class="f">luz_refletida</span>(<span class="n">1</span>) - <span class="f">luz_refletida</span>(<span class="n">2</span>)</span><span class="ln">    <span class="f">motores</span>(<span class="n">25</span> + erro * <span class="n">0.4</span>, <span class="n">25</span> - erro * <span class="n">0.4</span>)</span></pre>
+      </div>
+      <div class="flow">compila para</div>
+      <div class="bytes-box">
+        <div class="bytes" id="bytes"></div>
+        <div class="bytes-key"><span><b class="k48">48</b> início de bloco</span><span><b class="k30">30</b> lê o sensor</span><span>bytes reais gerados pelo compilador</span></div>
+      </div>
+      <div class="brick">
+        <div class="lcd" aria-label="Tela do robô">
+          <div>Funcionou!</div>
+          <div>luz: 47</div>
+          <div>dist: 23 cm</div>
+        </div>
+        <div class="brick-side"><span class="status-led blink" aria-hidden="true"></span>luz azul</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ribbon" aria-hidden="true">
+  <div class="ribbon-track" id="ribbon"></div>
+</div>
+
+<div class="wrap">
+  <section id="status">
+    <div class="sec-head">
+      <div><div class="eyebrow">Situação</div><h2>O que já funciona</h2></div>
+      <p>O compilador gera, byte a byte, os mesmos programas que a IDE oficial, em 13 de 13 programas de referência. As cores abaixo são as da luz do próprio robô.</p>
+    </div>
+    <div class="legend">
+      <span><i class="led azul"></i>Testado no robô</span>
+      <span><i class="led roxo"></i>Pronto, falta ver funcionando</span>
+      <span><i class="led vermelho"></i>Ainda não existe</span>
+    </div>
+    <ul class="status">
+      <li><i class="led azul"></i><span><b>Enviar pelo VS Code</b><small>Compila e grava com <code>Ctrl+Shift+B</code>, já executando</small></span></li>
+      <li><i class="led azul"></i><span><b>Motores e movimento</b><small>Os dois motores juntos, rotações, graus e segundos</small></span></li>
+      <li><i class="led azul"></i><span><b>Seguidor de linha</b><small>Liga-desliga e proporcional com dois sensores</small></span></li>
+      <li><i class="led azul"></i><span><b>Tela, som e luz</b><small>Três linhas de texto, sons e luz azul, roxa ou vermelha</small></span></li>
+      <li><i class="led azul"></i><span><b>Ultrassom</b><small>Ler distância, esperar e decidir pela distância</small></span></li>
+      <li><i class="led azul"></i><span><b>Decisões e repetições</b><small><code>se(...)</code>, <code>senao()</code>, <code>repetir</code>, <code>repetir_ate</code>, variáveis</small></span></li>
+      <li><i class="led roxo"></i><span><b>Andar em cm e virar em graus</b><small>Precisa calibrar a medida da roda de cada robô</small></span></li>
+      <li><i class="led roxo"></i><span><b>Sensor de toque</b><small>Não tínhamos o sensor para testar</small></span></li>
+      <li><i class="led roxo"></i><span><b>Outras controladoras e firmwares</b><small>É aqui que entra o seu teste</small></span></li>
+      <li><i class="led vermelho"></i><span><b>Mac e Linux</b><small>Por enquanto só Windows</small></span></li>
+      <li><i class="led vermelho"></i><span><b>Giroscópio e mensagens</b><small>Blocos que o compilador ainda não conhece</small></span></li>
+    </ul>
+  </section>
+
+  <section id="como">
+    <div class="sec-head">
+      <div><div class="eyebrow">Passo a passo</div><h2>Como testar</h2></div>
+      <p>Uns 30 minutos, com um robô carregado e um computador com Windows. Bateria fraca faz o robô se comportar de forma estranha: carregue antes.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Instale</h3><p>Python (marque "Add to PATH"), VS Code com a extensão Python e, na pasta do projeto, dois cliques no <code>instalar.bat</code>.</p></div>
+      <div class="step"><h3>Teste a conexão</h3><p>No VS Code: Terminal → Executar Tarefa → <b>Testar conexão com o robô</b>. Luz azul, som e "Funcionou!".</p></div>
+      <div class="step"><h3>Rode os exemplos</h3><p>Abra <code>exemplos/1</code> a <code>8</code> e aperte <code>Ctrl+Shift+B</code>. Robô no chão: ele anda logo depois do envio.</p></div>
+      <div class="step"><h3>Marque o resultado</h3><p>Na lista abaixo, o que funcionou e o que não funcionou na sua controladora.</p></div>
+      <div class="step"><h3>Mande para a gente</h3><p>Copie o resumo e mande para quem te convidou, ou abra uma issue no GitHub.</p></div>
+    </div>
+  </section>
+
+  <section id="teste">
+    <div class="sec-head">
+      <div><div class="eyebrow">Sua controladora</div><h2>Lista do teste</h2></div>
+      <p>Marque cada item. O resumo ao lado se escreve sozinho e fica salvo neste navegador até você voltar.</p>
+    </div>
+    <div class="tester">
+      <form id="form" autocomplete="off">
+        <div class="fields">
+          <div class="field"><label for="quem">Nome ou escola (opcional)</label><input id="quem" type="text" placeholder="Ex.: Escola Estadual X"></div>
+          <div class="field"><label for="firmware">Versão do firmware (opcional)</label><input id="firmware" type="text" placeholder="Aparece no menu do robô"></div>
+        </div>
+        <div class="rows" id="rows"></div>
+        <div class="fields" style="margin-top: 24px">
+          <div class="field" style="grid-column: 1 / -1"><label for="obs">Observações</label><textarea id="obs" placeholder="O que aconteceu de diferente? Mensagens de erro? Calibragem que funcionou no seu robô?"></textarea></div>
+        </div>
+      </form>
+      <aside class="summary" aria-label="Resumo para enviar">
+        <h3>Resumo para enviar</h3>
+        <textarea id="resumo" readonly aria-label="Texto do resumo"></textarea>
+        <div class="actions">
+          <button class="btn solid" type="button" id="copiar">Copiar resumo</button>
+          <a class="btn line" href="https://github.com/AndreyViolante/est-robot/issues/new" target="_blank" rel="noopener">Abrir issue no GitHub</a>
+        </div>
+        <div class="copied" id="avisoCopia" role="status"></div>
+        <p>No GitHub, cole o resumo na descrição da issue. Pelo WhatsApp, é só colar na conversa.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="perguntas">
+    <div class="sec-head">
+      <div><div class="eyebrow">Antes de começar</div><h2>Perguntas</h2></div>
+      <p>As dúvidas mais comuns de quem vai testar.</p>
+    </div>
+    <div class="faq">
+      <div><h3>Pode estragar o robô?</h3><p>Não. O robô recebe só um programa, numa pasta própria (<code>/vscode</code>), do mesmo jeito que a IDE envia os dela. O firmware não é alterado, e dá para voltar a usar a IDE oficial a qualquer momento.</p></div>
+      <div><h3>Preciso desinstalar a IDE EST?</h3><p>Não, os dois convivem. Se aparecer "robô não encontrado", feche a IDE e tente de novo.</p></div>
+      <div><h3>Isso é legal?</h3><p>É um projeto independente, feito para o robô conversar com outro programa (interoperabilidade). Não usa código do fabricante e não distribui nada da IDE. Também não tem relação com o fabricante.</p></div>
+      <div><h3>Para que idade serve?</h3><p>Os comandos são em português e os erros aparecem explicados, com a linha. O projeto traz um guia com 8 aulas e uma folha de comandos para imprimir.</p></div>
+      <div><h3>Funciona no Mac ou no Chromebook?</h3><p>Ainda não. A comunicação USB usa uma parte do Windows. Se você tiver interesse em ajudar nisso, fale com a gente.</p></div>
+      <div><h3>Deu erro. E agora?</h3><p>Mande o resumo assim mesmo, com o que aconteceu nas observações. Um "não funcionou" ajuda tanto quanto um "funcionou".</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>est-robot · código e material sob licença MIT · <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">github.com/AndreyViolante/est-robot</a></span>
+    <span>Projeto independente, sem relação com o fabricante do robô. EST é usado só para indicar compatibilidade.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // bytes reais do compilador (estc.py) para o seguidor do topo: inicio da thread do loop
+  var HEX = '48 01 00 00 00 0c 01 30 00 00 00 00 0c 01 02 04 00 00 00 0d 04 00 00 00 16 00 00 00 0d 48 01 00 00 00 11 02 30 00 00 00 00 11 01 02 04 00 00 00 12 04 00 00 00 1a 00 00 00 12 48 0a 00 00 00 1e 00 00 00 16'.split(' ');
+  var box = document.getElementById('bytes');
+  var cells = HEX.map(function (h, i) {
+    var s = document.createElement('span');
+    s.textContent = h;
+    var prev = HEX[i - 1];
+    if (h === '48' && (i === 0 || prev === '0d' || prev === '12')) s.className = 'op48';
+    else if (h === '30' && prev !== '00') s.className = 'op30';
+    box.appendChild(s);
+    return s;
+  });
+
+  // faixa com o pacote USB que leva o programa ao robo (formato real)
+  var frames = ['<b>68 11 0a</b> 11 00 02 2f 76 73 63 6f 64 65 2f 73 … da <b>16</b> selecionar',
+                '<b>68 11 0c</b> 01 00 01 87 <b>16</b> download',
+                '<b>68 11 04</b> 18 00 01 01 00 08 2f 76 73 63 6f 64 … 3d <b>16</b> nome do arquivo',
+                '<b>68 11 04</b> d1 01 02 01 00 02 00 00 00 5b 00 00 … 7e <b>16</b> programa',
+                '<b>68 11 0a</b> 15 00 01 2f 76 73 63 6f 64 65 2f 73 … 37 <b>16</b> executar'];
+  var track = document.getElementById('ribbon');
+  var html = frames.map(function (f) { return '<span>' + f + '</span>'; }).join('');
+  track.innerHTML = html + html;
+
+  // momento do topo: as linhas do codigo acendem e os bytes correm, em ciclo
+  var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var linhas = document.querySelectorAll('.code .ln');
+  if (!reduz) {
+    var ciclo = function () {
+      var i = 0;
+      var passo = setInterval(function () {
+        linhas.forEach(function (l, k) { l.classList.toggle('hot', k === i); });
+        i++;
+        if (i > linhas.length) {
+          clearInterval(passo);
+          linhas.forEach(function (l) { l.classList.remove('hot'); });
+          var j = 0;
+          var corre = setInterval(function () {
+            if (j < cells.length) cells[j].classList.add('lit');
+            if (j - 10 >= 0 && j - 10 < cells.length) cells[j - 10].classList.remove('lit');
+            j++;
+            if (j > cells.length + 10) { clearInterval(corre); setTimeout(ciclo, 2400); }
+          }, 45);
+        }
+      }, 650);
+    };
+    setTimeout(ciclo, 600);
+  }
+
+  // lista do teste
+  var TESTES = [
+    ['conexao', 'Teste de conexão', 'Luz azul, som e "Funcionou!" na tela'],
+    ['andar', 'Andar e virar', 'exemplos/1_andar_e_virar.py'],
+    ['quadrado', 'Quadrado', 'exemplos/2_quadrado.py: fechou o quadrado?'],
+    ['seguidor', 'Seguidor liga-desliga', 'exemplos/3_seguidor_liga_desliga.py'],
+    ['proporcional', 'Seguidor proporcional', 'exemplos/4_seguidor_proporcional.py'],
+    ['ultrassom', 'Ultrassom', 'exemplos/5_desviar_obstaculo.py (porta 4)'],
+    ['toque', 'Sensor de toque', 'exemplos/6_botao_de_toque.py (porta 4)'],
+    ['tela', 'Tela e contador', 'exemplos/7_mostrar_sensor.py e 8_contador.py']
+  ];
+  var ESTADOS = [['ok', 'Funcionou'], ['no', 'Não'], ['na', 'Não testei']];
+  var rows = document.getElementById('rows');
+  TESTES.forEach(function (t) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    var info = document.createElement('div');
+    var b = document.createElement('b'); b.textContent = t[1];
+    var sm = document.createElement('small'); sm.textContent = t[2];
+    info.appendChild(b); info.appendChild(sm);
+    var seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.setAttribute('role', 'radiogroup');
+    seg.setAttribute('aria-label', t[1]);
+    ESTADOS.forEach(function (e) {
+      var id = 't_' + t[0] + '_' + e[0];
+      var inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = 't_' + t[0]; inp.id = id; inp.value = e[0];
+      if (e[0] === 'na') inp.checked = true;
+      var lab = document.createElement('label');
+      lab.htmlFor = id; lab.className = e[0]; lab.textContent = e[1];
+      seg.appendChild(inp); seg.appendChild(lab);
+    });
+    row.appendChild(info); row.appendChild(seg);
+    rows.appendChild(row);
+  });
+
+  var form = document.getElementById('form');
+  var resumo = document.getElementById('resumo');
+  var CHAVE = 'convite-est-robot';
+  var SIMBOLO = { ok: '✔', no: '✘', na: '–' };
+
+  function estado() {
+    var dados = { quem: form.quem.value, firmware: form.firmware.value, obs: form.obs.value, testes: {} };
+    TESTES.forEach(function (t) {
+      var marcado = form.querySelector('input[name="t_' + t[0] + '"]:checked');
+      dados.testes[t[0]] = marcado ? marcado.value : 'na';
+    });
+    return dados;
+  }
+
+  function escrever() {
+    var d = estado();
+    var linhas = ['Teste do est-robot'];
+    if (d.quem.trim()) linhas.push('Quem: ' + d.quem.trim());
+    if (d.firmware.trim()) linhas.push('Firmware: ' + d.firmware.trim());
+    linhas.push('');
+    TESTES.forEach(function (t) { linhas.push(SIMBOLO[d.testes[t[0]]] + ' ' + t[1]); });
+    linhas.push('');
+    linhas.push('(✔ funcionou · ✘ não funcionou · – não testei)');
+    if (d.obs.trim()) { linhas.push(''); linhas.push('Observações: ' + d.obs.trim()); }
+    resumo.value = linhas.join('\n');
+    try { localStorage.setItem(CHAVE, JSON.stringify(d)); } catch (e) { /* sem armazenamento: segue sem salvar */ }
+  }
+
+  try {
+    var salvo = JSON.parse(localStorage.getItem(CHAVE) || 'null');
+    if (salvo) {
+      form.quem.value = salvo.quem || '';
+      form.firmware.value = salvo.firmware || '';
+      form.obs.value = salvo.obs || '';
+      Object.keys(salvo.testes || {}).forEach(function (k) {
+        var inp = document.getElementById('t_' + k + '_' + salvo.testes[k]);
+        if (inp) inp.checked = true;
+      });
+    }
+  } catch (e) { /* armazenamento indisponivel */ }
+
+  form.addEventListener('input', escrever);
+  form.addEventListener('change', escrever);
+  form.addEventListener('submit', function (e) { e.preventDefault(); });
+  escrever();
+
+  var aviso = document.getElementById('avisoCopia');
+  document.getElementById('copiar').addEventListener('click', function () {
+    var texto = resumo.value;
+    var ok = function () { aviso.textContent = 'Resumo copiado. Agora é só colar.'; };
+    var manual = function () { resumo.focus(); resumo.select(); aviso.textContent = 'Texto selecionado: use Ctrl+C para copiar.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(ok, manual);
+    } else {
+      manual();
+    }
+  });
+})();
+</script>
+</body>
+</html>
