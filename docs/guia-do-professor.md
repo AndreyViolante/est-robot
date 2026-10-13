@@ -148,8 +148,9 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 ## Ainda não conferido em todos os robôs
 
 Já testados no robô: movimento, seguidor de linha, tela (3 linhas), som, luz (azul, roxo,
-vermelho) e esperar. Ainda não vistos funcionando: a calibragem padrão de `andar_cm` e `virar_*` e os
-sensores de toque e ultrassom (o compilador gera para eles os mesmos bytes que a IDE oficial).
+vermelho), esperar, ultrassom, `se(...)` e `repetir_ate(...)`. Ainda não vistos funcionando: a
+calibragem padrão de `andar_cm` e `virar_*` e o sensor de toque (o compilador gera para eles os
+mesmos bytes que a IDE oficial).
 Teste antes de levar para a turma.
 
 **Bateria:** com a bateria fraca o robô mostra um aviso na tela, se desconecta do USB e deixa de

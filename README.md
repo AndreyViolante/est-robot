@@ -156,9 +156,10 @@ python verificar_gabaritos.py
 
 O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: OK`.
 
-**Já testado no robô:** movimento, seguidor de linha (liga-desliga e proporcional), tela, som, luz
-e esperar. **Ainda não visto funcionando:** a calibragem padrão de `andar_cm` e `virar_*` e os
-sensores de toque e ultrassom (os bytes batem com a IDE, mas não foram testados no robô). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+**Já testado no robô:** movimento, seguidor de linha (liga-desliga e proporcional), tela, som, luz,
+esperar, ultrassom (`distancia`, `esperar_distancia`, `se_distancia`), `se(...)` e `repetir_ate(...)`.
+**Ainda não visto funcionando:** a calibragem padrão de `andar_cm` e `virar_*` e o sensor de toque
+(os bytes batem com a IDE, mas não foram testados no robô). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
 
 ## Licença e aviso
 
