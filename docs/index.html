@@ -73,7 +73,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
         align-items: center; padding-block: clamp(24px, 6vw, 72px) clamp(40px, 7vw, 96px); }
 .eyebrow { font: 600 0.78rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
            display: flex; align-items: center; gap: 10px; }
-h1 { font: 900 clamp(3.1rem, 8.4vw, 7.4rem)/0.88 var(--display); text-transform: uppercase; letter-spacing: -0.01em;
+.hero-text { container-type: inline-size; min-width: 0; }
+/* o titulo acompanha a largura da coluna: "CONTROLADORA" cabe mesmo com a fonte substituta */
+h1 { font: 900 clamp(2.6rem, 6vw, 5rem)/0.88 var(--display); font-size: clamp(2.2rem, 11.5cqi, 7rem);
+     text-transform: uppercase; letter-spacing: -0.01em;
      margin: 18px 0 22px; text-wrap: balance; }
 h1 .py { color: var(--led-azul); }
 .lede { font-size: clamp(1.08rem, 1.6vw, 1.28rem); max-width: 34ch; color: var(--fg); margin: 0 0 30px; }
@@ -213,7 +216,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   </header>
 
   <div class="hero">
-    <div>
+    <div class="hero-text">
       <div class="eyebrow"><i class="led azul blink"></i>Convite para professores de robótica</div>
       <h1>Sua controladora EST, programada em <span class="py">Python</span>.</h1>
       <p class="lede">Os alunos escrevem os comandos <strong>em português</strong>, no VS Code, apertam <code>Ctrl+Shift+B</code> e o programa vai direto para o robô, sem a IDE do fabricante. Funciona no nosso robô. <strong>Queremos saber se funciona no seu.</strong></p>
