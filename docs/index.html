@@ -69,13 +69,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .bar a.gh:hover { border-color: var(--fg); }
 
 /* ---- hero ---- */
-.hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px);
-        align-items: center; padding-block: clamp(24px, 6vw, 72px) clamp(40px, 7vw, 96px); }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(20px, 3vw, 36px) clamp(28px, 5vw, 72px);
+        align-items: start; padding-block: clamp(24px, 6vw, 72px) clamp(40px, 7vw, 96px); }
 .eyebrow { font: 600 0.78rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
            display: flex; align-items: center; gap: 10px; }
-.hero-text { container-type: inline-size; min-width: 0; }
-/* o titulo acompanha a largura da coluna: "CONTROLADORA" cabe mesmo com a fonte substituta */
-h1 { font: 900 clamp(2.6rem, 6vw, 5rem)/0.88 var(--display); font-size: clamp(2.2rem, 11.5cqi, 7rem);
+.hero { container-type: inline-size; }
+.hero-head { grid-column: 1 / -1; min-width: 0; }
+.hero-text { min-width: 0; }
+/* o titulo ocupa a largura toda e cresce com ela; "CONTROLADORA" cabe mesmo com a fonte substituta */
+h1 { font: 900 clamp(2.6rem, 7vw, 6rem)/0.88 var(--display); font-size: clamp(2.4rem, 9.5cqi, 8.6rem);
      text-transform: uppercase; letter-spacing: -0.01em;
      margin: 18px 0 22px; text-wrap: balance; }
 h1 .py { color: var(--led-azul); }
@@ -193,6 +195,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 
 @media (max-width: 860px) {
   .hero, .tester, .sec-head { grid-template-columns: minmax(0, 1fr); }
+  h1 { font-size: clamp(2.2rem, 12cqi, 6rem); }
   .summary { position: static; }
 }
 @media (max-width: 460px) {
@@ -216,9 +219,11 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   </header>
 
   <div class="hero">
-    <div class="hero-text">
+    <div class="hero-head">
       <div class="eyebrow"><i class="led azul blink"></i>Convite para professores de robótica</div>
       <h1>Sua controladora EST, programada em <span class="py">Python</span>.</h1>
+    </div>
+    <div class="hero-text">
       <p class="lede">Os alunos escrevem os comandos <strong>em português</strong>, no VS Code, apertam <code>Ctrl+Shift+B</code> e o programa vai direto para o robô, sem a IDE do fabricante. Funciona no nosso robô. <strong>Queremos saber se funciona no seu.</strong></p>
       <div class="ctas">
         <a class="btn solid" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Baixar o projeto</a>
