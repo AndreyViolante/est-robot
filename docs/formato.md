@@ -48,11 +48,19 @@ thread 2               ...                                      ... 21 02 00
 | Op | Bytes | Formato | Significado |
 |---|---|---|---|
 | `01` | 6 | `01 [r] [byte]` | r = byte |
-| `02` | 9 | `02 [r] [f32]` | r = float (ou inteiro de 32 bits) |
+| `02` | 9 | `02 [r] [f32]` | r = float (ou inteiro de 32 bits, ou endereço de texto) |
+| `03` | 9 | `03 [dest] [orig]` | copia 1 byte (valores lógicos) |
 | `04` | 9 | `04 [dest] [orig]` | copia 4 bytes |
+| `08` | 9 | `08 [dest] [orig]` | dest = float(byte orig) |
 | `09` `0A` `0B` `0C` | 13 | `op [res] [a] [b]` | res = a + b, a − b, a × b, a ÷ b |
-| `10` | 14 | `10 [tipo] [res] [a] [b]` | comparação (tipo 4 usado no loop por contagem) |
+| `0D` | 10 | `0D 15 [r] [r]` | converte a cor lida para o número da cor (usado antes de exportar a leitura) |
+| `10` | 14 | `10 [tipo] [res] [a] [b]` | compara floats; tipo 1 =, 2 ≠, 3 >, 4 ≥, 5 <, 6 ≤ |
 | `11` | 13 | `11 [res] [leitura] [máscara]` | cor lida pertence ao conjunto da máscara |
+| `29` | 14 | `29 [tipo] [res] [a] [b]` | compara bytes (sensor de toque) |
+| `2B` | 17 | `2B [r_tipo] [res] [a] [b]` | compara floats com o tipo num registrador (0 =, 1 ≠, 2 >, 3 ≥, 4 <, 5 ≤) |
+| `2F` | 6+n | `2F [endereço] [n] [bytes]` | grava texto na área de textos |
+| `33` | 8 | `33 [tipo] [modo] [tam] [r_dados]` | escreve num dispositivo interno (tela, som, luz) |
+| `47` | 9 | `47 [endereço_texto] [r]` | converte um número em texto |
 | `1A` | 9 | `1A [pc] [r]` | salta para pc se r ≠ 0 |
 | `1B` | 9 | `1B [pc] [r]` | salta para pc se r = 0 |
 | `1D` | 7 | `1D [pc] [tid] 00` | inicia a thread tid em pc |
@@ -76,14 +84,28 @@ traduz alguns opcodes dos modelos `compile_xml` antes de gravar (o "comparar" `0
 
 | tipo | dispositivo | modos e tamanho dos dados |
 |---|---|---|
-| `0x01` | sensor de cor | 1 = cor, 2 = luz refletida, 3 = ambiente; 4 bytes (um float) |
+| `0x01` | sensor de cor | 1 = cor (1–2 bytes), 2 = luz refletida, 3 = ambiente (4 bytes, um float) |
+| `0x07` | sensor de toque | 1 = estado (1 byte: 0 solto, 1 apertado) |
+| `0x08` | sensor ultrassônico | 3 = distância em cm (4 bytes) |
 | `0x80` | motor médio | como o grande |
 | `0x81` | motor grande | 1 desligar (1 B), 2 ligar (4 B), 3 segundos, 4 graus, 5 rotações (9 B) |
 | `0x82` | mover com direção | 1 (1 B), 2 (8 B), 3–5 (13 B) |
 | `0x83` | mover tanque | 1 desligar (1 B), 2 ligar (8 B), 3 segundos, 4 graus, 5 rotações (13 B) |
 
 Os dados começam em `r_dados`: potência(s) em float, depois o valor do modo (segundos, graus ou
-rotações) em float e por fim o freio em 1 byte (1 = frear).
+rotações) em float e por fim o freio em 1 byte (1 = frear). No "mover com direção" a direção vem
+antes da potência.
+
+### Dispositivos internos (`33`)
+
+| tipo | dispositivo | dados |
+|---|---|---|
+| 1 | tela, modo 1 = texto | 10 bytes: endereço do texto (4), 1 reservado, limpar, x, y, cor, fonte |
+| 2 | som, modo 1 = tom | 13 bytes: frequência, duração, volume (floats) e tipo de reprodução |
+| 4 | luz do bloco | modo 1 = ligar (cor, piscar); modo 0 = desligar (`33 04 00 00 FFFFFFFF`) |
+
+Textos ficam numa área separada, a partir de `0xD7FF`, numa vaga de 50 bytes por parâmetro de
+texto. O bloco grava o texto com `2F` e põe o endereço da vaga no seu registrador.
 
 ### Porta (byte gravado no registrador de porta)
 
@@ -138,9 +160,29 @@ L: 1D [pc_corpo] [tid] 00
 fim:
 ```
 
-**Fios**: o bloco de origem termina com `04 [registrador do parâmetro de destino] [sua saída]`, uma
-cópia por destino. Parâmetros ligados por fio não são inicializados no bloco; começam com
-`FF FF FF FF` na tabela do início.
+**Fios**: o bloco de origem termina com uma cópia para o registrador do parâmetro de destino, uma
+por destino. A instrução depende dos tipos: `04` (número → número), `03` (lógico → lógico), `08`
+(byte → número) ou `47` (número → texto, gravando na vaga de texto). Parâmetros ligados por fio não
+são inicializados no bloco. Os numéricos começam com `FF FF FF FF` na tabela do início; os de texto,
+com `2F [vaga] 03 0D 0D 00`.
+
+**Esperar por sensor**: o bloco lê, compara e volta à leitura com `1B` enquanto a condição for falsa.
+```
+48
+01 [r0] 01                     porta
+01 [r8] 04                     tipo de comparação (4 = "<")
+02 [r6] 30.0                   limite
+L: 30 00 [r0] 01 02 04 [r4]    lê a luz refletida
+   2B [r8] [r43] [r4] [r6]     r43 = leitura < limite
+   1B [L] [r43]                volta enquanto falso
+```
+
+**Variáveis** têm um registrador por nome, compartilhado por todos os blocos. "Ler" copia dele para o
+destino do fio; "escrever valor fixo" grava direto nele (`02`); "escrever" ligada por fio usa um
+registrador intermediário e copia (`04`).
+
+**Loops** com o mesmo nome (o padrão é `01`) usam o mesmo registrador de interrupção: o do primeiro
+loop. Os outros reservam o seu, mas não o usam.
 
 ## 5. Como acrescentar um bloco novo
 

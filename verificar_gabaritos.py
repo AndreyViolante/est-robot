@@ -63,8 +63,55 @@ def t9_proporcional():
     return [start(), lp, tank_off()]
 
 
+def l1_tela_som_luz():
+    s = sensor_refl(1)
+    return [start(), display('Ola'), sound_tone(440, 1, 100), light_on(2), wait_sec(1),
+            s, display_val(s, 7, x=10, y=20), light_off()]
+
+
+def l2_motores():
+    return [start(), motor_on('B', 30), wait_sec(1), motor_off('B'), motor_rot('C', 30, 2),
+            motor_sec('B', 30, 1.5), steer_on(30, 20), wait_sec(1), steer_rot(30, 1), motors_off()]
+
+
+def l3_toque_ultra():
+    toque, ultra = touch_state(4), ultrasonic_cm(4)
+    sw_t = switch_touch(4)
+    sw_t.b1 = [tank_on(10, 10)]; sw_t.b2 = [tank_off()]
+    sw_d = switch_dist(4, 4, 20)
+    sw_d.b1 = [tank_on(10, -10)]; sw_d.b2 = [tank_off()]
+    return [start(), toque, var_wn('toque', src=toque, out=2), ultra, var_wn('dist', src=ultra, out=4),
+            wait_touch(4), wait_dist(4, 4, 20), sw_t, sw_d]
+
+
+def l4_espera_cor():
+    sw = switch_refl(1, 4, 30)
+    sw.b1 = [tank_on(10, 20)]; sw.b2 = [tank_on(20, 10)]
+    lr = loop_refl(1, 4, 30); lr.b1 = [tank_on(15, 15)]
+    lc = loop_color(2, PRETO); lc.b1 = [tank_on(15, 15)]
+    return [start(), wait_refl(1, 4, 30), wait_color(2, PRETO), sw, lr, lc, tank_off()]
+
+
+def l5_variaveis_logica():
+    rx = var_rn('x')
+    menor = compare('<', a=(rx, 2), cb=10)
+    sw = switch_logic(menor)
+    sw.b1 = [tank_on(10, 10)]; sw.b2 = [tank_off()]
+    r2 = var_rn('x')
+    soma = math('+', a=(r2, 2), cb=1)
+    r3 = var_rn('x')
+    chegou = compare('>=', a=(r3, 2), cb=10)
+    lp = loop_until(chegou)
+    lp.b1 = [r2, soma, var_wn('x', src=soma, out=1), r3, chegou]
+    cor = sensor_color_id(3)
+    div = math('/', ca=10, cb=4)
+    return [start(), var_wn('x', 7), rx, menor, sw, lp,
+            cor, var_wn('cor', src=cor, out=5), div, var_wn('metade', src=div, out=1)]
+
+
 TESTES = [teste1_switch_cor_preto, teste2_move_tank_bc, t4_loop_inf, t5_loop_cont,
-          t6_switch_depois, t7_loop_switch, t8_tank_modos, t9_proporcional]
+          t6_switch_depois, t7_loop_switch, t8_tank_modos, t9_proporcional,
+          l1_tela_som_luz, l2_motores, l3_toque_ultra, l4_espera_cor, l5_variaveis_logica]
 # no t9 a IDE manteve so o ultimo fio de cada saida ligada a duas entradas: reproduz isso so aqui
 COMPAT_FIOS = {'t9_proporcional'}
 
@@ -80,6 +127,110 @@ def comparar(nome, nosso, ide):
     return False
 
 
+RAIZ = os.path.dirname(os.path.abspath(__file__))
+EQUIVALENTES = [('exemplos/3_seguidor_liga_desliga.py', 'exemplos/blocos/seguidor_linha.py'),
+                ('exemplos/4_seguidor_proporcional.py', 'exemplos/blocos/seguidor_proporcional.py')]
+
+
+def _em_portugues():
+    """Os programas do lote 3 escritos com robo.py: tem que dar os mesmos bytes que a IDE gerou."""
+    from robo import (mostrar, tocar, luz, esperar, luz_refletida, apagar_luz, guardar, tocado, distancia,
+                      esperar_toque, esperar_distancia, esperar_luz, esperar_cor, se_tocado, se_distancia,
+                      se_luz, senao, motores, parar, repetir_ate_luz, repetir_ate_cor, se, ler, repetir_ate,
+                      cor_vista)
+
+    def l1():
+        mostrar('Ola'); tocar(440, 1, 100); luz('vermelho'); esperar(1)
+        mostrar(luz_refletida(1), x=10, y=20); apagar_luz()
+
+    def l3():
+        guardar('toque', tocado(4)); guardar('dist', distancia(4))
+        esperar_toque(4); esperar_distancia(4, '<', 20)
+        with se_tocado(4): motores(10, 10)
+        with senao(): parar()
+        with se_distancia(4, '<', 20): motores(10, -10)
+        with senao(): parar()
+
+    def l4():
+        esperar_luz(1, '<', 30); esperar_cor(2, PRETO)
+        with se_luz(1, '<', 30): motores(10, 20)
+        with senao(): motores(20, 10)
+        with repetir_ate_luz(1, '<', 30): motores(15, 15)
+        with repetir_ate_cor(2, PRETO): motores(15, 15)
+        parar()
+
+    def l5():
+        guardar('x', 7)
+        with se(ler('x') < 10): motores(10, 10)
+        with senao(): parar()
+        with repetir_ate(lambda: ler('x') >= 10):
+            guardar('x', ler('x') + 1)
+        guardar('cor', cor_vista(3))
+
+    def l5_blocos():
+        return l5_variaveis_logica()[:-2]           # o mesmo, sem a divisao do final
+
+    return [('l1_tela_som_luz', l1, None), ('l3_toque_ultra', l3, None), ('l4_espera_cor', l4, None),
+            ('l5_variaveis_logica (sem a divisao)', l5, l5_blocos)]
+
+
+def verificar_robo():
+    """A linguagem em portugues (robo.py) gera o mesmo que os blocos e avisa os erros comuns."""
+    import robo
+    from enviar import carregar
+    falhas = 0
+    for pt, bl in EQUIVALENTES:
+        iguais = compilar(carregar(os.path.join(RAIZ, pt))) == compilar(carregar(os.path.join(RAIZ, bl)))
+        print(f'  {"OK   " if iguais else "FALHA"} {pt} = {bl}')
+        falhas += not iguais
+    for nome, escrever, referencia in _em_portugues():
+        robo.novo_programa()
+        escrever()
+        nosso = compilar(robo.programa())
+        if referencia:
+            esperado = compilar(referencia())
+        else:
+            esperado = bytes.fromhex(open(os.path.join(PASTA, nome + '.hex')).read().strip())
+        iguais = nosso == esperado
+        print(f'  {"OK   " if iguais else "FALHA"} em portugues = {nome}')
+        falhas += not iguais
+
+    def espera_erro(nome, tipo, acao):
+        nonlocal falhas
+        robo.novo_programa()
+        try:
+            acao()
+        except tipo:
+            print(f'  OK    avisa: {nome}')
+            return
+        print(f'  FALHA nao avisou: {nome}')
+        falhas += 1
+
+    def senao_solto():
+        robo.andar(rotacoes=1)
+        with robo.senao():
+            pass
+
+    def senao_depois_de_outro_comando():
+        with robo.se_ver_cor(1, robo.PRETO):
+            robo.parar()
+        robo.esperar(1)
+        with robo.senao():
+            pass
+
+    def if_com_sensor():
+        if robo.luz_refletida(1):
+            pass
+
+    espera_erro('senao sem se', SyntaxError, senao_solto)
+    espera_erro('senao separado do se', SyntaxError, senao_depois_de_outro_comando)
+    espera_erro('if do Python com sensor', TypeError, if_com_sensor)
+    espera_erro('andar sem dizer quanto', ValueError, lambda: robo.andar())
+    robo.novo_programa()
+    blocos.MOTORS = 'B+C'
+    return falhas == 0
+
+
 def main():
     blocos.MOTORS = 'B+C'
     ok = 0
@@ -91,8 +242,10 @@ def main():
             print(f'  ERRO  {fn.__name__:26s} {type(e).__name__}: {e}')
             continue
         ok += comparar(fn.__name__, nosso, ide)
-    print(f'\n{ok}/{len(TESTES)} gabaritos identicos')
-    sys.exit(0 if ok == len(TESTES) else 1)
+    print(f'\n{ok}/{len(TESTES)} gabaritos identicos\n')
+    robo_ok = verificar_robo()
+    print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
+    sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 
 
 if __name__ == '__main__':

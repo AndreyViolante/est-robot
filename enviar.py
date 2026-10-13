@@ -1,6 +1,7 @@
-"""Compila um programa escrito com blocos.py e envia ao robo (Ctrl+Shift+B no VS Code).
+"""Compila um programa e envia ao robo (Ctrl+Shift+B no VS Code).
 
-O arquivo do programa deve definir  PROGRAMA = [start(), ...]
+O programa pode ser escrito com robo.py (comandos em portugues, ex.: andar(rotacoes=2))
+ou com blocos.py, definindo  PROGRAMA = [start(), ...]
 Uso:  python enviar.py seguidor_linha.py            compila e envia
       python enviar.py seguidor_linha.py --so-compilar   so mostra o tamanho e os bytes
 """
@@ -13,12 +14,17 @@ def carregar(arquivo):
     pasta = os.path.dirname(os.path.abspath(arquivo))
     if pasta not in sys.path:
         sys.path.insert(0, pasta)
+    import robo
+    robo.novo_programa()
     spec = importlib.util.spec_from_file_location('programa_usuario', arquivo)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    if not hasattr(mod, 'PROGRAMA'):
-        sys.exit(f'ERRO: {arquivo} precisa definir PROGRAMA = [start(), ...]')
-    return mod.PROGRAMA
+    if hasattr(mod, 'PROGRAMA'):
+        return mod.PROGRAMA
+    feito = robo.programa()
+    if len(feito) > 1:
+        return feito
+    sys.exit(f'ERRO: {arquivo} nao tem nenhum comando para o robo')
 
 
 def main():

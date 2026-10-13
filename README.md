@@ -1,89 +1,135 @@
 # est-robot
 
 Programe o robô educacional **Dr. Luck EST** em Python, direto do **VS Code**, sem a IDE
-proprietária.
-
-O projeto tem um compilador próprio que transforma o programa em Python no bytecode que o robô
-executa, e um cliente USB que grava e executa o programa no robô. O compilador foi construído por
-engenharia reversa e é testado comparando, byte a byte, a saída dele com programas compilados pela
-IDE oficial.
+proprietária. Pensado para aulas de robótica: os comandos são em português.
 
 ```python
-from blocos import *
+from robo import *
 
-s1 = sensor_refl(1)
-s2 = sensor_refl(2)
-erro = math('-', a=(s1, 7), b=(s2, 7))
-correcao = math('*', a=(erro, 1), cb=0.4)
-esq = math('+', ca=25, b=(correcao, 1))
-dir_ = math('-', ca=25, b=(correcao, 1))
-
-sempre = loop_forever()
-sempre.b1 = [s1, s2, erro, correcao, esq, dir_, tank_on(0, 0, wl=(esq, 1), wr=(dir_, 1))]
-
-PROGRAMA = [start(), sempre]
+with repetir(4):            # desenha um quadrado
+    andar_cm(30)
+    virar_direita(90)
 ```
 
-*Seguidor de linha proporcional com dois sensores ([exemplos/seguidor_proporcional.py](exemplos/seguidor_proporcional.py)).*
+```python
+from robo import *
+
+with para_sempre():         # seguidor de linha proporcional com dois sensores
+    erro = luz_refletida(1) - luz_refletida(2)
+    correcao = erro * 0.4
+    motores(25 + correcao, 25 - correcao)
+```
+
+O projeto tem um compilador próprio, que transforma o programa no bytecode que o robô executa, e
+um cliente USB que grava e executa o programa no robô. O compilador foi construído por engenharia
+reversa e é testado comparando, byte a byte, a saída dele com programas compilados pela IDE oficial.
 
 ## Requisitos
 
 - Windows (a comunicação USB usa a API HID do Windows)
-- Python 3.10 ou mais novo
-- `pip install pywinusb`
+- Python 3.10 ou mais novo, com `pip install pywinusb`
+- VS Code com a extensão Python
 - Robô EST ligado e conectado por cabo USB
 
 ## Uso
 
 1. Abra esta pasta no VS Code.
-2. Escreva o programa num arquivo `.py` que termine com `PROGRAMA = [start(), ...]`.
-3. Com o arquivo aberto, aperte **`Ctrl+Shift+B`**: ele compila, grava e executa no robô.
+2. Crie um arquivo `.py` começando com `from robo import *` e escreva os comandos.
+3. Com o arquivo aberto, aperte **`Ctrl+Shift+B`**: ele compila, grava e já executa no robô.
+
+> **Atenção:** o robô começa a se mexer logo depois do envio. Deixe-o no chão ou segure-o.
 
 Pelo terminal:
 
 ```bash
-python enviar.py exemplos/seguidor_linha.py
+python enviar.py exemplos/2_quadrado.py
 ```
 
-```bash
-python enviar.py exemplos/seguidor_linha.py --so-compilar
-```
+## Comandos
 
-O programa fica gravado no robô em `/vscode/<nome do arquivo>`.
-
-## Blocos disponíveis
-
-Programas são listas de blocos. Loops e switches guardam os blocos de dentro em `.b1`
-(e `.b2` no ramo "não" do switch).
-
-| Bloco | Função |
+| Movimento | |
 |---|---|
-| Mover tanque (B+C) | `tank_on(esq, dir)`, `tank_rot(esq, dir, rotacoes)`, `tank_deg(esq, dir, graus)`, `tank_sec(esq, dir, segundos)`, `tank_off()` |
-| Motor grande | `motor_deg(porta, potencia, graus)` |
-| Sensor de cor | `sensor_refl(porta)` (saída 7, luz refletida), `sensor_color_id(porta)` (saída 5, número da cor) |
-| Contas | `math('+' \| '-' \| '*' \| '/', a=(bloco, saida), b=(bloco, saida), ca=constante, cb=constante)` (saída 1) |
-| Variável | `var_wn(nome, valor)` ou `var_wn(nome, src=bloco, out=saida)` |
-| Switch de cor | `switch_color(porta, PRETO)` (conjuntos: `PRETO + VERDE`) |
-| Loop | `loop_forever()`, `loop_count(n)` |
-| Esperar | `wait_sec(segundos)` |
+| `andar(rotacoes=2)`, `andar(segundos=1)`, `andar(graus=360)` | anda para frente (`potencia=50` por padrão) |
+| `re(rotacoes=1)` | anda de ré |
+| `andar_cm(20)` | anda 20 cm |
+| `virar_direita(90)`, `virar_esquerda(90)` | vira o robô no lugar, em graus |
+| `girar_direita(rotacoes=0.5)`, `girar_esquerda(...)` | gira as rodas em sentidos opostos |
+| `motores(esq, dir)` | liga os dois motores e deixa ligados (aceita valores de sensor) |
+| `parar()` | desliga os motores |
+| `motor('A', 50, graus=180)`, `ligar_motor('A', 50)`, `desligar_motor('A')` | um motor sozinho (garra, braço) |
 
-- **Fios** ligam a saída de um bloco à entrada de outro: `(bloco, número_da_saída)`.
-- **Potência**: de −100 a 100. No robô usado nos testes, positiva é para frente.
-- **Motores**: o Move Tank usa B (esquerdo) e C (direito). Para mudar, altere `blocos.MOTORS`.
+| Sensores (dão valores que entram em contas: `+ - * /`) | |
+|---|---|
+| `luz_refletida(porta)` | luz refletida, de 0 (escuro) a 100 (claro) |
+| `cor_vista(porta)` | número da cor (`PRETO`, `AZUL`, `VERDE`, `AMARELO`, `VERMELHO`, `BRANCO`, `MARROM`) |
+| `distancia(porta)` | sensor ultrassônico, em centímetros |
+| `tocado(porta)` | sensor de toque: 1 apertado, 0 solto |
 
-Um bloco que o compilador ainda não conhece gera um erro claro na compilação. Já implementados,
-mas ainda sem conferência byte a byte com a IDE: `math('/')`, `sensor_color_id` e `var_wn` com valor
-fixo.
+| Esperar | |
+|---|---|
+| `esperar(1.5)` | segundos |
+| `esperar_toque(porta)` | até apertar o sensor de toque |
+| `esperar_distancia(porta, '<', 20)` | até a distância passar do valor |
+| `esperar_luz(porta, '<', 30)`, `esperar_cor(porta, VERDE)` | até o sensor de cor ver |
 
-## Como funciona
+| Repetir e decidir | |
+|---|---|
+| `with para_sempre():` / `with repetir(4):` | repete o que está dentro |
+| `with repetir_ate(lambda: distancia(4) < 20):` | repete até a condição acontecer |
+| `with repetir_ate_luz(1, '<', 30):`, `with repetir_ate_cor(1, PRETO):` | repete até o sensor de cor ver |
+| `with se(distancia(4) < 20):` | faz se a comparação for verdadeira |
+| `with se_ver_cor(1, PRETO):`, `with se_luz(1, '<', 30):` | decide pelo sensor de cor |
+| `with se_tocado(4):`, `with se_distancia(4, '<', 20):` | decide pelo toque / ultrassom |
+| `with senao():` | logo depois de um `with se...`: o que fazer no caso contrário |
+
+| Tela, som, luz e variáveis | |
+|---|---|
+| `mostrar('Ola')`, `mostrar(distancia(4), x=10, y=50)` | escreve texto ou valor na tela |
+| `tocar(440, 0.5)`, `bip()` | som (frequência em Hz, duração em segundos) |
+| `luz('verde')`, `apagar_luz()` | luz do robô: `'verde'`, `'laranja'` ou `'vermelho'` |
+| `guardar('contador', 0)`, `ler('contador')` | variáveis guardadas no robô |
+
+Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores funcionam dentro de `se(...)` e
+`repetir_ate(...)`. O `if` do Python não serve para isso, porque a leitura acontece no robô, e não
+no computador: o programa avisa se for usado assim.
+
+### Ajustando ao seu robô
+
+```python
+configurar(esquerdo='B', direito='C', invertido=False, roda_cm=5.6, entre_rodas_cm=12)
+```
+
+- `invertido=True` se o robô andar de ré quando deveria ir para frente.
+- `roda_cm` (diâmetro da roda) acerta o `andar_cm`.
+- `entre_rodas_cm` acerta o `virar_direita(90)`: se o robô virar a mais, diminua; se virar a menos, aumente.
+
+## Exemplos
+
+Em [exemplos/](exemplos/), em ordem para as aulas:
+
+1. `1_andar_e_virar.py`: andar, esperar, virar
+2. `2_quadrado.py`: repetir
+3. `3_seguidor_liga_desliga.py`: seguidor de linha com um sensor
+4. `4_seguidor_proporcional.py`: seguidor proporcional com dois sensores
+5. `5_desviar_obstaculo.py`: ultrassom e decisão
+6. `6_botao_de_toque.py`: esperar o toque, som e luz
+7. `7_mostrar_sensor.py`: ver o valor do sensor na tela
+8. `8_contador.py`: variáveis
+
+## Para quem quer ir além
+
+Os comandos em português geram blocos de [blocos.py](blocos.py), que seguem os blocos da IDE
+oficial (fios entre saídas e entradas, parâmetros por número). Os dois podem ser usados juntos; veja
+[exemplos/blocos/](exemplos/blocos/).
 
 | Arquivo | Papel |
 |---|---|
-| [blocos.py](blocos.py) | a linguagem: funções que criam os blocos |
-| [estc.py](estc.py) | o compilador: registradores, threads, fios e saltos |
+| [robo.py](robo.py) | a linguagem em português |
+| [blocos.py](blocos.py) | os blocos da IDE |
+| [estc.py](estc.py) | o compilador: registradores, threads, fios, saltos |
 | [est_protocol.py](est_protocol.py) | o protocolo USB HID (gravar e executar) |
-| [enviar.py](enviar.py) | junta tudo: compila o arquivo e envia |
-| [verificar_gabaritos.py](verificar_gabaritos.py) | compara o compilador com a IDE oficial |
+| [enviar.py](enviar.py) | compila o arquivo e envia |
+| [verificar_gabaritos.py](verificar_gabaritos.py) | testes: compara com a IDE oficial e confere a linguagem |
 | [gabaritos/](gabaritos/) | programas compilados pela IDE oficial, usados como referência |
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
 | [docs/formato.md](docs/formato.md) | protocolo, estrutura do programa e instruções da VM |
@@ -92,8 +138,11 @@ fixo.
 python verificar_gabaritos.py
 ```
 
-O resultado esperado é `8/8 gabaritos identicos`. Para acrescentar um bloco novo, siga a seção 5
-de [docs/formato.md](docs/formato.md).
+O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: OK`.
+
+**Ainda não conferido no robô:** a calibragem padrão de `andar_cm` e `virar_*`, as cores de `luz()`
+e os comandos com sensores de toque e ultrassom (os bytes batem com a IDE, mas não foram vistos
+funcionando). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
 
 ## Aviso
 
