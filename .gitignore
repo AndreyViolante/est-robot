@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.env
+
+# material local de investigacao e o compilador antigo (nao publicar)
+_investigacao/
+_legado/
+
+# capturas brutas da IDE e do USB podem conter caminhos e nomes da maquina
+*.pcapng
+order_content*.txt
