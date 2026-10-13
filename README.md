@@ -3,6 +3,8 @@
 Programe o robô educacional **Dr. Luck EST** em Python, direto do **VS Code**, sem a IDE
 proprietária. Pensado para aulas de robótica: os comandos são em português.
 
+**Tem uma controladora EST?** Ajude a testar: [andreyviolante.github.io/est-robot](https://andreyviolante.github.io/est-robot/)
+
 ```python
 from robo import *
 
