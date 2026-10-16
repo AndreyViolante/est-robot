@@ -55,10 +55,15 @@ ERRO na linha 3 de quadrado.py:
 Para conferir se o computador fala com o robô: **Terminal → Executar Tarefa → Testar conexão com o
 robô** (ele apita, acende a luz e escreve "Funcionou!").
 
+Para gravar sem o robô sair andando (por exemplo, numa prova, em que ele precisa estar na posição
+de largada): **Terminal → Executar Tarefa → Gravar no robô sem executar**. O programa fica na pasta
+**vscode** do robô e é iniciado pelo menu dele.
+
 Pelo terminal:
 
 ```bash
 python enviar.py exemplos/2_quadrado.py
+python enviar.py exemplos/2_quadrado.py --so-gravar
 ```
 
 ## Comandos

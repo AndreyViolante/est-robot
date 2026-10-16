@@ -6,6 +6,7 @@ import struct, ctypes, ctypes.wintypes as wt, time
 
 VID, PID = 0x0483, 0x5750
 REPORT_SIZE = 1025   # 1 byte report-ID + 1024 bytes payload
+PEDACO = REPORT_SIZE - 1 - 10   # bytes de programa por pacote (o pacote tem mais 10 bytes)
 
 # ── Estruturas Win32 ──────────────────────────────────────────────────────────
 
@@ -56,24 +57,33 @@ def pkt_filename(filepath: str) -> bytes:
     payload = (len(inner) + 1).to_bytes(2, 'little') + b'\x01' + inner
     return frame(0x04, payload)
 
-def pkt_data(data: bytes) -> bytes:
-    inner = b'\x01\x00' + data
+def pkt_data(data: bytes, total: int = 1, indice: int = 0) -> bytes:
+    inner = bytes([total, indice]) + data
     payload = (len(inner) + 1).to_bytes(2, 'little') + b'\x02' + inner
     return frame(0x04, payload)
 
+def pacotes_de_dados(data: bytes) -> list:
+    """Programa maior que um pacote vai em pedaços de 1014 bytes, cada um com o total de pedaços
+    e o seu número (0, 1, ...). Visto no envio do BrickPID_v6 pela IDE: 8762 bytes em 9 pedaços."""
+    pedacos = [data[i:i + PEDACO] for i in range(0, len(data), PEDACO)] or [b'']
+    if len(pedacos) > 255:
+        raise RuntimeError(f'programa grande demais ({len(data)} bytes)')
+    return [pkt_data(p, len(pedacos), i) for i, p in enumerate(pedacos)]
+
 def build_upload_sequence(program_data: bytes,
-                          prog_path: str = '/vscode/programa') -> list:
+                          prog_path: str = '/vscode/programa', executar: bool = True) -> list:
     dbf_path = prog_path + '.dbf'
+    dados = pacotes_de_dados(program_data)
+    nomes = ["SEND DATA"] if len(dados) == 1 else [f"SEND DATA {i + 1}/{len(dados)}" for i in range(len(dados))]
     return [
         (pkt_select(prog_path),  "SELECT PROGRAM",  0.15),
         (HEARTBEAT,              "HEARTBEAT",        0.15),
         (DOWNLOAD,               "DOWNLOAD trigger", 0.30),
         (pkt_filename(dbf_path), "SEND FILENAME",    0.15),
-        (pkt_data(program_data), "SEND DATA",        0.30),
+        *[(pkt, nome, 0.30) for pkt, nome in zip(dados, nomes)],
         (HEARTBEAT,              "HEARTBEAT",        0.15),
         (DOWNLOAD,               "DOWNLOAD confirm", 0.20),
-        (pkt_run(dbf_path),      "RUN",              0.20),
-    ]
+    ] + ([(pkt_run(dbf_path),    "RUN",              0.20)] if executar else [])
 
 # ── HID via WinAPI (modo assincrono) ─────────────────────────────────────────
 
@@ -121,9 +131,11 @@ def _make_overlapped() -> tuple:
 
 def send_report(handle, data: bytes):
     """Envia Output Report HID (1025 bytes). Aguarda conclusao."""
+    if len(data) > REPORT_SIZE - 1:
+        raise RuntimeError(f'pacote de {len(data)} bytes nao cabe num report HID')
     buf = bytearray(REPORT_SIZE)
     buf[0] = 0x00
-    buf[1:1+len(data)] = data[:REPORT_SIZE-1]
+    buf[1:1+len(data)] = data
     buf_c = (ctypes.c_ubyte * REPORT_SIZE)(*buf)
 
     ov, evt = _make_overlapped()
@@ -168,9 +180,10 @@ def read_response(handle, timeout_ms: int = 400) -> bytes | None:
 
 def upload(program_data: bytes,
            prog_path: str = '/vscode/programa',
-           verbose: bool = True):
+           verbose: bool = True, executar: bool = True):
     """
     Envia programa compilado ao robô, lendo o ACK do robo entre cada pacote.
+    executar=False só grava: o programa fica no robô para ser iniciado pelo menu dele.
     """
     if verbose:
         print("[*] Conectando ao robo...")
@@ -183,7 +196,7 @@ def upload(program_data: bytes,
         print(f"[OK] Programa: {len(program_data)} bytes")
         print()
 
-    sequence = build_upload_sequence(program_data, prog_path)
+    sequence = build_upload_sequence(program_data, prog_path, executar)
 
     try:
         for pkt, name, delay in sequence:

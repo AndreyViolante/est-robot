@@ -14,7 +14,7 @@ oficial (ver `gabaritos/`). Onde algo ainda é hipótese, está marcado.
 | `0x01` | `00 00` | heartbeat |
 | `0x02` | `01 00 00` | consulta de estado (a IDE manda sem parar) |
 | `0x04` | `len16 01 01 00 [tam_dir] [caminho.dbf]` | nome do arquivo de programa |
-| `0x04` | `len16 02 01 00 [bytecode]` | conteúdo do programa |
+| `0x04` | `len16 02 [total] [n] [bytecode]` | conteúdo do programa, pedaço `n` de `total` |
 | `0x0A` | `len16 01 [caminho.dbf]` | **executar** o programa gravado |
 | `0x0A` | `len16 02 [caminho]` | selecionar (enviado antes do download; função exata desconhecida) |
 | `0x0C` | `01 00 01` | iniciar/confirmar download |
@@ -22,8 +22,14 @@ oficial (ver `gabaritos/`). Onde algo ainda é hipótese, está marcado.
 `len16` é o comprimento (little-endian) do que vem depois dele. O caminho tem a forma
 `/pasta/programa.dbf`; a pasta é criada pelo robô se não existir.
 
-Sequência usada por `est_protocol.py`: SELECT → heartbeat → DOWNLOAD → nome → dados → heartbeat →
-DOWNLOAD → **executar**.
+O programa vai em pedaços de até **1014 bytes** (o que cabe num report junto com os 10 bytes do
+pacote), numerados a partir de 0, e todos levam o total de pedaços. Um programa pequeno vai num
+pedaço só (`01 00`). Conferido contra a IDE: o BrickPID_v6 (8762 bytes) foi em 9 pedaços, e os
+nossos saem iguais byte a byte.
+
+Sequência usada por `est_protocol.py`: SELECT → heartbeat → DOWNLOAD → nome → dados (um pacote por
+pedaço) → heartbeat → DOWNLOAD → **executar**. Sem o pacote de executar (`--so-gravar`), o programa
+fica gravado e é iniciado pelo menu do robô.
 
 ## 2. Estrutura de um programa
 

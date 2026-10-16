@@ -2,7 +2,8 @@
 
 O programa pode ser escrito com robo.py (comandos em portugues, ex.: andar(rotacoes=2))
 ou com blocos.py, definindo  PROGRAMA = [start(), ...]
-Uso:  python enviar.py quadrado.py                 compila e envia
+Uso:  python enviar.py quadrado.py                 compila, envia e já executa
+      python enviar.py quadrado.py --so-gravar     envia sem executar (iniciar pelo menu do robô)
       python enviar.py quadrado.py --so-compilar   só compila (não precisa do robô)
 """
 import difflib, importlib.util, inspect, os, re, sys, traceback
@@ -137,10 +138,13 @@ def main():
     if '--so-compilar' in sys.argv:
         return
     from est_protocol import upload
+    so_gravar = '--so-gravar' in sys.argv
     try:
-        upload(dados, prog_path=f'/vscode/{nome}')
+        upload(dados, prog_path=f'/vscode/{nome}', executar=not so_gravar)
     except RuntimeError as e:
         sys.exit(f'ERRO: {e}')
+    if so_gravar:
+        print(f'Gravado no robô como vscode/{nome}: inicie pelo menu do robô.')
 
 
 if __name__ == '__main__':

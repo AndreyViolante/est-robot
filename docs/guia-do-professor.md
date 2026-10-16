@@ -20,6 +20,8 @@ exemplo da pasta `exemplos/` e introduz um conceito de programação. A ideia de
 1. O aluno cria um arquivo `.py` (por exemplo `aula1_joao.py`) com a primeira linha
    `from robo import *`.
 2. Escreve os comandos e aperta **`Ctrl+Shift+B`**: o programa vai para o robô e já começa a rodar.
+   Para o robô esperar na posição de largada, use a tarefa **Gravar no robô sem executar** e inicie
+   pelo menu do robô (pasta **vscode**).
 3. Se houver erro, aparece no terminal **em português, com o número da linha**, e nada é enviado.
 
 **Segurança:** o robô se mexe logo depois do envio. Combine com a turma: robô no chão (nunca na
@@ -148,9 +150,11 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Ainda não conferido em todos os robôs
 
-Já testados no robô: movimento, `andar_cm` e `virar_*` (o quadrado fecha certo), seguidor de
-linha, tela (3 linhas), som, luz (azul, roxo, vermelho), esperar, ultrassom, `se(...)`,
-`repetir_ate(...)`, variáveis e `cor_vista`. Ainda não visto funcionando: o sensor de toque (o
+Já testados no robô: movimento (`andar`, `re`, rotações, graus e segundos, com e sem frear),
+`andar_cm` e `virar_*` (o quadrado fecha certo), seguidor de linha, parar na linha (`esperar_luz`,
+`repetir_ate_luz`, `repetir_ate_cor`), tela (3 linhas), som, luz (azul, roxo, vermelho), esperar,
+ultrassom (inclusive desviando de obstáculo com o robô andando), `se(...)`, `repetir_ate(...)`,
+variáveis e `cor_vista`. Ainda não visto funcionando: o sensor de toque (o
 compilador gera para ele os mesmos bytes que a IDE oficial).
 Teste antes de levar para a turma.
 
