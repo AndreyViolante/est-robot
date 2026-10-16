@@ -11,3 +11,6 @@ _legado/
 # capturas brutas da IDE e do USB podem conter caminhos e nomes da maquina
 *.pcapng
 order_content*.txt
+
+# programa do aluno gerado por simular.py a cada simulação
+simulador/programa.js

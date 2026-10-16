@@ -5,6 +5,9 @@ proprietária. Pensado para aulas de robótica: os comandos são em português.
 
 **Tem uma controladora EST?** Ajude a testar: [andreyviolante.github.io/est-robot](https://andreyviolante.github.io/est-robot/)
 
+**Quer ver antes de instalar?** Os exemplos rodam no simulador, no navegador:
+[andreyviolante.github.io/est-robot/simulador](https://andreyviolante.github.io/est-robot/simulador/)
+
 ```python
 from robo import *
 
@@ -65,6 +68,29 @@ Pelo terminal:
 python enviar.py exemplos/2_quadrado.py
 python enviar.py exemplos/2_quadrado.py --so-gravar
 ```
+
+### Simulador (sem o robô)
+
+**Terminal → Executar Tarefa → Simular no computador** abre o programa no navegador, numa pista
+vista de cima. O simulador executa os mesmos bytes que iriam para o robô: dá para ver o caminho
+(rastro), a linha do programa que está rodando, os sensores, os motores, as variáveis, a tela, a luz
+e o som. Funciona sem internet e sem instalar nada. Os exemplos 1 a 9 estão na
+[demonstração online](https://andreyviolante.github.io/est-robot/simulador/), cada um na sua pista.
+
+- Pistas: chão quadriculado (exemplos 1 e 2), oval, quadrado com cantos de 90°, curvas de 90° com
+  uma falha na linha, e uma arena com uma caixa (exemplo 5).
+- Arraste o robô para escolher a largada; a bolinha azul na frente gira o robô. A caixa da arena
+  também pode ser arrastada.
+- Em **Medidas do robô** ficam a roda, a distância entre as rodas e a posição de cada sensor. O padrão
+  é o robô do laboratório (S1 e S2 um de cada lado da linha, S3 no meio e mais à frente, ultrassom na
+  porta 4); meça o seu e ajuste.
+
+```bash
+python simular.py exemplos/4_seguidor_proporcional.py
+```
+
+O robô de verdade escorrega, a bateria muda a velocidade e a luz da sala muda os sensores: o
+simulador serve para testar a lógica, mas confira no robô.
 
 ## Comandos
 
@@ -155,10 +181,13 @@ oficial (fios entre saídas e entradas, parâmetros por número). Os dois podem 
 | [estc.py](estc.py) | o compilador: registradores, threads, fios, saltos |
 | [est_protocol.py](est_protocol.py) | o protocolo USB HID (gravar e executar) |
 | [enviar.py](enviar.py) | compila o arquivo e envia |
+| [simular.py](simular.py) | compila o arquivo e abre o simulador |
+| [simulador/](simulador/) | o simulador: VM do robô em JavaScript (`vm.js`), física (`robo.js`), pistas (`mundo.js`) e a página |
 | [verificar_gabaritos.py](verificar_gabaritos.py) | testes: compara com a IDE oficial e confere a linguagem |
 | [gabaritos/](gabaritos/) | programas compilados pela IDE oficial, usados como referência |
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
 | [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
+| [ferramentas/publicar_simulador.py](ferramentas/publicar_simulador.py) | copia o simulador para `docs/simulador/` com os exemplos compilados (a demonstração online) |
 | [instalar.bat](instalar.bat) | prepara um computador novo |
 | [docs/formato.md](docs/formato.md) | protocolo, estrutura do programa e instruções da VM |
 

@@ -22,6 +22,16 @@
             "problemMatcher": []
         },
         {
+            "label": "Simular no computador",
+            "type": "shell",
+            "command": "python",
+            "args": ["${workspaceFolder}/simular.py", "${file}"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "group": "build",
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true},
+            "problemMatcher": []
+        },
+        {
             "label": "Só compilar (sem robô)",
             "type": "shell",
             "command": "python",

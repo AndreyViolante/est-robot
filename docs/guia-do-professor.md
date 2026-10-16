@@ -30,6 +30,21 @@ mesa) e ninguém na frente dele. Para parar um programa, use o botão do robô.
 **Dica:** passar o mouse sobre um comando no VS Code mostra a explicação dele, e começar a digitar
 mostra a lista de comandos (autocompletar).
 
+## Quando não há robô para todos: o simulador
+
+Com o programa aberto, **Terminal → Executar Tarefa → Simular no computador** abre o programa no
+navegador, com o robô numa pista vista de cima. Ele executa os mesmos bytes que iriam para o robô,
+então os erros de lógica aparecem do mesmo jeito. Use para:
+
+- as equipes testarem enquanto esperam a vez do robô;
+- mostrar no projetor o que o programa faz linha a linha (a linha que está rodando fica destacada) e
+  o valor das variáveis, por exemplo no PID;
+- conferir a ideia antes de gastar bateria: o quadrado fecha? o seguidor faz a curva de 90°?
+
+Arraste o robô para a largada (a bolinha azul gira) e escolha a pista. Antes, meça o robô da turma
+(roda, distância entre as rodas, posição dos sensores) e ajuste em **Medidas do robô**. O simulador
+não tem escorregão, bateria fraca nem variação de luz: o teste final é sempre no robô.
+
 ---
 
 ## Aula 1: sequência

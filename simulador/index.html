@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Simulador do robô EST: roda no navegador o mesmo bytecode que vai para o robô.">
+<title>Simulador do robô EST</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header class="topo">
+  <div class="marca">
+    <span class="leds" aria-hidden="true"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>
+    est-robot <b>simulador</b>
+  </div>
+  <label class="campo" id="campoExemplo" hidden>Exemplo <select id="exemplo"></select></label>
+  <div class="arquivo" id="arquivo">sem programa</div>
+</header>
+
+<main class="layout">
+  <section class="palco" aria-label="Pista">
+    <div class="comandos">
+      <button id="btExecutar" class="bt principal" type="button" disabled>▶ Executar</button>
+      <button id="btReiniciar" class="bt" type="button">⟲ Reiniciar</button>
+      <label class="campo">Velocidade
+        <select id="velocidade">
+          <option value="0.25">¼×</option>
+          <option value="0.5">½×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+          <option value="10">10×</option>
+        </select>
+      </label>
+      <span class="relogio" id="relogio" aria-label="Tempo simulado">0,0 s</span>
+      <span class="estado" id="estado" role="status">Carregando…</span>
+    </div>
+
+    <div class="quadro" id="quadro">
+      <canvas id="cena" aria-label="Pista vista de cima com o robô"></canvas>
+    </div>
+
+    <div class="opcoes">
+      <label class="campo">Pista <select id="pista"></select></label>
+      <button id="btLargada" class="bt pequeno" type="button" title="Volta o robô (e a caixa) para a posição original da pista">Largada original</button>
+      <label class="marcar"><input type="checkbox" id="lupa"> Lupa (segue o robô)</label>
+      <label class="marcar"><input type="checkbox" id="rastro" checked> Rastro</label>
+      <button id="btLimparRastro" class="bt pequeno" type="button">Limpar rastro</button>
+      <label class="marcar"><input type="checkbox" id="somLigado" checked> Som</label>
+    </div>
+    <p class="dica" id="dica"></p>
+    <div class="avisos" id="avisos" hidden></div>
+  </section>
+
+  <aside class="painel">
+    <section class="cartao brick" aria-label="Tela, luz e som do robô">
+      <h2>Robô</h2>
+      <div class="lcd-moldura"><canvas id="lcd" width="256" height="128" aria-label="Tela do robô"></canvas></div>
+      <div class="luz-som">
+        <span class="luz" id="luz" aria-hidden="true"></span>
+        <span id="luzNome">luz apagada</span>
+        <span class="som" id="som" aria-live="off"></span>
+      </div>
+      <button id="btToque" class="bt toque" type="button" hidden>Sensor de toque (segure)</button>
+    </section>
+
+    <section class="cartao">
+      <h2>Sensores</h2>
+      <table class="tabela" id="sensores"></table>
+    </section>
+
+    <section class="cartao">
+      <h2>Motores</h2>
+      <div id="motores" class="motores"></div>
+    </section>
+
+    <section class="cartao" id="cartaoVariaveis" hidden>
+      <h2>Variáveis</h2>
+      <table class="tabela" id="variaveis"></table>
+    </section>
+
+    <section class="cartao">
+      <h2>Programa</h2>
+      <pre class="fonte" id="fonte"></pre>
+    </section>
+
+    <details class="cartao" id="medidas">
+      <summary>Medidas do robô</summary>
+      <p class="nota">Em centímetros, a partir do meio entre as duas rodas. Meça o seu robô e ajuste aqui:
+        fica guardado neste navegador.</p>
+      <div id="formMedidas"></div>
+      <button id="btPadrao" class="bt pequeno" type="button">Voltar ao padrão</button>
+    </details>
+  </aside>
+</main>
+
+<footer class="rodape">
+  <p class="demo" id="notaDemo" hidden>Esta é uma demonstração com os exemplos do projeto. Para simular os
+    seus programas, <a href="https://github.com/AndreyViolante/est-robot">baixe o est-robot</a> e, no VS Code,
+    escolha <b>Terminal → Executar Tarefa → Simular no computador</b>.</p>
+  O simulador executa os mesmos bytes que vão para o robô, mas o robô de verdade escorrega, a bateria
+  muda a velocidade e os sensores variam com a luz: confira no robô antes da prova.
+  Atalhos: <kbd>Espaço</kbd> executa/pausa, <kbd>R</kbd> reinicia.
+</footer>
+
+<script src="vm.js"></script>
+<script src="mundo.js"></script>
+<script src="robo.js"></script>
+<script src="programa.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
