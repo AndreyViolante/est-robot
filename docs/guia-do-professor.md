@@ -10,9 +10,10 @@ exemplo da pasta `exemplos/` e introduz um conceito de programação. A ideia de
 - Em cada robô, rode a tarefa **Testar conexão com o robô** (Terminal → Executar Tarefa).
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
   exemplos usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
-- Rode o `exemplos/2_quadrado.py`. Se o robô virar mais ou menos que 90°, ajuste
-  `configurar(entre_rodas_cm=...)`; se cada lado não tiver 30 cm, ajuste `configurar(roda_cm=...)`.
-  Anote os valores do seu robô para passar aos alunos.
+- Rode o `exemplos/2_quadrado.py`. Os valores padrão foram medidos num robô EST e fazem o quadrado
+  certo. Se o seu robô virar mais ou menos que 90°, ajuste `configurar(entre_rodas_cm=...)`; se cada
+  lado não tiver 30 cm, ajuste `configurar(roda_cm=...)`. Anote os valores do seu robô para passar
+  aos alunos.
 
 ## Como é uma aula
 
@@ -147,11 +148,15 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Ainda não conferido em todos os robôs
 
-Já testados no robô: movimento, seguidor de linha, tela (3 linhas), som, luz (azul, roxo,
-vermelho), esperar, ultrassom, `se(...)` e `repetir_ate(...)`. Ainda não vistos funcionando: a
-calibragem padrão de `andar_cm` e `virar_*` e o sensor de toque (o compilador gera para eles os
-mesmos bytes que a IDE oficial).
+Já testados no robô: movimento, `andar_cm` e `virar_*` (o quadrado fecha certo), seguidor de
+linha, tela (3 linhas), som, luz (azul, roxo, vermelho), esperar, ultrassom, `se(...)`,
+`repetir_ate(...)`, variáveis e `cor_vista`. Ainda não visto funcionando: o sensor de toque (o
+compilador gera para ele os mesmos bytes que a IDE oficial).
 Teste antes de levar para a turma.
+
+**Movimentos seguidos:** depois de cada movimento que freia (`andar`, `re`, `andar_cm`, `girar_*`,
+`virar_*`), o robô fica parado meio segundo antes do próximo comando. Sem essa pausa ele emenda um
+movimento no outro e as viradas saem erradas. Dá para mudar com `configurar(pausa=...)`.
 
 **Sensor de cor:** cada sensor deve ser usado num modo só. Misturar comandos de cor (`cor_vista`, `se_ver_cor`) com
 comandos de luz refletida (`luz_refletida`, `se_luz`) no mesmo sensor faz ele trocar de modo o tempo todo, ficar lento

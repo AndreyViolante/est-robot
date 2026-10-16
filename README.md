@@ -112,12 +112,17 @@ no computador: o programa avisa se for usado assim.
 ### Ajustando ao seu robô
 
 ```python
-configurar(esquerdo='B', direito='C', invertido=False, roda_cm=5.6, entre_rodas_cm=12)
+configurar(esquerdo='B', direito='C', invertido=False, roda_cm=4.3, entre_rodas_cm=12, pausa=0.5)
 ```
+
+Os valores acima são os padrões, medidos num robô EST: com eles, `andar_cm(30)` anda 30 cm e
+`virar_direita(90)` vira 90°. Só use `configurar` se o seu robô for diferente.
 
 - `invertido=True` se o robô andar de ré quando deveria ir para frente.
 - `roda_cm` (diâmetro da roda) acerta o `andar_cm`.
 - `entre_rodas_cm` acerta o `virar_direita(90)`: se o robô virar a mais, diminua; se virar a menos, aumente.
+- `pausa` é o tempo parado depois de cada movimento que freia. Sem ela, o robô emenda um movimento no
+  outro e as viradas saem erradas; `pausa=0` desliga.
 
 ## Exemplos
 

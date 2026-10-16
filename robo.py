@@ -31,7 +31,7 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'se', 'se_ver_cor', 'se_tocado', 'se_distancia', 'se_luz', 'senao', 'novo_programa', 'programa']
 
 POTENCIA_PADRAO = 50
-_config = {'esquerdo': 'B', 'direito': 'C', 'sentido': 1, 'roda_cm': 5.6, 'entre_rodas_cm': 12.0}
+_config = {'esquerdo': 'B', 'direito': 'C', 'sentido': 1, 'roda_cm': 4.3, 'entre_rodas_cm': 12.0, 'pausa': 0.5}
 
 
 # ---------------------------------------------------------------- programa em construcao
@@ -88,16 +88,18 @@ novo_programa()
 
 # ---------------------------------------------------------------- configuracao
 
-def configurar(esquerdo='B', direito='C', invertido=False, roda_cm=5.6, entre_rodas_cm=12.0):
+def configurar(esquerdo='B', direito='C', invertido=False, roda_cm=4.3, entre_rodas_cm=12.0, pausa=0.5):
     """Ajusta o programa ao robo.
 
     esquerdo, direito   portas dos motores das rodas
     invertido           True se o robô anda de ré quando deveria ir para frente
-    roda_cm             diâmetro da roda (para andar_cm)
+    roda_cm             diâmetro efetivo da roda (para andar_cm); 4.3 medido no robô EST
     entre_rodas_cm      distância entre as duas rodas (para virar_direita / virar_esquerda)
+    pausa               segundos parado depois de cada movimento que freia (0 = sem pausa);
+                        sem ela o robô emenda um movimento no outro e erra a virada
     """
     _config.update(esquerdo=esquerdo.upper(), direito=direito.upper(), sentido=-1 if invertido else 1,
-                   roda_cm=roda_cm, entre_rodas_cm=entre_rodas_cm)
+                   roda_cm=roda_cm, entre_rodas_cm=entre_rodas_cm, pausa=pausa)
 
 
 def _tanque(construtor, esq, dir_, *extra, **kw):
@@ -120,10 +122,14 @@ def _mover(esq, dir_, rotacoes, graus, segundos, frear):
         raise ValueError('diga quanto andar: rotacoes=..., graus=... ou segundos=...')
     esq, dir_ = _pot(esq), _pot(dir_)
     if rotacoes is not None:
-        return _tanque(_b.tank_rot, esq, dir_, rotacoes, brake=frear)
-    if graus is not None:
-        return _tanque(_b.tank_deg, esq, dir_, graus, brake=frear)
-    return _tanque(_b.tank_sec, esq, dir_, segundos, brake=frear)
+        bloco = _tanque(_b.tank_rot, esq, dir_, rotacoes, brake=frear)
+    elif graus is not None:
+        bloco = _tanque(_b.tank_deg, esq, dir_, graus, brake=frear)
+    else:
+        bloco = _tanque(_b.tank_sec, esq, dir_, segundos, brake=frear)
+    if frear and _config['pausa']:
+        _adiciona(_b.wait_sec(_config['pausa']))   # testado no robô: sem a pausa a virada seguinte sai errada
+    return bloco
 
 
 # ---------------------------------------------------------------- movimento

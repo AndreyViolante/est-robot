@@ -44,7 +44,7 @@ Leva uns 10 minutos por computador. Funciona no **Windows**.
 | O `Ctrl+Shift+B` pergunta qual tarefa usar | Escolha **Enviar para o Robô** |
 | `ERRO na linha …` | É um erro no programa: a mensagem explica o que corrigir |
 | O robô anda de ré quando deveria ir para frente | Coloque `configurar(invertido=True)` no começo do programa |
-| O robô vira mais ou menos que 90° | Ajuste `configurar(entre_rodas_cm=...)`: diminua se virar a mais, aumente se virar a menos |
+| O robô vira mais ou menos que 90° | Ajuste `configurar(entre_rodas_cm=...)`: diminua se virar a mais, aumente se virar a menos. Se você usou `configurar(pausa=0)`, volte a pausa para 0.5 |
 
 Em computadores da escola, a instalação do Python e do `pywinusb` pode precisar de permissão do
 responsável pela rede.

@@ -222,6 +222,21 @@ def verificar_robo():
         if robo.luz_refletida(1):
             pass
 
+    def quadrado(pausa_a_mao):
+        robo.novo_programa()
+        robo.configurar(pausa=0 if pausa_a_mao else 0.5)
+        with robo.repetir(4):
+            robo.andar_cm(30)
+            if pausa_a_mao: robo.esperar(0.5)
+            robo.virar_direita(90)
+            if pausa_a_mao: robo.esperar(0.5)
+        feito = compilar(robo.programa())
+        robo.configurar()
+        return feito
+    iguais = quadrado(False) == quadrado(True)
+    print(f'  {"OK   " if iguais else "FALHA"} pausa depois de cada movimento = esperar(0.5) testado no robô')
+    falhas += not iguais
+
     espera_erro('senao sem se', SyntaxError, senao_solto)
     espera_erro('senao separado do se', SyntaxError, senao_depois_de_outro_comando)
     espera_erro('if do Python com sensor', TypeError, if_com_sensor)
