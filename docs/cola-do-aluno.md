@@ -26,7 +26,7 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 | Comando | Dá |
 |---|---|
 | `luz_refletida(1)` | luz no sensor 1: 0 (escuro) a 100 (claro) |
-| `cor_vista(1)` | a cor: `PRETO`, `AZUL`, `VERDE`, `AMARELO`, `VERMELHO`, `BRANCO`, `MARROM` |
+| `cor_vista(1)` | a cor: compare com `PRETO`, `AZUL`, `VERDE`, `AMARELO`, `VERMELHO`, `BRANCO`, `MARROM` (ex.: `se(cor_vista(1) == VERDE)`) |
 | `distancia(4)` | distância em centímetros (ultrassom) |
 | `tocado(4)` | 1 se o botão de toque estiver apertado, 0 se não |
 
@@ -68,4 +68,6 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 - `with ...` termina com **dois-pontos** `:` e as linhas de dentro começam com **4 espaços**.
 - Texto vai entre **aspas**: `mostrar('Oi')`.
 - Para comparar sensores use `with se(...)`, e não `if`.
+- Para linha preta no chão branco, use a **luz refletida** (`luz_refletida`, `se_luz`): é mais confiável que a cor.
+- Use **um modo só para cada sensor**: misturar cor e luz refletida no mesmo sensor deixa ele lento e errando (o programa avisa).
 - Se der erro, leia a mensagem: ela diz **a linha** e o que corrigir.

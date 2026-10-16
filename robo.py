@@ -45,6 +45,25 @@ class _Trecho:
 _pilha = []
 
 
+_MODO_COR = {('3002', '1'), ('2004', '4'), ('2003', '2'), ('2002', '3')}
+_MODO_LUZ = {('3002', '2'), ('2004', '5'), ('2003', '3'), ('2002', '4')}
+
+
+def avisos(blocos):
+    """Problemas que não impedem o envio, mas atrapalham o robô."""
+    modos = {}
+    def percorre(lista):
+        for b in lista:
+            chave = (b.t, b.mode)
+            if chave in _MODO_COR or chave in _MODO_LUZ:
+                modos.setdefault(str(b.port).strip(), set()).add('cor' if chave in _MODO_COR else 'luz')
+            percorre(b.b1); percorre(b.b2)
+    percorre(blocos)
+    return [f'o sensor da porta {p} é usado no modo cor (cor_vista, se_ver_cor...) e no modo luz '
+            f'(luz_refletida, se_luz...). Ele vai ficar trocando de modo, fica lento e erra leituras. '
+            f'Use um modo só para cada sensor.' for p, m in sorted(modos.items()) if len(m) > 1]
+
+
 def novo_programa():
     """Começa um programa vazio (o arquivo do aluno não precisa chamar)."""
     _pilha.clear()
@@ -208,8 +227,8 @@ def _const(v):
 
 class Valor:
     """Um número que só existe no robô (leitura de sensor ou resultado de conta)."""
-    def __init__(self, bloco, saida, byte=False):
-        self.bloco, self.saida, self.byte = bloco, saida, byte
+    def __init__(self, bloco, saida, byte=False, cor=False):
+        self.bloco, self.saida, self.byte, self.cor = bloco, saida, byte, cor
 
     def _conta(self, op, outro, invertido=False):
         a, b = (outro, self) if invertido else (self, outro)
@@ -235,6 +254,8 @@ class Valor:
         kw = {'a': (self.bloco, self.saida)}
         if isinstance(outro, Valor):
             kw['b'] = (outro.bloco, outro.saida)
+        elif isinstance(outro, str):
+            kw['cb'] = _numero_da_cor(outro, self)
         else:
             kw['cb'] = _const(outro)
         return Condicao(_adiciona(_b.compare(op, **kw)))
@@ -249,6 +270,19 @@ class Valor:
 
     def __bool__(self):
         raise TypeError('valores do robô não funcionam com "if" do Python: use "with se(...)"')
+
+
+# numero que cor_vista() devolve para cada cor. No robo (2026-10-16) o preto deu 1 e o branco oscilou entre 6 e 0:
+# 0 = nenhuma cor, quando o sensor nao tem certeza (longe do chao, luz forte)
+_NUMERO_DA_COR = {PRETO: 1, AZUL: 2, VERDE: 3, AMARELO: 4, VERMELHO: 5, BRANCO: 6, MARROM: 7}
+
+
+def _numero_da_cor(cor, valor):
+    if not valor.cor:
+        raise TypeError('nomes de cor (PRETO, VERDE...) só podem ser comparados com cor_vista(...)')
+    if cor not in _NUMERO_DA_COR:
+        raise TypeError('compare uma cor por vez, ex.: se(cor_vista(1) == VERDE)')
+    return _NUMERO_DA_COR[cor]
 
 
 class Condicao:
@@ -266,8 +300,11 @@ def luz_refletida(porta):
 
 
 def cor_vista(porta):
-    """Lê o número da cor vista pelo sensor (PRETO = 1, VERDE = 3, BRANCO = 6...)."""
-    return Valor(_adiciona(_b.sensor_color_id(porta)), 5, byte=True)
+    """Lê a cor vista pelo sensor. Compare com os nomes: with se(cor_vista(1) == VERDE):
+    Na tela aparece um número: PRETO = 1, AZUL = 2, VERDE = 3, AMARELO = 4, VERMELHO = 5, BRANCO = 6,
+    e 0 quando o sensor não reconhece a cor (o branco às vezes dá 0).
+    Para linha preta no chão branco, luz_refletida é mais confiável."""
+    return Valor(_adiciona(_b.sensor_color_id(porta)), 5, byte=True, cor=True)
 
 
 def distancia(porta):

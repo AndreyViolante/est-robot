@@ -227,6 +227,22 @@ def verificar_robo():
     espera_erro('if do Python com sensor', TypeError, if_com_sensor)
     espera_erro('andar sem dizer quanto', ValueError, lambda: robo.andar())
     falhas += not verificar_mensagens()
+
+    robo.novo_programa()
+    with robo.se(robo.cor_vista(1) == robo.VERDE):
+        robo.bip()
+    comparou = robo.programa()[2].params.startswith('1|3|')          # bloco Comparar com B = 3 (verde)
+    robo.novo_programa()
+    robo.mostrar(robo.cor_vista(1)); robo.mostrar(robo.luz_refletida(1), linha=2)
+    avisou = len(robo.avisos(robo.programa())) == 1
+    robo.novo_programa()
+    robo.mostrar(robo.cor_vista(1)); robo.mostrar(robo.luz_refletida(2), linha=2)
+    calado = robo.avisos(robo.programa()) == []
+    for ok, nome in ((comparou, 'cor_vista(1) == VERDE compara com 3'),
+                     (avisou, 'avisa sensor usado nos modos cor e luz'),
+                     (calado, 'não avisa quando cada sensor tem um modo')):
+        print(f'  {"OK   " if ok else "FALHA"} {nome}')
+        falhas += not ok
     robo.novo_programa()
     blocos.MOTORS = 'B+C'
     return falhas == 0

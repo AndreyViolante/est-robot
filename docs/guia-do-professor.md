@@ -153,6 +153,11 @@ calibragem padrão de `andar_cm` e `virar_*` e o sensor de toque (o compilador g
 mesmos bytes que a IDE oficial).
 Teste antes de levar para a turma.
 
+**Sensor de cor:** cada sensor deve ser usado num modo só. Misturar comandos de cor (`cor_vista`, `se_ver_cor`) com
+comandos de luz refletida (`luz_refletida`, `se_luz`) no mesmo sensor faz ele trocar de modo o tempo todo, ficar lento
+e errar leituras; o programa mostra um aviso quando isso acontece. No modo cor, o branco às vezes aparece como 0
+("nenhuma cor"): para linha preta no chão branco, a luz refletida é mais confiável.
+
 **Bateria:** com a bateria fraca o robô mostra um aviso na tela, se desconecta do USB e deixa de
 executar partes do programa. Se algo estranho acontecer, carregue o robô antes de procurar erro no
 programa.

@@ -122,10 +122,16 @@ def main():
     nome = re.sub(r'[^A-Za-z0-9_]', '_', os.path.splitext(os.path.basename(arquivo))[0])[:20] or 'programa'
 
     try:
-        dados = compilar(carregar(arquivo))
+        programa = carregar(arquivo)
+        dados = compilar(programa)
     except Exception as e:                      # o programa do aluno pode ter qualquer erro
         _mostrar_erro(e, arquivo)
         sys.exit(1)
+    import robo
+    for aviso in robo.avisos(programa):
+        print()
+        print(f'AVISO: {aviso}')
+        print()
     print(f'[OK] {os.path.basename(arquivo)}: {len(dados)} bytes')
 
     if '--so-compilar' in sys.argv:
