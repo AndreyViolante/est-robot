@@ -73,7 +73,8 @@ function rotulo(p) {
   return p.titulo ? (n ? `${n[1]}. ${p.titulo}` : p.titulo) : p.nome;
 }
 
-let exemplo = Math.max(0, exemploDoEndereco());
+let exemplo = exemploDoEndereco();
+if (exemplo < 0) exemplo = Math.max(0, PROGRAMAS.findIndex(p => p.inicial));     // sem #: o que abre primeiro
 lerPrograma(PROGRAMAS[exemplo]);
 
 function linhaDoPc(pc) {

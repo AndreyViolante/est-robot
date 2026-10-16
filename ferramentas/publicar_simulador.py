@@ -28,7 +28,9 @@ EXEMPLOS = [
     ('8_contador.py',               'Contador',                       'livre'),
     ('9_seguidor_pid.py',           'Seguidor PID',                   'oval'),
     ('10_seguidor_pid_90.py',       'Seguidor PID com curvas de 90°', 'curvas90'),
+    ('11_seguidor_dois_sensores.py', 'Seguidor básico com dois sensores', 'quadrado'),
 ]
+INICIAL = '11_seguidor_dois_sensores.py'      # o exemplo que a demonstração mostra ao abrir
 
 
 def main():
@@ -39,6 +41,8 @@ def main():
         dados = simular.montar(str(RAIZ / 'exemplos' / arquivo))
         del dados['gerado']                         # sem data: o arquivo só muda quando um programa muda
         dados.update(titulo=titulo, pista=pista)
+        if arquivo == INICIAL:
+            dados['inicial'] = True
         programas.append(dados)
         print(f'[OK] {arquivo}: {len(dados["bytes"]) // 2} bytes, pista {pista}')
 

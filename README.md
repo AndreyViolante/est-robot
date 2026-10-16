@@ -74,7 +74,7 @@ python enviar.py exemplos/2_quadrado.py --so-gravar
 **Terminal → Executar Tarefa → Simular no computador** abre o programa no navegador, numa pista
 vista de cima. O simulador executa os mesmos bytes que iriam para o robô: dá para ver o caminho
 (rastro), a linha do programa que está rodando, os sensores, os motores, as variáveis, a tela, a luz
-e o som. Funciona sem internet e sem instalar nada. Os exemplos 1 a 10 estão na
+e o som. Funciona sem internet e sem instalar nada. Os exemplos 1 a 11 estão na
 [demonstração online](https://andreyviolante.github.io/est-robot/simulador/), cada um na sua pista.
 
 - Pistas: chão quadriculado (exemplos 1 e 2), oval, quadrado com cantos de 90°, curvas de 90° com
@@ -170,6 +170,8 @@ Em [exemplos/](exemplos/), em ordem para as aulas:
 9. `9_seguidor_pid.py`: seguidor PID com dois sensores
 10. `10_seguidor_pid_90.py`: o PID mais curvas de 90° e falha na linha, com o terceiro sensor
     (conferido no simulador; meça `ATE_AS_RODAS` no seu robô)
+11. `11_seguidor_dois_sensores.py`: seguidor básico com dois sensores (se S1 vê preto vira, senão
+    se S2 vê preto vira para o outro lado, senão anda reto), conferido no simulador
 
 ## Para quem quer ir além
 
