@@ -27,8 +27,7 @@ EXEMPLOS = [
     ('7_mostrar_sensor.py',         'Mostrar o sensor na tela',       'oval'),
     ('8_contador.py',               'Contador',                       'livre'),
     ('9_seguidor_pid.py',           'Seguidor PID',                   'oval'),
-    # fora por enquanto: no simulador ele passa do ponto na curva de 90°, perde a linha e dá meia-volta
-    # ('10_seguidor_pid_90.py',     'Seguidor PID com curvas de 90°', 'curvas90'),
+    ('10_seguidor_pid_90.py',       'Seguidor PID com curvas de 90°', 'curvas90'),
 ]
 
 
