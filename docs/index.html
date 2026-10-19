@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
 <style>
 /* Layout: a boot sequence read top to bottom. Hero = code compiling into real bytes and lighting the brick's
-   LCD; then status (LED colors), steps, the tester's checklist, and plain answers. */
+   LCD; then status (LED colors), steps, a call to test and send feedback, and plain answers. */
 :root {
   --bg: #f1f3f8;
   --fg: #0d1222;
@@ -151,39 +151,26 @@ h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: upp
 .step::before { content: counter(passo); display: block; font: 900 3.4rem/1 var(--display); color: var(--led-azul); margin-bottom: 10px; }
 .step h3 { font: 700 1.12rem var(--body); margin: 0 0 6px; }
 .step p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-.step code, .faq code, .lede code, .row code { font: 400 0.86em var(--mono); background: color-mix(in srgb, var(--fg) 8%, transparent);
+.step code, .faq code, .lede code { font: 400 0.86em var(--mono); background: color-mix(in srgb, var(--fg) 8%, transparent);
             padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
 
-/* ---- tester checklist ---- */
-.tester { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
-.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px; margin-bottom: 24px; }
-.field label { display: block; font: 600 0.78rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-.field input, .field textarea { width: 100%; font: 400 1rem var(--body); color: var(--fg); background: var(--panel);
-                                border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
-.field textarea { min-height: 96px; resize: vertical; }
-.rows { border-top: 2px solid var(--fg); }
-.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 18px; align-items: center; padding-block: 14px; border-bottom: 1px solid var(--line); }
-.row b { display: block; }
-.row small { color: var(--muted); font-size: 0.88rem; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
-.seg input { position: absolute; opacity: 0; pointer-events: none; }
-.seg label { padding: 7px 12px; font: 600 0.82rem var(--body); cursor: pointer; color: var(--muted); white-space: nowrap; }
-.seg label + input + label, .seg input + label + input + label { border-left: 1px solid var(--line); }
-.seg input:focus-visible + label { outline: 3px solid var(--led-azul); outline-offset: -3px; }
-.seg input:checked + label.ok { background: var(--led-azul); color: #fff; }
-.seg input:checked + label.no { background: var(--led-vermelho); color: #fff; }
-.seg input:checked + label.na { background: color-mix(in srgb, var(--fg) 12%, transparent); color: var(--fg); }
-.summary { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); background: var(--code-bg); color: var(--code-fg); border-radius: 16px; padding: 20px; }
-.summary h3 { font: 600 0.78rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: #8b95b4; margin: 0 0 12px; }
-.summary textarea { width: 100%; min-height: 300px; background: transparent; color: var(--code-fg); border: 1px dashed #2c3550;
-                    border-radius: 10px; padding: 12px; font: 400 0.84rem/1.55 var(--mono); resize: vertical; }
-.summary .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
-.summary .btn.solid { background: #fff; color: #0d1222; border-color: #fff; }
-.summary .btn.solid:hover { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
-.summary .btn.line { color: #fff; border-color: #3a4566; }
-.summary .btn.line:hover { border-color: #fff; color: #fff; }
-.copied { font: 600 0.85rem var(--mono); color: #9fb4ff; min-height: 1.2em; }
-.summary p { color: #9aa4c2; font-size: 0.88rem; margin: 14px 0 0; }
+/* ---- chamada para testes ---- */
+.anuncio { container-type: inline-size; background: var(--code-bg); color: var(--code-fg); border-radius: 28px;
+           padding: clamp(24px, 5vw, 64px); display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+           gap: 28px clamp(28px, 5vw, 64px); align-items: end; }
+.anuncio-topo { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.anuncio .eyebrow { color: #8b95b4; }
+.anuncio .eyebrow .led { background: #8aa4ff; }
+.anuncio-lcd { min-height: 0; font-size: 0.9rem; padding: 6px 12px; line-height: 1.45; }
+.anuncio h2 { font-size: clamp(2.4rem, 8.5cqi, 6rem); line-height: 0.9; margin: 0; color: #fff; }
+.anuncio h2 span { color: #8aa4ff; }
+.anuncio-corpo p { margin: 0 0 16px; color: #b9c2dc; max-width: 46ch; }
+.anuncio-corpo .ctas { margin-top: 26px; }
+.anuncio .btn.solid { background: #fff; color: #0d1222; border-color: #fff; }
+.anuncio .btn.solid:hover { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
+.anuncio .btn.line { color: #fff; border-color: #3a4566; }
+.anuncio .btn.line:hover { border-color: #fff; color: #fff; }
+.anuncio-corpo .nota { font: 400 0.85rem var(--mono); color: #8b95b4; margin: 18px 0 0; }
 
 /* ---- faq ---- */
 .faq { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 0 48px; }
@@ -194,13 +181,10 @@ h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: upp
 footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 8px; }
 
 @media (max-width: 860px) {
-  .hero, .tester, .sec-head { grid-template-columns: minmax(0, 1fr); }
+  .hero, .anuncio, .sec-head { grid-template-columns: minmax(0, 1fr); }
   h1 { font-size: clamp(2.2rem, 12cqi, 6rem); }
-  .summary { position: static; }
 }
 @media (max-width: 460px) {
-  .row { grid-template-columns: minmax(0, 1fr); }
-  .seg label { padding: 7px 10px; }
   .brick { grid-template-columns: minmax(0, 1fr); }
   .brick-side { grid-auto-flow: column; justify-content: start; align-items: center; }
 }
@@ -228,7 +212,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
       <div class="ctas">
         <a class="btn solid" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Baixar o projeto</a>
         <a class="btn line" href="simulador/index.html">Ver no simulador</a>
-        <a class="btn line" href="#teste">Ver o que testar</a>
+        <a class="btn line" href="#teste">Quero testar</a>
       </div>
     </div>
 
@@ -294,37 +278,27 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
       <div class="step"><h3>Instale</h3><p>Python (marque "Add to PATH"), VS Code com a extensão Python e, na pasta do projeto, dois cliques no <code>instalar.bat</code>.</p></div>
       <div class="step"><h3>Teste a conexão</h3><p>No VS Code: Terminal → Executar Tarefa → <b>Testar conexão com o robô</b>. Luz azul, som e "Funcionou!".</p></div>
       <div class="step"><h3>Rode os testes</h3><p>Os programas estão nas aulas 1 a 8 do <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>: copie cada um num arquivo <code>.py</code> e aperte <code>Ctrl+Shift+B</code>. Robô no chão: ele anda logo depois do envio.</p></div>
-      <div class="step"><h3>Marque o resultado</h3><p>Na lista abaixo, o que funcionou e o que não funcionou na sua controladora.</p></div>
-      <div class="step"><h3>Mande para a gente</h3><p>Copie o resumo e mande para quem te convidou, ou abra uma issue no GitHub.</p></div>
+      <div class="step"><h3>Anote o que aconteceu</h3><p>O que funcionou, o que não funcionou e as mensagens de erro. Uma foto ou um vídeo curto ajuda muito.</p></div>
+      <div class="step"><h3>Mande seu feedback</h3><p>Abra uma issue no GitHub ou mande para quem te convidou.</p></div>
     </div>
   </section>
 
   <section id="teste">
-    <div class="sec-head">
-      <div><div class="eyebrow">Sua controladora</div><h2>Lista do teste</h2></div>
-      <p>Marque cada item. O resumo ao lado se escreve sozinho e fica salvo neste navegador até você voltar.</p>
-    </div>
-    <div class="tester">
-      <form id="form" autocomplete="off">
-        <div class="fields">
-          <div class="field"><label for="quem">Nome ou escola (opcional)</label><input id="quem" type="text" placeholder="Ex.: Escola Estadual X"></div>
-          <div class="field"><label for="firmware">Versão do firmware (opcional)</label><input id="firmware" type="text" placeholder="Aparece no menu do robô"></div>
+    <div class="anuncio">
+      <div class="anuncio-topo">
+        <div class="eyebrow"><i class="led azul blink"></i>Chamada para testes</div>
+        <div class="lcd anuncio-lcd" aria-hidden="true"><div>Seu robo?</div><div>Teste e conte!</div></div>
+      </div>
+      <h2>Ligue a sua EST. <span>Conte o que aconteceu.</span></h2>
+      <div class="anuncio-corpo">
+        <p>Funciona no nosso robô. Mas cada controladora e cada firmware tem o seu jeito, e só quem tem uma EST na mão pode dizer se funciona nela. Cada teste leva o projeto para mais salas de aula.</p>
+        <p>Siga o passo a passo, rode os programas do guia e conte para a gente: qual robô e firmware, o que funcionou e o que não funcionou. Um “não funcionou” ajuda tanto quanto um “funcionou”.</p>
+        <div class="ctas">
+          <a class="btn solid" href="https://github.com/AndreyViolante/est-robot/issues/new?title=Teste%20na%20minha%20controladora&amp;body=%2A%2ARob%C3%B4%20e%20firmware%3A%2A%2A%20%0A%0A%2A%2AO%20que%20funcionou%3A%2A%2A%20%0A%0A%2A%2AO%20que%20n%C3%A3o%20funcionou%20%28e%20a%20mensagem%20de%20erro%2C%20se%20apareceu%29%3A%2A%2A%20%0A%0A%2A%2AFoto%20ou%20v%C3%ADdeo%20%28opcional%29%3A%2A%2A%20" target="_blank" rel="noopener">Enviar meu feedback</a>
+          <a class="btn line" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Baixar o projeto</a>
         </div>
-        <div class="rows" id="rows"></div>
-        <div class="fields" style="margin-top: 24px">
-          <div class="field" style="grid-column: 1 / -1"><label for="obs">Observações</label><textarea id="obs" placeholder="O que aconteceu de diferente? Mensagens de erro? Calibragem que funcionou no seu robô?"></textarea></div>
-        </div>
-      </form>
-      <aside class="summary" aria-label="Resumo para enviar">
-        <h3>Resumo para enviar</h3>
-        <textarea id="resumo" readonly aria-label="Texto do resumo"></textarea>
-        <div class="actions">
-          <button class="btn solid" type="button" id="copiar">Copiar resumo</button>
-          <a class="btn line" href="https://github.com/AndreyViolante/est-robot/issues/new" target="_blank" rel="noopener">Abrir issue no GitHub</a>
-        </div>
-        <div class="copied" id="avisoCopia" role="status"></div>
-        <p>No GitHub, cole o resumo na descrição da issue. Pelo WhatsApp, é só colar na conversa.</p>
-      </aside>
+        <p class="nota">Sem conta no GitHub? Mande para quem te convidou.</p>
+      </div>
     </div>
   </section>
 
@@ -339,7 +313,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
       <div><h3>Isso é legal?</h3><p>É um projeto independente, feito para o robô conversar com outro programa (interoperabilidade). Não usa código do fabricante e não distribui nada da IDE. Também não tem relação com o fabricante.</p></div>
       <div><h3>Para que idade serve?</h3><p>Os comandos são em português e os erros aparecem explicados, com a linha. O projeto traz um guia com 8 aulas e uma folha de comandos para imprimir.</p></div>
       <div><h3>Funciona no Mac ou no Chromebook?</h3><p>Ainda não. A comunicação USB usa uma parte do Windows. Se você tiver interesse em ajudar nisso, fale com a gente.</p></div>
-      <div><h3>Deu erro. E agora?</h3><p>Mande o resumo assim mesmo, com o que aconteceu nas observações. Um "não funcionou" ajuda tanto quanto um "funcionou".</p></div>
+      <div><h3>Deu erro. E agora?</h3><p>Mande o feedback assim mesmo, contando o que aconteceu e a mensagem de erro. Um "não funcionou" ajuda tanto quanto um "funcionou".</p></div>
     </div>
   </section>
 
@@ -398,101 +372,6 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
     setTimeout(ciclo, 600);
   }
 
-  // lista do teste
-  var TESTES = [
-    ['conexao', 'Teste de conexão', 'Luz azul, som e "Funcionou!" na tela'],
-    ['andar', 'Andar e virar', 'Aula 1 do guia do professor'],
-    ['quadrado', 'Quadrado', 'Aula 2 do guia: fechou o quadrado?'],
-    ['seguidor', 'Seguidor liga-desliga', 'Aula 3 do guia'],
-    ['proporcional', 'Seguidor proporcional', 'Aula 4 do guia'],
-    ['ultrassom', 'Ultrassom', 'Aula 5 do guia (porta 4)'],
-    ['toque', 'Sensor de toque', 'Aula 6 do guia (porta 4)'],
-    ['tela', 'Tela e contador', 'Aulas 7 e 8 do guia'],
-    ['dois', 'Seguidor com dois sensores', 'exemplos/11_seguidor_dois_sensores.py']
-  ];
-  var ESTADOS = [['ok', 'Funcionou'], ['no', 'Não'], ['na', 'Não testei']];
-  var rows = document.getElementById('rows');
-  TESTES.forEach(function (t) {
-    var row = document.createElement('div');
-    row.className = 'row';
-    var info = document.createElement('div');
-    var b = document.createElement('b'); b.textContent = t[1];
-    var sm = document.createElement('small'); sm.textContent = t[2];
-    info.appendChild(b); info.appendChild(sm);
-    var seg = document.createElement('div');
-    seg.className = 'seg';
-    seg.setAttribute('role', 'radiogroup');
-    seg.setAttribute('aria-label', t[1]);
-    ESTADOS.forEach(function (e) {
-      var id = 't_' + t[0] + '_' + e[0];
-      var inp = document.createElement('input');
-      inp.type = 'radio'; inp.name = 't_' + t[0]; inp.id = id; inp.value = e[0];
-      if (e[0] === 'na') inp.checked = true;
-      var lab = document.createElement('label');
-      lab.htmlFor = id; lab.className = e[0]; lab.textContent = e[1];
-      seg.appendChild(inp); seg.appendChild(lab);
-    });
-    row.appendChild(info); row.appendChild(seg);
-    rows.appendChild(row);
-  });
-
-  var form = document.getElementById('form');
-  var resumo = document.getElementById('resumo');
-  var CHAVE = 'convite-est-robot';
-  var SIMBOLO = { ok: '✔', no: '✘', na: '–' };
-
-  function estado() {
-    var dados = { quem: form.quem.value, firmware: form.firmware.value, obs: form.obs.value, testes: {} };
-    TESTES.forEach(function (t) {
-      var marcado = form.querySelector('input[name="t_' + t[0] + '"]:checked');
-      dados.testes[t[0]] = marcado ? marcado.value : 'na';
-    });
-    return dados;
-  }
-
-  function escrever() {
-    var d = estado();
-    var linhas = ['Teste do est-robot'];
-    if (d.quem.trim()) linhas.push('Quem: ' + d.quem.trim());
-    if (d.firmware.trim()) linhas.push('Firmware: ' + d.firmware.trim());
-    linhas.push('');
-    TESTES.forEach(function (t) { linhas.push(SIMBOLO[d.testes[t[0]]] + ' ' + t[1]); });
-    linhas.push('');
-    linhas.push('(✔ funcionou · ✘ não funcionou · – não testei)');
-    if (d.obs.trim()) { linhas.push(''); linhas.push('Observações: ' + d.obs.trim()); }
-    resumo.value = linhas.join('\n');
-    try { localStorage.setItem(CHAVE, JSON.stringify(d)); } catch (e) { /* sem armazenamento: segue sem salvar */ }
-  }
-
-  try {
-    var salvo = JSON.parse(localStorage.getItem(CHAVE) || 'null');
-    if (salvo) {
-      form.quem.value = salvo.quem || '';
-      form.firmware.value = salvo.firmware || '';
-      form.obs.value = salvo.obs || '';
-      Object.keys(salvo.testes || {}).forEach(function (k) {
-        var inp = document.getElementById('t_' + k + '_' + salvo.testes[k]);
-        if (inp) inp.checked = true;
-      });
-    }
-  } catch (e) { /* armazenamento indisponivel */ }
-
-  form.addEventListener('input', escrever);
-  form.addEventListener('change', escrever);
-  form.addEventListener('submit', function (e) { e.preventDefault(); });
-  escrever();
-
-  var aviso = document.getElementById('avisoCopia');
-  document.getElementById('copiar').addEventListener('click', function () {
-    var texto = resumo.value;
-    var ok = function () { aviso.textContent = 'Resumo copiado. Agora é só colar.'; };
-    var manual = function () { resumo.focus(); resumo.select(); aviso.textContent = 'Texto selecionado: use Ctrl+C para copiar.'; };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(texto).then(ok, manual);
-    } else {
-      manual();
-    }
-  });
 })();
 </script>
 </body>
