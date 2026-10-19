@@ -51,7 +51,8 @@ button, select, input { font: inherit; color: inherit; }
 /* ---- topo ---- */
 .topo { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap;
         padding: 12px clamp(16px, 3vw, 28px); border-bottom: 1px solid var(--line); }
-.marca { display: flex; align-items: center; gap: 10px; font: 600 0.95rem var(--mono); }
+.marca { display: flex; align-items: center; gap: 10px; font: 600 0.95rem var(--mono); color: inherit; text-decoration: none; }
+.marca:hover { text-decoration: underline; text-underline-offset: 4px; }
 .marca b { color: var(--led-azul); }
 .leds { display: inline-flex; gap: 5px; }
 .led { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
