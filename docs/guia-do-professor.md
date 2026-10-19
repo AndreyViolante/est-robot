@@ -1,16 +1,16 @@
 # Guia do professor
 
 Roteiro de 8 aulas para ensinar programação com o robô EST pelo VS Code. Cada aula parte de um
-exemplo da pasta `exemplos/` e introduz um conceito de programação. A ideia de cada encontro é:
-**mostrar o exemplo funcionando → os alunos mudam números e veem o efeito → desafios**.
+programa curto, que a turma digita, e introduz um conceito de programação. A ideia de cada encontro
+é: **digitar e ver o programa funcionando → os alunos mudam números e veem o efeito → desafios**.
 
 ## Antes da primeira aula
 
 - Instale tudo em cada computador seguindo o [INSTALAR.md](../INSTALAR.md).
 - Em cada robô, rode a tarefa **Testar conexão com o robô** (Terminal → Executar Tarefa).
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
-  exemplos usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
-- Rode o `exemplos/2_quadrado.py`. Os valores padrão foram medidos num robô EST e fazem o quadrado
+  programas deste guia usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
+- Rode o quadrado da aula 2. Os valores padrão foram medidos num robô EST e fazem o quadrado
   certo. Se o seu robô virar mais ou menos que 90°, ajuste `configurar(entre_rodas_cm=...)`; se cada
   lado não tiver 30 cm, ajuste `configurar(roda_cm=...)`. Anote os valores do seu robô para passar
   aos alunos.
@@ -49,12 +49,25 @@ não tem escorregão, bateria fraca nem variação de luz: o teste final é semp
 
 ## Aula 1: sequência
 
-**Exemplo:** `1_andar_e_virar.py` · **Conceito:** um programa é uma lista de passos executados em ordem.
+**Conceito:** um programa é uma lista de passos executados em ordem.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Anda para frente, para um pouco, vira e volta de ré.
+andar(rotacoes=2)
+esperar(1)
+virar_direita(90)
+andar_cm(20)
+re(rotacoes=1)
+```
 
 **Comandos:** `andar(rotacoes=...)`, `re(...)`, `esperar(...)`, `virar_direita(90)`, `andar_cm(...)`
 
 **Roteiro**
-- Mostre o exemplo e peça para preverem o caminho antes de enviar.
+- Antes de enviar, peça para preverem o caminho.
 - Os alunos trocam números: mais rotações, outra potência (`andar(rotacoes=2, potencia=30)`), virar para o outro lado.
 
 **Desafios**
@@ -67,7 +80,17 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 2: repetição
 
-**Exemplo:** `2_quadrado.py` · **Conceito:** repetir um bloco de comandos em vez de copiá-lo.
+**Conceito:** repetir um bloco de comandos em vez de copiá-lo.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+with repetir(4):            # um quadrado: andar e virar 90 graus, 4 vezes
+    andar_cm(30)
+    virar_direita(90)
+```
 
 **Comandos:** `with repetir(n):`
 
@@ -84,7 +107,20 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 3: sensores e decisões
 
-**Exemplo:** `3_seguidor_liga_desliga.py` · **Conceito:** o programa decide o que fazer conforme o que o sensor vê.
+**Conceito:** o programa decide o que fazer conforme o que o sensor vê.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Seguidor com um sensor (S1) na borda esquerda da linha preta.
+with para_sempre():
+    with se_ver_cor(1, PRETO):
+        motores(10, 30)     # viu preto: puxa para a esquerda
+    with senao():
+        motores(30, 10)     # viu branco: puxa para a direita
+```
 
 **Comandos:** `with para_sempre():`, `with se_ver_cor(porta, cor):`, `with senao():`, `motores(esq, dir)`
 
@@ -100,7 +136,22 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 4: matemática no robô (controle proporcional)
 
-**Exemplo:** `4_seguidor_proporcional.py` · **Conceito:** usar contas com valores de sensor para controlar o movimento.
+**Conceito:** usar contas com valores de sensor para controlar o movimento.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Seguidor proporcional: S1 à esquerda e S2 à direita da linha.
+VELOCIDADE = 25
+GANHO = 0.4
+
+with para_sempre():
+    erro = luz_refletida(1) - luz_refletida(2)
+    correcao = erro * GANHO
+    motores(VELOCIDADE + correcao, VELOCIDADE - correcao)
+```
 
 **Comandos:** `luz_refletida(porta)`, contas `+ - * /` com sensores
 
@@ -116,7 +167,21 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 5: ultrassom e obstáculos
 
-**Exemplo:** `5_desviar_obstaculo.py` · **Conceito:** decidir por distância; condições com números.
+**Conceito:** decidir por distância; condições com números.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Anda até chegar perto de um obstáculo (ultrassom na porta 4), dá ré e vira.
+with para_sempre():
+    with se_distancia(4, '<', 15):
+        re(rotacoes=0.5)
+        virar_direita(90)
+    with senao():
+        motores(30, 30)
+```
 
 **Comandos:** `distancia(porta)`, `with se_distancia(porta, '<', cm):`, `with se(distancia(4) < 15):`
 
@@ -127,7 +192,22 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 6: toque, som e luz
 
-**Exemplo:** `6_botao_de_toque.py` · **Conceito:** esperar um evento; dar sinais para as pessoas.
+**Conceito:** esperar um evento; dar sinais para as pessoas.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Espera apertar o sensor de toque (porta 4) para começar.
+mostrar('Aperte')
+mostrar('o botao', linha=2)
+esperar_toque(4)
+bip()
+luz('azul')
+andar(rotacoes=2)
+apagar_luz()
+```
 
 **Comandos:** `esperar_toque(porta)`, `with se_tocado(porta):`, `bip()`, `tocar(freq, seg)`, `luz('azul' | 'roxo' | 'vermelho')`, `apagar_luz()`, `mostrar(texto, linha=1..3)`
 
@@ -138,7 +218,19 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 7: medindo com sensores
 
-**Exemplo:** `7_mostrar_sensor.py` · **Conceito:** observar dados antes de programar; escolher um limite.
+**Conceito:** observar dados antes de programar; escolher um limite.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Mostra sem parar quanta luz o S1 vê (0 = escuro, 100 = claro).
+with para_sempre():
+    mostrar('Luz:')
+    mostrar(luz_refletida(1), linha=2)
+    esperar(0.2)
+```
 
 **Comandos:** `mostrar(valor, linha=2)` (a tela tem 3 linhas), `esperar_luz(porta, '<', valor)`, `with se_luz(porta, '<', valor):`
 
@@ -152,7 +244,23 @@ parênteses (`andar` em vez de `andar(rotacoes=1)`).
 
 ## Aula 8: variáveis
 
-**Exemplo:** `8_contador.py` · **Conceito:** guardar um valor e mudá-lo durante o programa.
+**Conceito:** guardar um valor e mudá-lo durante o programa.
+
+**Programa da aula** (a turma digita):
+
+```python
+from robo import *
+
+# Conta de 1 até 10 na tela, com um bip a cada número.
+guardar('contador', 0)
+
+with repetir(10):
+    guardar('contador', ler('contador') + 1)
+    mostrar('Contando')
+    mostrar(ler('contador'), linha=2)
+    bip()
+    esperar(1)
+```
 
 **Comandos:** `guardar(nome, valor)`, `ler(nome)`
 

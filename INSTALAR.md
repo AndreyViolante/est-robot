@@ -32,7 +32,8 @@ Leva uns 10 minutos por computador. Funciona no **Windows**.
 1. Ligue o robô e conecte o cabo USB.
 2. No VS Code: **Terminal → Executar Tarefa… → Testar conexão com o robô**. O robô deve apitar,
    acender a luz e escrever "Funcionou!".
-3. Abra `exemplos/1_andar_e_virar.py` e aperte **`Ctrl+Shift+B`**. O robô vai andar: deixe-o no chão.
+3. Crie um arquivo `teste.py` com as linhas `from robo import *` e `andar_cm(20)` e aperte
+   **`Ctrl+Shift+B`**. O robô vai andar: deixe-o no chão.
 
 ## Problemas comuns
 

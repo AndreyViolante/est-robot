@@ -35,7 +35,7 @@ const PISTAS = [
     id: 'livre', nome: 'Chão livre (quadriculado)', largura: 200, altura: 150, quadriculado: true,
     linhas: [], paredes: [], caixas: [],
     largada: {x: 60, y: 50, ang: 0},
-    dica: 'Para os exemplos 1 e 2: o rastro mostra o caminho do robô.',
+    dica: 'Para programas de andar e virar: o rastro mostra o caminho do robô.',
   },
   {
     id: 'oval', nome: 'Oval', largura: 200, altura: 140,
@@ -43,7 +43,7 @@ const PISTAS = [
              {seg: [140, 110, 60, 110]}, {arco: [60, 70, 40, 90, 180]}],
     paredes: [], caixas: [],
     largada: {x: 75, y: 30, ang: 0},
-    dica: 'Para os seguidores de linha (exemplos 3, 4 e 9).',
+    dica: 'Para os seguidores de linha.',
   },
   {
     id: 'quadrado', nome: 'Quadrado (cantos de 90°)', largura: 180, altura: 160,

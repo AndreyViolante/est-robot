@@ -278,7 +278,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
       <li><i class="led azul"></i><span><b>Sensor de toque</b><small>Ler, esperar o toque e decidir pelo toque</small></span></li>
       <li><i class="led azul"></i><span><b>Decisões e repetições</b><small><code>se(...)</code>, <code>senao()</code>, <code>repetir</code>, <code>repetir_ate</code>, variáveis</small></span></li>
       <li><i class="led azul"></i><span><b>Andar em cm e virar em graus</b><small><code>andar_cm(30)</code> e <code>virar_direita(90)</code> fazem o quadrado certo</small></span></li>
-      <li><i class="led azul"></i><span><b>Simulador no navegador</b><small>Roda os mesmos bytes numa pista vista de cima: <a href="simulador/index.html">veja os exemplos</a>, sem robô e sem instalar nada</small></span></li>
+      <li><i class="led azul"></i><span><b>Simulador no navegador</b><small>Roda os mesmos bytes numa pista vista de cima: <a href="simulador/index.html">veja o exemplo</a>, sem robô e sem instalar nada</small></span></li>
       <li><i class="led roxo"></i><span><b>Outras controladoras e firmwares</b><small>É aqui que entra o seu teste</small></span></li>
       <li><i class="led vermelho"></i><span><b>Mac e Linux</b><small>Por enquanto só Windows</small></span></li>
       <li><i class="led vermelho"></i><span><b>Giroscópio e mensagens</b><small>Blocos que o compilador ainda não conhece</small></span></li>
@@ -293,7 +293,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
     <div class="steps">
       <div class="step"><h3>Instale</h3><p>Python (marque "Add to PATH"), VS Code com a extensão Python e, na pasta do projeto, dois cliques no <code>instalar.bat</code>.</p></div>
       <div class="step"><h3>Teste a conexão</h3><p>No VS Code: Terminal → Executar Tarefa → <b>Testar conexão com o robô</b>. Luz azul, som e "Funcionou!".</p></div>
-      <div class="step"><h3>Rode os exemplos</h3><p>Abra <code>exemplos/1</code> a <code>8</code> e aperte <code>Ctrl+Shift+B</code>. Robô no chão: ele anda logo depois do envio.</p></div>
+      <div class="step"><h3>Rode os testes</h3><p>Os programas estão nas aulas 1 a 8 do <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>: copie cada um num arquivo <code>.py</code> e aperte <code>Ctrl+Shift+B</code>. Robô no chão: ele anda logo depois do envio.</p></div>
       <div class="step"><h3>Marque o resultado</h3><p>Na lista abaixo, o que funcionou e o que não funcionou na sua controladora.</p></div>
       <div class="step"><h3>Mande para a gente</h3><p>Copie o resumo e mande para quem te convidou, ou abra uma issue no GitHub.</p></div>
     </div>
@@ -401,13 +401,14 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   // lista do teste
   var TESTES = [
     ['conexao', 'Teste de conexão', 'Luz azul, som e "Funcionou!" na tela'],
-    ['andar', 'Andar e virar', 'exemplos/1_andar_e_virar.py'],
-    ['quadrado', 'Quadrado', 'exemplos/2_quadrado.py: fechou o quadrado?'],
-    ['seguidor', 'Seguidor liga-desliga', 'exemplos/3_seguidor_liga_desliga.py'],
-    ['proporcional', 'Seguidor proporcional', 'exemplos/4_seguidor_proporcional.py'],
-    ['ultrassom', 'Ultrassom', 'exemplos/5_desviar_obstaculo.py (porta 4)'],
-    ['toque', 'Sensor de toque', 'exemplos/6_botao_de_toque.py (porta 4)'],
-    ['tela', 'Tela e contador', 'exemplos/7_mostrar_sensor.py e 8_contador.py']
+    ['andar', 'Andar e virar', 'Aula 1 do guia do professor'],
+    ['quadrado', 'Quadrado', 'Aula 2 do guia: fechou o quadrado?'],
+    ['seguidor', 'Seguidor liga-desliga', 'Aula 3 do guia'],
+    ['proporcional', 'Seguidor proporcional', 'Aula 4 do guia'],
+    ['ultrassom', 'Ultrassom', 'Aula 5 do guia (porta 4)'],
+    ['toque', 'Sensor de toque', 'Aula 6 do guia (porta 4)'],
+    ['tela', 'Tela e contador', 'Aulas 7 e 8 do guia'],
+    ['dois', 'Seguidor com dois sensores', 'exemplos/11_seguidor_dois_sensores.py']
   ];
   var ESTADOS = [['ok', 'Funcionou'], ['no', 'Não'], ['na', 'Não testei']];
   var rows = document.getElementById('rows');

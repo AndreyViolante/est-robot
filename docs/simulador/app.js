@@ -2,7 +2,8 @@
 /* Página do simulador: desenha a pista e o robô, controla a execução e mostra a tela, a luz, o som,
    os sensores, os motores, as variáveis e a linha do programa que está rodando.
    O programa vem de programa.js, gerado por simular.py. Na demonstração da página do projeto
-   (ferramentas/publicar_simulador.py) o programa.js traz vários exemplos e aparece o seletor. */
+   (ferramentas/publicar_simulador.py) o programa.js traz uma lista de exemplos; com mais de um,
+   aparece o seletor. */
 (function () {
 const EST = globalThis.EST;
 const DT = 0.002;                 // passo da simulação (s)
@@ -61,7 +62,7 @@ function lerPrograma(dados) {
   }
 }
 
-// o endereço guarda o exemplo escolhido (simulador/#9_seguidor_pid), para recarregar e para links
+// o endereço guarda o exemplo escolhido (simulador/#11_seguidor_dois_sensores), para recarregar e para links
 const chaveDe = p => String(p.nome || '').replace(/\.py$/, '');
 function exemploDoEndereco() {
   let h = '';
@@ -597,7 +598,7 @@ function montarFonte() {
   if (!P) {
     pre.outerHTML = `<p class="vazio" id="fonte">Nenhum programa carregado. No VS Code, abra o seu programa e escolha
       <b>Terminal → Executar Tarefa → Simular no computador</b>. Pelo terminal:
-      <code>python simular.py exemplos/2_quadrado.py</code></p>`;
+      <code>python simular.py meu_programa.py</code></p>`;
     return;
   }
   pre.innerHTML = P.fonte.replace(/\r/g, '').split('\n').map((t, i) => {
@@ -840,6 +841,7 @@ if (typeof salvo.rastro === 'boolean') $('rastro').checked = salvo.rastro;
 if (typeof salvo.som === 'boolean') $('somLigado').checked = salvo.som;
 if (typeof salvo.lupa === 'boolean') $('lupa').checked = salvo.lupa;
 
+if (Array.isArray(globalThis.PROGRAMAS)) $('notaDemo').hidden = false;    // demonstração da página do projeto
 if (PROGRAMAS.length > 1) {
   $('exemplo').innerHTML = PROGRAMAS.map((p, i) => `<option value="${i}">${escapar(rotulo(p))}</option>`).join('');
   $('exemplo').value = String(exemplo);
@@ -849,7 +851,6 @@ if (PROGRAMAS.length > 1) {
     if (i >= 0 && i !== exemplo) { $('exemplo').value = String(i); trocarExemplo(i); }
   });
   $('campoExemplo').hidden = false;
-  $('notaDemo').hidden = false;
 }
 lerCores();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { lerCores(); desenharLcd(true); });

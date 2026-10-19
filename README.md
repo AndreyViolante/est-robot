@@ -5,7 +5,7 @@ proprietária. Pensado para aulas de robótica: os comandos são em português.
 
 **Tem uma controladora EST?** Ajude a testar: [andreyviolante.github.io/est-robot](https://andreyviolante.github.io/est-robot/)
 
-**Quer ver antes de instalar?** Os exemplos rodam no simulador, no navegador:
+**Quer ver antes de instalar?** O exemplo roda no simulador, no navegador:
 [andreyviolante.github.io/est-robot/simulador](https://andreyviolante.github.io/est-robot/simulador/)
 
 ```python
@@ -65,8 +65,8 @@ de largada): **Terminal → Executar Tarefa → Gravar no robô sem executar**. 
 Pelo terminal:
 
 ```bash
-python enviar.py exemplos/2_quadrado.py
-python enviar.py exemplos/2_quadrado.py --so-gravar
+python enviar.py meu_programa.py
+python enviar.py meu_programa.py --so-gravar
 ```
 
 ### Simulador (sem o robô)
@@ -74,11 +74,11 @@ python enviar.py exemplos/2_quadrado.py --so-gravar
 **Terminal → Executar Tarefa → Simular no computador** abre o programa no navegador, numa pista
 vista de cima. O simulador executa os mesmos bytes que iriam para o robô: dá para ver o caminho
 (rastro), a linha do programa que está rodando, os sensores, os motores, as variáveis, a tela, a luz
-e o som. Funciona sem internet e sem instalar nada. Os exemplos 1 a 11 estão na
-[demonstração online](https://andreyviolante.github.io/est-robot/simulador/), cada um na sua pista.
+e o som. Funciona sem internet e sem instalar nada. O exemplo do projeto está na
+[demonstração online](https://andreyviolante.github.io/est-robot/simulador/).
 
-- Pistas: chão quadriculado (exemplos 1 e 2), oval, quadrado com cantos de 90°, curvas de 90° com
-  uma falha na linha, e uma arena com uma caixa (exemplo 5).
+- Pistas: chão quadriculado, oval, quadrado com cantos de 90°, curvas de 90° com uma falha na
+  linha, e uma arena com uma caixa.
 - Arraste o robô para escolher a largada; a bolinha azul na frente gira o robô. A caixa da arena
   também pode ser arrastada.
 - Em **Medidas do robô** ficam a roda, a distância entre as rodas e a posição de cada sensor. O padrão
@@ -86,7 +86,7 @@ e o som. Funciona sem internet e sem instalar nada. Os exemplos 1 a 11 estão na
   porta 4); meça o seu e ajuste.
 
 ```bash
-python simular.py exemplos/4_seguidor_proporcional.py
+python simular.py meu_programa.py
 ```
 
 O robô de verdade escorrega, a bateria muda a velocidade e a luz da sala muda os sensores: o
@@ -155,29 +155,18 @@ Os valores acima são os padrões, medidos num robô EST: com eles, `andar_cm(30
 - `pausa` é o tempo parado depois de cada movimento que freia. Sem ela, o robô emenda um movimento no
   outro e as viradas saem erradas; `pausa=0` desliga.
 
-## Exemplos
+## Exemplo
 
-Em [exemplos/](exemplos/), em ordem para as aulas:
-
-1. `1_andar_e_virar.py`: andar, esperar, virar
-2. `2_quadrado.py`: repetir
-3. `3_seguidor_liga_desliga.py`: seguidor de linha com um sensor
-4. `4_seguidor_proporcional.py`: seguidor proporcional com dois sensores
-5. `5_desviar_obstaculo.py`: ultrassom e decisão
-6. `6_botao_de_toque.py`: esperar o toque, som e luz
-7. `7_mostrar_sensor.py`: ver o valor do sensor na tela
-8. `8_contador.py`: variáveis
-9. `9_seguidor_pid.py`: seguidor PID com dois sensores
-10. `10_seguidor_pid_90.py`: o PID mais curvas de 90° e falha na linha, com o terceiro sensor
-    (conferido no simulador; meça `ATE_AS_RODAS` no seu robô)
-11. `11_seguidor_dois_sensores.py`: seguidor básico com dois sensores (se S1 vê preto vira, senão
-    se S2 vê preto vira para o outro lado, senão anda reto), conferido no simulador
+[exemplos/11_seguidor_dois_sensores.py](exemplos/11_seguidor_dois_sensores.py): seguidor básico com
+dois sensores (se S1 vê preto vira, senão se S2 vê preto vira para o outro lado, senão anda reto),
+conferido no simulador.
 
 ## Para quem quer ir além
 
 Os comandos em português geram blocos de [blocos.py](blocos.py), que seguem os blocos da IDE
-oficial (fios entre saídas e entradas, parâmetros por número). Os dois podem ser usados juntos; veja
-[exemplos/blocos/](exemplos/blocos/).
+oficial (fios entre saídas e entradas, parâmetros por número). Os dois podem ser usados juntos: um
+programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
+[verificar_gabaritos.py](verificar_gabaritos.py)).
 
 | Arquivo | Papel |
 |---|---|
@@ -192,7 +181,7 @@ oficial (fios entre saídas e entradas, parâmetros por número). Os dois podem 
 | [gabaritos/](gabaritos/) | programas compilados pela IDE oficial, usados como referência |
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
 | [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
-| [ferramentas/publicar_simulador.py](ferramentas/publicar_simulador.py) | copia o simulador para `docs/simulador/` com os exemplos compilados (a demonstração online) |
+| [ferramentas/publicar_simulador.py](ferramentas/publicar_simulador.py) | copia o simulador para `docs/simulador/` com o exemplo compilado (a demonstração online) |
 | [instalar.bat](instalar.bat) | prepara um computador novo |
 | [docs/formato.md](docs/formato.md) | protocolo, estrutura do programa e instruções da VM |
 

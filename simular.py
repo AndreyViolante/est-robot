@@ -2,8 +2,8 @@
 
 Compila igual ao enviar.py e abre o simulador (pasta simulador/), que executa os mesmos bytes que
 iriam para o robô: dá para ver o caminho, os sensores, a tela, a luz e o som.
-Uso:  python simular.py exemplos/2_quadrado.py
-      python simular.py exemplos/2_quadrado.py --sem-abrir    só prepara o simulador
+Uso:  python simular.py meu_programa.py
+      python simular.py meu_programa.py --sem-abrir    só prepara o simulador
 """
 import json, os, sys, time, webbrowser
 from pathlib import Path

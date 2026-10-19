@@ -1,7 +1,7 @@
 """Mostra, instrucao por instrucao, o bytecode de um programa do robo EST.
 
 Uso:
-  python ferramentas/decodificar.py exemplos/4_seguidor_proporcional.py   o que o estc.py gera
+  python ferramentas/decodificar.py exemplos/11_seguidor_dois_sensores.py   o que o estc.py gera
   python ferramentas/decodificar.py gabaritos/t5_loop_cont.hex            um gabarito salvo
   python ferramentas/decodificar.py order_content.txt                     uma captura da IDE EST
 """

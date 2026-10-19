@@ -127,17 +127,44 @@ def comparar(nome, nosso, ide):
     return False
 
 
-RAIZ = os.path.dirname(os.path.abspath(__file__))
-EQUIVALENTES = [('exemplos/3_seguidor_liga_desliga.py', 'exemplos/blocos/seguidor_linha.py'),
-                ('exemplos/4_seguidor_proporcional.py', 'exemplos/blocos/seguidor_proporcional.py')]
-
-
 def _em_portugues():
-    """Os programas do lote 3 escritos com robo.py: tem que dar os mesmos bytes que a IDE gerou."""
+    """Programas escritos com robo.py e a referência que tem que dar os mesmos bytes: o que a IDE gerou
+    (gabaritos/) ou o mesmo programa montado com os blocos."""
     from robo import (mostrar, tocar, luz, esperar, luz_refletida, apagar_luz, guardar, tocado, distancia,
                       esperar_toque, esperar_distancia, esperar_luz, esperar_cor, se_tocado, se_distancia,
                       se_luz, senao, motores, parar, repetir_ate_luz, repetir_ate_cor, se, ler, repetir_ate,
-                      cor_vista)
+                      cor_vista, para_sempre, se_ver_cor)
+
+    def liga_desliga():
+        with para_sempre():
+            with se_ver_cor(1, PRETO):
+                motores(10, 30)
+            with senao():
+                motores(30, 10)
+
+    def liga_desliga_blocos():
+        borda = switch_color(1, PRETO)
+        borda.b1 = [tank_on(10, 30)]
+        borda.b2 = [tank_on(30, 10)]
+        sempre = loop_forever()
+        sempre.b1 = [borda]
+        return [start(), sempre]
+
+    def proporcional():
+        with para_sempre():
+            erro = luz_refletida(1) - luz_refletida(2)
+            correcao = erro * 0.4
+            motores(25 + correcao, 25 - correcao)
+
+    def proporcional_blocos():
+        s1, s2 = sensor_refl(1), sensor_refl(2)
+        erro = math('-', a=(s1, 7), b=(s2, 7))
+        correcao = math('*', a=(erro, 1), cb=0.4)
+        pot_b = math('+', ca=25, b=(correcao, 1))
+        pot_c = math('-', ca=25, b=(correcao, 1))
+        sempre = loop_forever()
+        sempre.b1 = [s1, s2, erro, correcao, pot_b, pot_c, tank_on(0, 0, wl=(pot_b, 1), wr=(pot_c, 1))]
+        return [start(), sempre]
 
     def l1():
         mostrar('Ola'); tocar(440, 1, 100); luz('vermelho'); esperar(1)
@@ -171,18 +198,15 @@ def _em_portugues():
         return l5_variaveis_logica()[:-2]           # o mesmo, sem a divisao do final
 
     return [('l1_tela_som_luz', l1, None), ('l3_toque_ultra', l3, None), ('l4_espera_cor', l4, None),
-            ('l5_variaveis_logica (sem a divisao)', l5, l5_blocos)]
+            ('l5_variaveis_logica (sem a divisao)', l5, l5_blocos),
+            ('seguidor liga-desliga em blocos', liga_desliga, liga_desliga_blocos),
+            ('seguidor proporcional em blocos', proporcional, proporcional_blocos)]
 
 
 def verificar_robo():
     """A linguagem em portugues (robo.py) gera o mesmo que os blocos e avisa os erros comuns."""
     import robo
-    from enviar import carregar
     falhas = 0
-    for pt, bl in EQUIVALENTES:
-        iguais = compilar(carregar(os.path.join(RAIZ, pt))) == compilar(carregar(os.path.join(RAIZ, bl)))
-        print(f'  {"OK   " if iguais else "FALHA"} {pt} = {bl}')
-        falhas += not iguais
     for nome, escrever, referencia in _em_portugues():
         robo.novo_programa()
         escrever()
