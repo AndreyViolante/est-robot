@@ -22,7 +22,7 @@ echo ============================================
 echo   Tudo pronto!
 echo ============================================
 echo   1. Abra esta pasta no VS Code (Arquivo - Abrir Pasta).
-echo   2. Crie um arquivo .py que comece com "from robo import *" e aperte Ctrl+Shift+B.
+echo   2. Abra o meu_programa.py e aperte Ctrl+Shift+B: luz, som e "Funcionou!" na tela.
 echo.
 choice /M "Quer testar a conexao com o robo agora (precisa do cabo USB ligado)"
 if errorlevel 2 goto fim

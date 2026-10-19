@@ -42,8 +42,10 @@ reversa e é testado comparando, byte a byte, a saída dele com programas compil
 Funciona no **Windows**, com Python 3.10+ e VS Code (veja o [INSTALAR.md](INSTALAR.md)).
 
 1. Abra esta pasta no VS Code.
-2. Crie um arquivo `.py` começando com `from robo import *` e escreva os comandos.
-3. Com o arquivo aberto, aperte **`Ctrl+Shift+B`**: ele compila, grava e já executa no robô.
+2. Abra o [meu_programa.py](meu_programa.py) e aperte **`Ctrl+Shift+B`**: se o robô acender a luz,
+   apitar e escrever "Funcionou!", o computador está conversando com a controladora.
+3. Apague as linhas do teste e escreva o seu programa embaixo do `from robo import *` (ou crie outro
+   arquivo `.py` começando com essa linha). **`Ctrl+Shift+B`** compila, grava e já executa no robô.
 
 > **Atenção:** o robô começa a se mexer logo depois do envio. Deixe-o no chão ou segure-o.
 

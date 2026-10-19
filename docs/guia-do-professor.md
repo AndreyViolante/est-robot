@@ -7,7 +7,8 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
 ## Antes da primeira aula
 
 - Instale tudo em cada computador seguindo o [INSTALAR.md](../INSTALAR.md).
-- Em cada robô, rode a tarefa **Testar conexão com o robô** (Terminal → Executar Tarefa).
+- Em cada computador, com o robô no USB, abra o `meu_programa.py` e aperte **`Ctrl+Shift+B`**: luz,
+  som e "Funcionou!" na tela mostram que conectou (a tarefa **Testar conexão com o robô** faz o mesmo).
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
   programas deste guia usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
 - Rode o quadrado da aula 2. Os valores padrão foram medidos num robô EST e fazem o quadrado
