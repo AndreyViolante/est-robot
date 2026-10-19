@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Convite para professores testarem o est-robot: programe a controladora EST em Python, pelo VS Code, sem a IDE do fabricante.">
+<meta name="description" content="Convite para professores testarem o EST-ROBOT: programe a controladora EST em Python, pelo VS Code, sem a IDE do fabricante.">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Convite est-robot</title>
+<title>EST-ROBOT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
@@ -185,6 +185,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   h1 { font-size: clamp(2.2rem, 12cqi, 6rem); }
 }
 @media (max-width: 460px) {
+  .code .c { display: none; }   /* no celular o código cabe no quadro sem os comentários */
   .brick { grid-template-columns: minmax(0, 1fr); }
   .brick-side { grid-auto-flow: column; justify-content: start; align-items: center; }
 }
@@ -198,7 +199,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 <body>
 <div class="wrap">
   <header class="bar">
-    <a class="mark" href="#topo" id="topo"><span class="leds"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>est-robot</a>
+    <a class="mark" href="#topo" id="topo"><span class="leds"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>EST-ROBOT</a>
     <a class="gh" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 
@@ -218,8 +219,8 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 
     <div class="rig" aria-label="Exemplo: código em português compilado para os bytes que o robô executa">
       <div class="code">
-        <span class="file">seguidor.py</span>
-<pre><span class="ln"><span class="k">from</span> robo <span class="k">import</span> *</span><span class="ln"> </span><span class="ln"><span class="k">with</span> <span class="f">para_sempre</span>():</span><span class="ln">    <span class="k">with</span> <span class="f">se_ver_cor</span>(<span class="n">1</span>, <span class="n">PRETO</span>):</span><span class="ln">        <span class="f">motores</span>(<span class="n">10</span>, <span class="n">30</span>)</span><span class="ln">    <span class="k">with</span> <span class="f">senao</span>():</span><span class="ln">        <span class="f">motores</span>(<span class="n">30</span>, <span class="n">10</span>)</span></pre>
+        <span class="file">11_seguidor_dois_sensores.py</span>
+<pre><span class="ln"><span class="k">from</span> robo <span class="k">import</span> *</span><span class="ln"> </span><span class="ln">RETO = <span class="n">30</span></span><span class="ln">FORA = <span class="n">30</span></span><span class="ln">DENTRO = <span class="n">-15</span></span><span class="ln"> </span><span class="ln"><span class="k">with</span> <span class="f">para_sempre</span>():</span><span class="ln">    <span class="k">with</span> <span class="f">se_ver_cor</span>(<span class="n">1</span>, <span class="n">PRETO</span>):</span><span class="ln">        <span class="f">motores</span>(DENTRO, FORA)  <span class="c"># vira para a esquerda</span></span><span class="ln">    <span class="k">with</span> <span class="f">senao</span>():</span><span class="ln">        <span class="k">with</span> <span class="f">se_ver_cor</span>(<span class="n">2</span>, <span class="n">PRETO</span>):</span><span class="ln">            <span class="f">motores</span>(FORA, DENTRO)  <span class="c"># vira para a direita</span></span><span class="ln">        <span class="k">with</span> <span class="f">senao</span>():</span><span class="ln">            <span class="f">motores</span>(RETO, RETO)  <span class="c"># anda reto</span></span></pre>
       </div>
       <div class="flow">compila para</div>
       <div class="bytes-box">
@@ -318,7 +319,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   </section>
 
   <footer>
-    <span>est-robot · código e material sob licença MIT · <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">github.com/AndreyViolante/est-robot</a></span>
+    <span>EST-ROBOT · código e material sob licença MIT · <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">github.com/AndreyViolante/est-robot</a></span>
     <span>Projeto independente, sem relação com o fabricante do robô. EST é usado só para indicar compatibilidade.</span>
   </footer>
 </div>
