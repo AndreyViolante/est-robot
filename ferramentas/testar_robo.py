@@ -18,8 +18,7 @@ def main():
     from est_protocol import find_robot, upload
 
     if ide_est_aberta():
-        print(f'{AVISO_IDE}
-')
+        print(f'{AVISO_IDE}\n')
     print('Procurando o robô no USB...')
     try:
         find_robot()
