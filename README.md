@@ -3,7 +3,7 @@
 Programe o robô educacional **Dr. Luck EST** em Python, direto do **VS Code**, sem a IDE
 proprietária. Pensado para aulas de robótica: os comandos são em português.
 
-**Tem uma controladora EST?** Ajude a testar: [andreyviolante.github.io/est-robot](https://andreyviolante.github.io/est-robot/)
+Criado por **Andrey Violante**, para uso pedagógico. Conheça: [andreyviolante.github.io/est-robot](https://andreyviolante.github.io/est-robot/)
 
 **Quer ver antes de instalar?** O exemplo roda no simulador, no navegador:
 [andreyviolante.github.io/est-robot/simulador](https://andreyviolante.github.io/est-robot/simulador/)
@@ -296,6 +296,9 @@ O GitHub testa, monta o pacote para Windows com o Python dentro e publica a vers
 "Atualizar o projeto" dos professores baixa.
 
 ## Licença e aviso
+
+Criado por Andrey Violante. É uma ferramenta pedagógica: feita para aulas, clubes e projetos de
+robótica, para o aluno aprender a programar.
 
 Código e material sob a [licença MIT](LICENSE): pode usar, copiar e adaptar livremente, mantendo o
 aviso de licença.

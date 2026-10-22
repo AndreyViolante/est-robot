@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Convite para professores testarem o EST-ROBOT: programe a controladora EST em Python, pelo VS Code, sem a IDE do fabricante.">
+<meta name="description" content="EST-ROBOT, ferramenta criada por Andrey Violante para programar a controladora educacional EST em Python, pelo VS Code ou pelo navegador, para uso pedagógico.">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>EST-ROBOT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
 <style>
 /* Layout: a boot sequence read top to bottom. Hero = code compiling into real bytes and lighting the brick's
-   LCD; then status (LED colors), steps, a call to test and send feedback, and plain answers. */
+   LCD; then what the tool does, how to start, a note on pedagogical use, and plain answers. */
 :root {
   --bg: #f1f3f8;
   --fg: #0d1222;
@@ -205,16 +205,15 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 
   <div class="hero">
     <div class="hero-head">
-      <div class="eyebrow"><i class="led azul blink"></i>Convite para professores de robótica</div>
+      <div class="eyebrow"><i class="led azul blink"></i>Nova ferramenta para aulas de robótica</div>
       <h1>Sua controladora EST, programada em <span class="py">Python</span>.</h1>
     </div>
     <div class="hero-text">
-      <p class="lede">Os alunos escrevem os comandos <strong>em português</strong>, no VS Code, apertam <code>Ctrl+Shift+B</code> e o programa vai direto para o robô, sem a IDE do fabricante. Funciona no nosso robô. <strong>Queremos saber se funciona no seu.</strong></p>
+      <p class="lede">Os alunos escrevem os comandos <strong>em português</strong>, no VS Code ou no navegador, e o programa vai direto para o robô, sem a IDE do fabricante. Uma ferramenta criada por <strong>Andrey Violante</strong>, gratuita e de código aberto, para ensinar programação de verdade.</p>
       <div class="ctas">
-        <a class="btn solid" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Baixar o projeto</a>
+        <a class="btn solid" href="https://github.com/AndreyViolante/est-robot/releases/latest" target="_blank" rel="noopener">Baixar para Windows</a>
         <a class="btn line" href="programar/">Programar no navegador</a>
         <a class="btn line" href="simulador/index.html">Ver no simulador</a>
-        <a class="btn line" href="#teste">Quero testar</a>
       </div>
     </div>
 
@@ -245,84 +244,76 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 </div>
 
 <div class="wrap">
-  <section id="status">
+  <section id="recursos">
     <div class="sec-head">
-      <div><div class="eyebrow">Situação</div><h2>O que já funciona</h2></div>
-      <p>O compilador gera, byte a byte, os mesmos programas que a IDE oficial, em 13 de 13 programas de referência. As cores abaixo são as da luz do próprio robô.</p>
-    </div>
-    <div class="legend">
-      <span><i class="led azul"></i>Funciona</span>
-      <span><i class="led roxo"></i>Pronto, falta ver funcionando</span>
-      <span><i class="led vermelho"></i>Ainda não existe</span>
+      <div><div class="eyebrow">Recursos</div><h2>O que a ferramenta faz</h2></div>
+      <p>O compilador gera, byte a byte, os mesmos programas que a IDE oficial. Tudo em português, com mensagens de erro que explicam o que corrigir.</p>
     </div>
     <ul class="status">
-      <li><i class="led azul"></i><span><b>Enviar pelo VS Code</b><small>Compila e grava com <code>Ctrl+Shift+B</code>, já executando</small></span></li>
-      <li><i class="led azul"></i><span><b>Motores e movimento</b><small>Os dois motores juntos, rotações, graus e segundos</small></span></li>
-      <li><i class="led azul"></i><span><b>Seguidor de linha</b><small>Liga-desliga e proporcional com dois sensores</small></span></li>
-      <li><i class="led azul"></i><span><b>Tela, som e luz</b><small>Três linhas de texto, sons e luz azul, roxa ou vermelha</small></span></li>
-      <li><i class="led azul"></i><span><b>Ultrassom</b><small>Ler distância, esperar e decidir pela distância</small></span></li>
-      <li><i class="led azul"></i><span><b>Sensor de toque</b><small>Ler, esperar o toque e decidir pelo toque</small></span></li>
-      <li><i class="led azul"></i><span><b>Decisões e repetições</b><small><code>se(...)</code>, <code>senao()</code>, <code>repetir</code>, <code>repetir_ate</code>, variáveis</small></span></li>
-      <li><i class="led azul"></i><span><b>Andar em cm e virar em graus</b><small><code>andar_cm(30)</code> e <code>virar_direita(90)</code> fazem o quadrado certo</small></span></li>
-      <li><i class="led azul"></i><span><b>Simulador no navegador</b><small>Roda os mesmos bytes numa pista vista de cima, com desafios, pistas de prova e passo a passo: <a href="simulador/index.html">veja o exemplo</a></small></span></li>
-      <li><i class="led roxo"></i><span><b>Programar no navegador</b><small>Python ou blocos, sem instalar nada, no Chrome ou no Edge: <a href="programar/">abra a página</a>. Falta testar o envio pelo navegador</small></span></li>
-      <li><i class="led roxo"></i><span><b>Outras controladoras e firmwares</b><small>É aqui que entra o seu teste</small></span></li>
-      <li><i class="led vermelho"></i><span><b>Mac e Linux</b><small>Por enquanto só Windows</small></span></li>
-      <li><i class="led vermelho"></i><span><b>Giroscópio e mensagens</b><small>Blocos que o compilador ainda não conhece</small></span></li>
+      <li><i class="led azul"></i><span><b>Python de verdade, em português</b><small><code>andar_cm(30)</code>, <code>virar_direita(90)</code> e o <code>if</code>, o <code>while</code> e o <code>for</code> do Python com os sensores</small></span></li>
+      <li><i class="led roxo"></i><span><b>No VS Code ou no navegador</b><small><code>Ctrl+Shift+B</code> manda para o robô; no navegador, sem instalar nada, até em Chromebook</small></span></li>
+      <li><i class="led vermelho"></i><span><b>Blocos e Python lado a lado</b><small>A ponte para quem vem da programação em blocos: monta com blocos e vê o Python</small></span></li>
+      <li><i class="led azul"></i><span><b>Simulador com desafios</b><small>Pista vista de cima, 8 desafios com correção automática e execução linha por linha</small></span></li>
+      <li><i class="led roxo"></i><span><b>Sensores, motores, tela e som</b><small>Cor, luz refletida, ultrassom e toque; motores em cm, graus e segundos; notas musicais pelo nome</small></span></li>
+      <li><i class="led vermelho"></i><span><b>Erros explicados</b><small>"não conheço andr. Você quis dizer andar?", com o número da linha</small></span></li>
+      <li><i class="led azul"></i><span><b>Calibração por robô</b><small>As medidas de cada robô num arquivo só, usado por todos os programas</small></span></li>
+      <li><i class="led roxo"></i><span><b>Material para o professor</b><small>Guia com 8 aulas, cola de comandos para imprimir e trilha de desafios</small></span></li>
+      <li><i class="led vermelho"></i><span><b>Instala sem administrador</b><small>Pacote para Windows com o Python dentro e atualização com um clique</small></span></li>
     </ul>
   </section>
 
   <section id="como">
     <div class="sec-head">
-      <div><div class="eyebrow">Passo a passo</div><h2>Como testar</h2></div>
-      <p>Uns 30 minutos, com um robô carregado e um computador com Windows. Bateria fraca faz o robô se comportar de forma estranha: carregue antes.</p>
+      <div><div class="eyebrow">Passo a passo</div><h2>Como começar</h2></div>
+      <p>Uns 10 minutos, com um computador com Windows e o robô carregado. Sem instalar nada? Use a página <a href="programar/">Programar no navegador</a>.</p>
     </div>
     <div class="steps">
-      <div class="step"><h3>Instale</h3><p>Python (marque "Add to PATH"), VS Code com a extensão Python e, na pasta do projeto, dois cliques no <code>instalar.bat</code>.</p></div>
-      <div class="step"><h3>Teste a conexão</h3><p>No VS Code: Terminal → Executar Tarefa → <b>Testar conexão com o robô</b>. Luz azul, som e "Funcionou!".</p></div>
-      <div class="step"><h3>Rode os testes</h3><p>Os programas estão nas aulas 1 a 8 do <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>: copie cada um num arquivo <code>.py</code> e aperte <code>Ctrl+Shift+B</code>. Robô no chão: ele anda logo depois do envio.</p></div>
-      <div class="step"><h3>Anote o que aconteceu</h3><p>O que funcionou, o que não funcionou e as mensagens de erro. Uma foto ou um vídeo curto ajuda muito.</p></div>
-      <div class="step"><h3>Mande seu feedback</h3><p>Abra uma issue no GitHub ou mande para quem te convidou.</p></div>
+      <div class="step"><h3>Baixe</h3><p>O <code>est-robot-windows.zip</code> em <a href="https://github.com/AndreyViolante/est-robot/releases/latest">Releases</a>, que já traz o Python, e use <b>Extrair Tudo</b>.</p></div>
+      <div class="step"><h3>Abra no VS Code</h3><p>Arquivo → Abrir Pasta, com a extensão Python instalada.</p></div>
+      <div class="step"><h3>Primeiro programa</h3><p>Abra o <code>meu_programa.py</code> e aperte <code>Ctrl+Shift+B</code>: luz, som e "Funcionou!" na tela do robô.</p></div>
+      <div class="step"><h3>Meça o robô</h3><p>Anote no <code>calibracao.py</code> as medidas e o preto e o branco de cada sensor.</p></div>
+      <div class="step"><h3>Dê a aula</h3><p>Siga o <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>, com 8 aulas, e use os desafios do simulador.</p></div>
     </div>
   </section>
 
-  <section id="teste">
+  <section id="pedagogico">
     <div class="anuncio">
       <div class="anuncio-topo">
-        <div class="eyebrow"><i class="led azul blink"></i>Chamada para testes</div>
-        <div class="lcd anuncio-lcd" aria-hidden="true"><div>Seu robo?</div><div>Teste e conte!</div></div>
+        <div class="eyebrow"><i class="led azul blink"></i>Uso pedagógico</div>
+        <div class="lcd anuncio-lcd" aria-hidden="true"><div>Aprender</div><div>programando!</div></div>
       </div>
-      <h2>Ligue a sua EST. <span>Conte o que aconteceu.</span></h2>
+      <h2>Feita para ensinar. <span>Use para aprender.</span></h2>
       <div class="anuncio-corpo">
-        <p>Funciona no nosso robô. Mas cada controladora e cada firmware tem o seu jeito, e só quem tem uma EST na mão pode dizer se funciona nela. Cada teste leva o projeto para mais salas de aula.</p>
-        <p>Siga o passo a passo, rode os programas do guia e conte para a gente: qual robô e firmware, o que funcionou e o que não funcionou. Um “não funcionou” ajuda tanto quanto um “funcionou”.</p>
+        <p>O EST-ROBOT foi criado por Andrey Violante para a sala de aula. O objetivo é o aluno entender o que o robô faz e aprender a programar, e não receber programas prontos: por isso os exemplos são poucos, e cada turma escreve os seus.</p>
+        <p>Use em aulas, clubes e projetos de robótica. A IA pode ajudar a explicar um código ou a encontrar um erro, mas quem programa é o aluno. Em competições, siga sempre as regras da prova.</p>
         <div class="ctas">
-          <a class="btn solid" href="https://github.com/AndreyViolante/est-robot/issues/new?title=Teste%20na%20minha%20controladora&amp;body=%2A%2ARob%C3%B4%20e%20firmware%3A%2A%2A%20%0A%0A%2A%2AO%20que%20funcionou%3A%2A%2A%20%0A%0A%2A%2AO%20que%20n%C3%A3o%20funcionou%20%28e%20a%20mensagem%20de%20erro%2C%20se%20apareceu%29%3A%2A%2A%20%0A%0A%2A%2AFoto%20ou%20v%C3%ADdeo%20%28opcional%29%3A%2A%2A%20" target="_blank" rel="noopener">Enviar meu feedback</a>
-          <a class="btn line" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Baixar o projeto</a>
+          <a class="btn solid" href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md" target="_blank" rel="noopener">Guia do professor</a>
+          <a class="btn line" href="https://github.com/AndreyViolante/est-robot/blob/master/docs/cola-do-aluno.md" target="_blank" rel="noopener">Cola de comandos</a>
         </div>
-        <p class="nota">Sem conta no GitHub? Mande para quem te convidou.</p>
+        <p class="nota">Gratuito e de código aberto (licença MIT).</p>
       </div>
     </div>
   </section>
 
   <section id="perguntas">
     <div class="sec-head">
-      <div><div class="eyebrow">Antes de começar</div><h2>Perguntas</h2></div>
-      <p>As dúvidas mais comuns de quem vai testar.</p>
+      <div><div class="eyebrow">Dúvidas</div><h2>Perguntas</h2></div>
+      <p>As dúvidas mais comuns de quem vai começar.</p>
     </div>
     <div class="faq">
       <div><h3>Pode estragar o robô?</h3><p>Não. O robô recebe só um programa, numa pasta própria (<code>/vscode</code>), do mesmo jeito que a IDE envia os dela. O firmware não é alterado, e dá para voltar a usar a IDE oficial a qualquer momento.</p></div>
-      <div><h3>Preciso desinstalar a IDE EST?</h3><p>Não, os dois convivem. Se aparecer "robô não encontrado", feche a IDE e tente de novo.</p></div>
+      <div><h3>Preciso desinstalar a IDE EST?</h3><p>Não, os dois convivem. Só feche a IDE na hora de enviar pelo EST-ROBOT, porque ela conversa com o robô ao mesmo tempo.</p></div>
+      <div><h3>É gratuito?</h3><p>Sim. O código e o material são livres (licença MIT): use, copie e adapte para as suas aulas.</p></div>
+      <div><h3>Para que idade serve?</h3><p>Os comandos são em português e os erros aparecem explicados, com a linha. Para quem está começando, há os blocos com o Python ao lado.</p></div>
+      <div><h3>Funciona no Mac ou no Chromebook?</h3><p>Pelo navegador, sim: a página <a href="programar/">Programar</a> funciona no Chrome e no Edge, em Windows, Mac, Linux e Chromebook. O VS Code com envio pelo cabo é para Windows.</p></div>
       <div><h3>Isso é legal?</h3><p>É um projeto independente, feito para o robô conversar com outro programa (interoperabilidade). Não usa código do fabricante e não distribui nada da IDE. Também não tem relação com o fabricante.</p></div>
-      <div><h3>Para que idade serve?</h3><p>Os comandos são em português e os erros aparecem explicados, com a linha. O projeto traz um guia com 8 aulas e uma folha de comandos para imprimir.</p></div>
-      <div><h3>Funciona no Mac ou no Chromebook?</h3><p>Ainda não. A comunicação USB usa uma parte do Windows. Se você tiver interesse em ajudar nisso, fale com a gente.</p></div>
-      <div><h3>Deu erro. E agora?</h3><p>Mande o feedback assim mesmo, contando o que aconteceu e a mensagem de erro. Um "não funcionou" ajuda tanto quanto um "funcionou".</p></div>
+      <div><h3>Encontrou um problema?</h3><p><a href="https://github.com/AndreyViolante/est-robot/issues/new" target="_blank" rel="noopener">Abra uma issue no GitHub</a> contando o que aconteceu e a mensagem de erro.</p></div>
     </div>
   </section>
 
   <footer>
-    <span>EST-ROBOT · código e material sob licença MIT · <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">github.com/AndreyViolante/est-robot</a></span>
-    <span>Projeto independente, sem relação com o fabricante do robô. EST é usado só para indicar compatibilidade.</span>
+    <span>EST-ROBOT · criado por Andrey Violante · código e material sob licença MIT · <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">github.com/AndreyViolante/est-robot</a></span>
+    <span>Ferramenta para uso pedagógico. Projeto independente, sem relação com o fabricante do robô. EST é usado só para indicar compatibilidade.</span>
   </footer>
 </div>
 
@@ -342,7 +333,7 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 
   // faixa com o pacote USB que leva o programa ao robo (formato real)
   var frames = ['<b>68 11 0a</b> 11 00 02 2f 76 73 63 6f 64 65 2f 73 … da <b>16</b> selecionar',
-                '<b>68 11 0c</b> 01 00 01 87 <b>16</b> download',
+                '<b>68 11 0c</b> 01 00 01 87 <b>16</b> consulta a bateria',
                 '<b>68 11 04</b> 18 00 01 01 00 08 2f 76 73 63 6f 64 … 3d <b>16</b> nome do arquivo',
                 '<b>68 11 04</b> 31 01 02 01 00 02 00 00 00 29 00 00 … 1c <b>16</b> programa',
                 '<b>68 11 0a</b> 15 00 01 2f 76 73 63 6f 64 65 2f 73 … 37 <b>16</b> executar'];
