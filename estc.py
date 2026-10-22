@@ -75,6 +75,7 @@ def _laco(hw, dentro, passos):
 
 
 _P, _F, _L = (0, PORTA), FLOAT, LOGICO
+PARALELO = '9001'
 MODELOS = {
     # ---- motores (tipo 0x81 grande, 0x82 com direcao, 0x83 tanque) ----
     ('1002', '1'): _motor(0x81, 1, 1, 2, [_P, (2, _L)]),
@@ -102,6 +103,11 @@ MODELOS = {
     ('3002', '2'): Modelo([_P, (7, SAIDA_F, 4)], [0], [_disp(0x30, 1, 2, 4, 7)]),
     ('3008', '1'): Modelo([_P, (2, SAIDA_B, 1)], [0], [_disp(0x30, 7, 1, 1, 2)]),
     ('3009', '3'): Modelo([_P, (4, SAIDA_F, 4)], [0], [_disp(0x30, 8, 3, 4, 4)]),
+    # ---- botoes da controladora (leitura interna 0x32, tipo 3); compile_xml/3001.xml da IDE, ainda nao conferido
+    #      contra uma captura nem no robo ----
+    ('3001', '1'): Modelo([(3, SAIDA_B, 1)], [], [(0x32, [_b(3), _b(0), _b(1), _r(3)])]),
+    # ---- ao mesmo tempo (nao existe na IDE): cada tarefa e uma thread, todas iniciadas antes de esperar ----
+    (PARALELO, '1'): Modelo([], [], []),
     # ---- contas e comparacoes ----
     ('4005', '1'): _conta(0x09),
     ('4005', '2'): _conta(0x0A),
@@ -198,7 +204,8 @@ class _Programa:
             tid, ch = fila.pop(0)
             self.segmentos.append((tid, ch))
             for b in ch:
-                ramos = [b.b1, b.b2] if b.t == '2004' else [b.b1] if b.t == '2003' else []
+                ramos = ([b.b1, b.b2] if b.t == '2004' else [b.b1] if b.t == '2003'
+                         else b.ramos if b.t == PARALELO else [])
                 if ramos:
                     self.tids[id(b)] = list(range(proximo, proximo + len(ramos)))
                     fila += [(proximo + i, r) for i, r in enumerate(ramos)]
@@ -384,6 +391,11 @@ def compilar(cadeia, compat_ide_fios=False):
             passos(b, repetir)
             a.emite(b'\x1b'); a.pc(f'espera{n}'); a.emite(_e(regs[condicao]))
             passos(b, depois)
+        elif b.t == PARALELO:
+            for tid in p.tids[id(b)]:
+                a.emite(b''); a.pc(f't{tid}'); a.emite(bytes([tid, 0]))
+            for tid in p.tids[id(b)]:
+                a.emite(bytes([0x20, tid, 0]))
         elif b.t == '2004':
             inicializa(b, m, m.inicio)
             passos(b, m.passos)

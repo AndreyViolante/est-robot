@@ -16,7 +16,9 @@ Cada comando entra no programa na ordem em que aparece. Exemplo:
 Leituras de sensor podem entrar em contas: erro = luz_refletida(1) - luz_refletida(2)
 O resultado vira um valor que pode ir para os motores: motores(25 + erro * 0.4, 25 - erro * 0.4)
 """
+import importlib.util as _imp
 import math as _m
+import os as _os
 
 import blocos as _b
 from blocos import PRETO, AZUL, VERDE, AMARELO, VERMELHO, BRANCO, MARROM
@@ -28,7 +30,10 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'esperar_toque', 'esperar_distancia', 'esperar_luz', 'esperar_cor',
            'mostrar', 'tocar', 'bip', 'luz', 'apagar_luz',
            'para_sempre', 'repetir', 'repetir_ate', 'repetir_ate_luz', 'repetir_ate_cor',
-           'se', 'se_ver_cor', 'se_tocado', 'se_distancia', 'se_luz', 'senao', 'novo_programa', 'programa']
+           'se', 'se_ver_cor', 'se_tocado', 'se_distancia', 'se_luz', 'senao', 'limite',
+           'melodia', 'botao_apertado', 'esperar_botao', 'ao_mesmo_tempo', 'tarefa', 'painel', 'ajustando',
+           'BOTAO_CIMA', 'BOTAO_BAIXO',
+           'novo_programa', 'programa']
 
 POTENCIA_PADRAO = 50
 _config = {'esquerdo': 'B', 'direito': 'C', 'sentido': 1, 'roda_cm': 4.3, 'entre_rodas_cm': 12.0, 'pausa': 0.5}
@@ -58,6 +63,8 @@ def avisos(blocos):
             if chave in _MODO_COR or chave in _MODO_LUZ:
                 modos.setdefault(str(b.port).strip(), set()).add('cor' if chave in _MODO_COR else 'luz')
             percorre(b.b1); percorre(b.b2)
+            for ramo in getattr(b, 'ramos', []):
+                percorre(ramo)
     percorre(blocos)
     return [f'o sensor da porta {p} é usado no modo cor (cor_vista, se_ver_cor...) e no modo luz '
             f'(luz_refletida, se_luz...). Ele vai ficar trocando de modo, fica lento e erra leituras. '
@@ -88,8 +95,8 @@ novo_programa()
 
 # ---------------------------------------------------------------- configuracao
 
-def configurar(esquerdo='B', direito='C', invertido=False, roda_cm=4.3, entre_rodas_cm=12.0, pausa=0.5):
-    """Ajusta o programa ao robo.
+def configurar(esquerdo=None, direito=None, invertido=None, roda_cm=None, entre_rodas_cm=None, pausa=None):
+    """Ajusta só este programa ao robô (o que não for informado fica como está no calibracao.py).
 
     esquerdo, direito   portas dos motores das rodas
     invertido           True se o robô anda de ré quando deveria ir para frente
@@ -98,8 +105,49 @@ def configurar(esquerdo='B', direito='C', invertido=False, roda_cm=4.3, entre_ro
     pausa               segundos parado depois de cada movimento que freia (0 = sem pausa);
                         sem ela o robô emenda um movimento no outro e erra a virada
     """
-    _config.update(esquerdo=esquerdo.upper(), direito=direito.upper(), sentido=-1 if invertido else 1,
-                   roda_cm=roda_cm, entre_rodas_cm=entre_rodas_cm, pausa=pausa)
+    if esquerdo is not None:
+        _config['esquerdo'] = str(esquerdo).upper()
+    if direito is not None:
+        _config['direito'] = str(direito).upper()
+    if invertido is not None:
+        _config['sentido'] = -1 if invertido else 1
+    for nome, valor in (('roda_cm', roda_cm), ('entre_rodas_cm', entre_rodas_cm), ('pausa', pausa)):
+        if valor is not None:
+            _config[nome] = valor
+
+
+# luz refletida de cada sensor no preto e no branco, do calibracao.py (para limite())
+_PRETO, _BRANCO = {}, {}
+
+
+def _carregar_calibracao():
+    """Lê o calibracao.py da pasta do projeto, se existir: as medidas do robô valem para todos os programas."""
+    arquivo = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'calibracao.py')
+    if not _os.path.exists(arquivo):
+        return
+    try:
+        spec = _imp.spec_from_file_location('calibracao', arquivo)
+        cal = _imp.module_from_spec(spec)
+        spec.loader.exec_module(cal)
+    except SyntaxError as e:
+        raise SyntaxError(f'erro no calibracao.py, linha {e.lineno}: confira o que foi mudado lá') from None
+    configurar(esquerdo=getattr(cal, 'MOTOR_ESQUERDO', None), direito=getattr(cal, 'MOTOR_DIREITO', None),
+               invertido=getattr(cal, 'INVERTIDO', None), roda_cm=getattr(cal, 'RODA_CM', None),
+               entre_rodas_cm=getattr(cal, 'ENTRE_RODAS_CM', None), pausa=getattr(cal, 'PAUSA', None))
+    _PRETO.update(getattr(cal, 'PRETO', {}))
+    _BRANCO.update(getattr(cal, 'BRANCO', {}))
+
+
+_carregar_calibracao()
+
+
+def limite(porta):
+    """O meio do caminho entre o preto e o branco do sensor, medidos no calibracao.py.
+    Ex.: with se_luz(1, '<', limite(1)):   ou   if luz_refletida(1) < limite(1):"""
+    p = int(str(porta).strip())
+    if p not in _PRETO or p not in _BRANCO:
+        raise ValueError(f'meça o preto e o branco do sensor {p} e escreva no calibracao.py (PRETO e BRANCO)')
+    return round((_PRETO[p] + _BRANCO[p]) / 2, 1)
 
 
 def _tanque(construtor, esq, dir_, *extra, **kw):
@@ -275,7 +323,8 @@ class Valor:
     __hash__ = object.__hash__
 
     def __bool__(self):
-        raise TypeError('valores do robô não funcionam com "if" do Python: use "with se(...)"')
+        raise TypeError('esse valor do robô não funciona aqui: use ele num "if" ou num "while" '
+                        '(o "x if ... else y" numa linha só ainda não funciona com o robô)')
 
 
 # numero que cor_vista() devolve para cada cor. No robo (2026-10-16) o preto deu 1 e o branco oscilou entre 6 e 0:
@@ -297,7 +346,8 @@ class Condicao:
         self.bloco, self.saida = bloco, 3
 
     def __bool__(self):
-        raise TypeError('comparações do robô não funcionam com "if" do Python: use "with se(...)"')
+        raise TypeError('essa comparação do robô não funciona aqui: use ela num "if" ou num "while" '
+                        '(o "x if ... else y" numa linha só ainda não funciona com o robô)')
 
 
 def luz_refletida(porta):
@@ -323,6 +373,11 @@ def tocado(porta):
     return Valor(_adiciona(_b.touch_state(porta)), 2, byte=True)
 
 
+def botao_apertado():
+    """Número do botão da controladora que está apertado (0 = nenhum). Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.Blk(3001, 1, '2|1|0|0', ' ')), 3, byte=True)
+
+
 def ler(nome):
     """Lê o número guardado numa variável do robô. Ex.: ler('contador')"""
     return Valor(_adiciona(_b.var_rn(nome)), 2)
@@ -336,6 +391,14 @@ def guardar(nome, valor):
 
 
 # ---------------------------------------------------------------- esperas por sensor
+
+def esperar_botao():
+    """Espera apertar e soltar um botão da controladora (bom para largar o robô). Ainda não conferido no robô."""
+    with repetir_ate(lambda: botao_apertado() != 0):
+        pass
+    with repetir_ate(lambda: botao_apertado() == 0):
+        pass
+
 
 def _cmp(comparacao):
     try:
@@ -394,9 +457,60 @@ def mostrar(texto, linha=1, x=0, limpar=None, y=None):
     return _adiciona(_b.display(_ascii(texto), x, y, limpar))
 
 
+_NOTAS = {'do': 0, 'do#': 1, 're': 2, 're#': 3, 'mi': 4, 'fa': 5, 'fa#': 6, 'sol': 7, 'sol#': 8,
+          'la': 9, 'la#': 10, 'si': 11}
+_SEM_ACENTO = str.maketrans('óéíáú', 'oeiau')
+_FREQ_MIN = 300                 # a IDE só aceita de 300 a 10000 Hz
+
+
+def _frequencia(nota):
+    """'la' -> 880 (oitava 5 se não disser), 'la4' -> 440, 'do#5' -> 554, 'ré' -> 587."""
+    texto = str(nota).strip().lower().translate(_SEM_ACENTO)
+    nome = texto.rstrip('0123456789')
+    oitava = int(texto[len(nome):] or 5)
+    if nome not in _NOTAS:
+        raise ValueError(f'não conheço a nota {nota!r}: use do, re, mi, fa, sol, la, si '
+                         f'(com # para sustenido e o número da oitava, ex.: "do#5")')
+    freq = round(440 * 2 ** ((_NOTAS[nome] - 9) / 12 + oitava - 4))
+    if freq < _FREQ_MIN:
+        raise ValueError(f'a nota {nota!r} é grave demais para o robô ({freq} Hz): use uma oitava acima, '
+                         f'ex.: "{nome}{oitava + 1}"')
+    return freq
+
+
+_X_DO_VALOR = 70              # um nome de até 6 letras cabe antes disso (8 letras já encostavam em x=80)
+
+
+def painel(**valores):
+    """Mostra até 3 valores na tela do robô, um por linha, com o nome na frente. Bom para ver o PID andando:
+    painel(erro=ler('erro'), vel=ler('vel'), s1=luz_refletida(1))
+    A controladora não manda as leituras para o computador, então a tela dela é o jeito de ver os números.
+    Num laço muito rápido, a tela deixa o laço um pouco mais lento."""
+    if not 1 <= len(valores) <= 3:
+        raise ValueError('painel(...) mostra de 1 a 3 valores, um por linha, ex.: painel(erro=ler("erro"))')
+    for linha, (nome, valor) in enumerate(valores.items(), 1):
+        mostrar(f'{nome[:5]}:', linha=linha)
+        mostrar(valor if isinstance(valor, Valor) else str(valor), linha=linha, x=_X_DO_VALOR, limpar=False)
+
+
 def tocar(frequencia=440, segundos=1, volume=100):
-    """Toca um som. Ex.: tocar(440, 0.5)"""
+    """Toca um som e espera ele acabar. Ex.: tocar(440, 0.5) ou, pelo nome da nota, tocar('la', 0.5).
+    Notas: do re mi fa sol la si (sustenido: 'do#'), na oitava 5 se não disser outra ('la4' = 440 Hz)."""
+    if isinstance(frequencia, str):
+        frequencia = _frequencia(frequencia)
     return _adiciona(_b.sound_tone(frequencia, segundos, volume))
+
+
+def melodia(notas, tempo=0.3, volume=100):
+    """Toca uma sequência de notas separadas por espaço. Cada nota dura tempo segundos;
+    'nota:segundos' muda a duração de uma nota e '-' é uma pausa. Ex.: melodia('do re mi fa sol:0.6')"""
+    for parte in str(notas).split():
+        nota, _, duracao = parte.partition(':')
+        segundos = float(duracao) if duracao else tempo
+        if nota == '-':
+            esperar(segundos)
+        else:
+            tocar(nota, segundos, volume)
 
 
 def bip():
@@ -475,6 +589,45 @@ def repetir_ate_cor(porta, cor):
     return _Bloco(blk, blk.b1)
 
 
+class _Paralelo(_Bloco):
+    """O with ao_mesmo_tempo(): só aceita "with tarefa():" dentro."""
+    def __enter__(self):
+        super().__enter__()
+        _pilha[-1].paralelo = self.bloco
+        return self
+
+    def __exit__(self, tipo_erro, *erro):
+        if tipo_erro is None:
+            if self.ramo:
+                raise SyntaxError('dentro do "with ao_mesmo_tempo():" ponha cada parte num "with tarefa():"')
+            if len(self.bloco.ramos) < 2:
+                raise SyntaxError('"with ao_mesmo_tempo():" precisa de pelo menos duas "with tarefa():"')
+        return super().__exit__(tipo_erro, *erro)
+
+
+def ao_mesmo_tempo():
+    """Faz várias partes do programa ao mesmo tempo, cada uma num "with tarefa():". Ex.:
+        with ao_mesmo_tempo():
+            with tarefa():
+                andar_cm(30)
+            with tarefa():
+                melodia('do re mi')
+    Continua depois que todas as tarefas acabarem. Ainda não conferido no robô (funciona no simulador)."""
+    blk = _adiciona(_b.Blk(9001, 1, '', ' '))
+    blk.ramos = []
+    return _Paralelo(blk, [])
+
+
+def tarefa():
+    """Uma parte de um "with ao_mesmo_tempo():"."""
+    paralelo = getattr(_pilha[-1], 'paralelo', None)
+    if paralelo is None:
+        raise SyntaxError('"with tarefa():" só funciona logo dentro de um "with ao_mesmo_tempo():"')
+    ramo = []
+    paralelo.ramos.append(ramo)
+    return _Bloco(paralelo, ramo)
+
+
 def _se(blk):
     return _Bloco(_adiciona(blk), blk.b1, abre_senao=True)
 
@@ -512,3 +665,225 @@ def senao():
     if sw is None:
         raise SyntaxError('"with senao()" precisa vir logo depois de um "with se_..."')
     return _Bloco(sw, sw.b2)
+
+
+# ---------------------------------------------------------------- if e while do Python
+# enviar.py troca cada if/while do programa do aluno por estas peças: quando a condição é do robô
+# (sensor, variável do robô), elas montam os blocos se/senão/repetir; quando é do Python, o if/while
+# funciona como sempre.
+
+_INVERSO = {'1': '2', '2': '1', '3': '6', '6': '3', '4': '5', '5': '4'}     # modos do Comparar: = != > >= < <=
+
+
+def _nao(cond):
+    """A comparação ao contrário (< vira >=, = vira !=). Se ela acabou de ser feita, só inverte o bloco;
+    senão faz um bloco novo, para não mudar uma comparação guardada que o programa ainda usa."""
+    velho = cond.bloco
+    if _pilha[-1].blocos and _pilha[-1].blocos[-1] is velho:
+        velho.mode = _INVERSO[velho.mode]
+        return cond
+    return Condicao(_adiciona(_b.Blk(velho.t, _INVERSO[velho.mode], velho.params, velho.port, velho.wires)))
+
+
+def _como_condicao(valor, negar=False):
+    """A comparação do robô que decide o if/while, ou None quando a condição é do Python."""
+    if isinstance(valor, Valor):
+        valor = (valor + 0 if valor.byte else valor) != 0      # "if tocado(4):" = "if tocado(4) != 0:"
+    if isinstance(valor, Condicao):
+        return _nao(valor) if negar else valor
+    return None
+
+
+class _Decisao:
+    """Um if do aluno: se(...)/senao() quando a condição é do robô, if comum quando é do Python."""
+    def __init__(self, valor, negar=False):
+        self.cond = _como_condicao(valor, negar)
+        self.python = None if self.cond is not None else (not valor if negar else bool(valor))
+        self.trecho = None
+
+    def _entra(self, bloco):
+        self.trecho = bloco
+        bloco.__enter__()
+        return True
+
+    def sim(self):
+        return self._entra(se(self.cond)) if self.cond is not None else self.python
+
+    def nao(self):
+        return self._entra(senao()) if self.cond is not None else not self.python
+
+    def fim(self):
+        if self.trecho is not None:
+            self.trecho.__exit__(None, None, None)
+            self.trecho = None
+
+
+class _Repeticao:
+    """Um while do aluno. Com condição do robô vira se(cond) + repetir_ate(cond ao contrário)
+    (o robô confere no fim de cada volta); com condição do Python, while comum."""
+    def __init__(self, condicao, negar=False, tem_break=False):
+        self.condicao, self.negar, self.tem_break = condicao, negar, tem_break
+        self.robo = None            # None antes da 1a volta; depois True ou False
+        self.trechos = []
+
+    def volta(self):
+        if self.robo is None:
+            cond = _como_condicao(self.condicao(), self.negar)
+            self.robo = cond is not None
+            if not self.robo:
+                return self._python()
+            if self.tem_break:
+                raise SyntaxError('"break" e "continue" ainda não funcionam num while com sensor: '
+                                  'use a condição do próprio while para sair')
+            for faz in (lambda: se(cond), lambda: repetir_ate(lambda: _como_condicao(self.condicao(), not self.negar))):
+                bloco = faz()                   # um de cada vez: o repetir_ate fica dentro do se
+                bloco.__enter__()
+                self.trechos.append(bloco)
+            return True
+        return False if self.robo else self._python()
+
+    def _python(self):
+        valor = self.condicao()
+        return not valor if self.negar else bool(valor)
+
+    def fim(self):
+        while self.trechos:
+            self.trechos.pop().__exit__(None, None, None)
+
+
+_contador_logica = [0]
+
+
+def _variavel_logica():
+    _contador_logica[0] += 1
+    return f'_logica{_contador_logica[0]}'
+
+
+def _e(*partes):
+    """"a and b and ..." do aluno. Partes do Python funcionam como sempre; com partes do robô, o resultado
+    vai para uma variável do robô (1 = verdadeiro) montada com um se dentro do outro."""
+    valor = True
+    for i, parte in enumerate(partes):
+        valor = parte()
+        cond = _como_condicao(valor)
+        if cond is None:
+            if not valor:
+                return valor
+            continue
+        nome = _variavel_logica()
+        guardar(nome, 0)
+
+        def resto(j, cond):
+            with se(cond):
+                for k in range(j, len(partes)):
+                    v = partes[k]()
+                    c = _como_condicao(v)
+                    if c is None:
+                        if not v:
+                            return
+                        continue
+                    return resto(k + 1, c)
+                guardar(nome, 1)
+        resto(i + 1, cond)
+        return ler(nome) == 1
+    return valor
+
+
+def _ou(*partes):
+    """"a or b or ..." do aluno, do mesmo jeito que o _e."""
+    valor = False
+    for i, parte in enumerate(partes):
+        valor = parte()
+        cond = _como_condicao(valor)
+        if cond is None:
+            if valor:
+                return valor
+            continue
+        nome = _variavel_logica()
+        guardar(nome, 0)
+
+        def resto(j, cond):
+            with se(cond):
+                guardar(nome, 1)
+            with senao():
+                for k in range(j, len(partes)):
+                    v = partes[k]()
+                    c = _como_condicao(v)
+                    if c is None:
+                        if v:
+                            guardar(nome, 1)
+                            return
+                        continue
+                    return resto(k + 1, c)
+        resto(i + 1, cond)
+        return ler(nome) == 1
+    return valor
+
+
+def _nao_geral(valor):
+    """"not x" do aluno: comparação do robô ao contrário, ou o not do Python."""
+    cond = _como_condicao(valor, negar=True)
+    return cond if cond is not None else not valor
+
+
+def _vezes(n):
+    """"for _ in range(n)" do aluno quando a variável do for não é usada: vira o repetir(n) do robô,
+    para o programa não ficar n vezes maior. Se o corpo não tiver comandos do robô, repete no Python."""
+    if isinstance(n, bool) or not isinstance(n, int) or n < 1:
+        yield from range(n)
+        return
+    bloco = repetir(n)
+    bloco.__enter__()
+    try:
+        yield None
+    except BaseException:
+        bloco.__exit__(None, None, None)
+        raise
+    bloco.__exit__(None, None, None)
+    if not bloco.bloco.b1:                          # só Python dentro: desfaz o bloco e repete do jeito normal
+        _pilha[-1].blocos.remove(bloco.bloco)
+        for _ in range(n - 1):
+            yield None
+
+
+# ---------------------------------------------------------------- ajustar um número pelos botões
+# números dos botões no bloco "Botões da controladora" da IDE; ainda não conferidos no robô
+BOTAO_CIMA, BOTAO_BAIXO = 4, 5
+
+
+class _Ajustando:
+    def __init__(self, nome, inicial, passo):
+        self.nome, self.inicial, self.passo = nome, inicial, passo
+
+    def __enter__(self):
+        nome, passo = self.nome, self.passo
+        guardar(nome, self.inicial)
+        self.paralelo = ao_mesmo_tempo()
+        self.paralelo.__enter__()
+        with tarefa():                                      # os botões mudam o número, sem parar
+            with para_sempre():
+                for botao, conta in ((BOTAO_CIMA, passo), (BOTAO_BAIXO, -passo)):
+                    with se(botao_apertado() == botao):
+                        guardar(nome, ler(nome) + conta)
+                        with repetir_ate(lambda: botao_apertado() == 0):     # espera soltar
+                            pass
+                mostrar(f'{nome[:5]}:', linha=3)
+                mostrar(ler(nome), linha=3, x=_X_DO_VALOR, limpar=False)
+                esperar(0.1)
+        self.corpo = tarefa()
+        self.corpo.__enter__()
+        return self
+
+    def __exit__(self, tipo_erro, *erro):
+        self.corpo.__exit__(tipo_erro, *erro)
+        return self.paralelo.__exit__(tipo_erro, *erro)
+
+
+def ajustando(nome, inicial, passo):
+    """Deixa ajustar um número com os botões da controladora enquanto o programa roda, sem reenviar:
+    o botão de cima soma passo, o de baixo tira, e o valor aparece na linha 3 da tela. Ex.:
+        with ajustando('kp', 0.4, 0.05):
+            while True:
+                ... motores(20 + erro * ler('kp'), 20 - erro * ler('kp'))
+    Use ler('kp') no programa. Ainda não conferido no robô (os números dos botões podem ser outros)."""
+    return _Ajustando(nome, inicial, passo)

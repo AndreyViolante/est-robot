@@ -11,10 +11,11 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
   som e "Funcionou!" na tela mostram que conectou (a tarefa **Testar conexão com o robô** faz o mesmo).
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
   programas deste guia usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
-- Rode o quadrado da aula 2. Os valores padrão foram medidos num robô EST e fazem o quadrado
-  certo. Se o seu robô virar mais ou menos que 90°, ajuste `configurar(entre_rodas_cm=...)`; se cada
-  lado não tiver 30 cm, ajuste `configurar(roda_cm=...)`. Anote os valores do seu robô para passar
-  aos alunos.
+- Rode o quadrado da aula 2. Os valores do `calibracao.py` foram medidos num robô EST e fazem o
+  quadrado certo. Se o seu robô virar mais ou menos que 90°, ajuste `ENTRE_RODAS_CM`; se cada lado não
+  tiver 30 cm, ajuste `RODA_CM`. Com a tarefa **Ver sensores na tela do robô**, anote também o preto e
+  o branco de cada sensor (`PRETO` e `BRANCO`). Fica tudo no `calibracao.py` do computador daquele
+  robô, e os programas dos alunos usam sozinhos.
 
 ## Como é uma aula
 
@@ -105,6 +106,10 @@ with repetir(4):            # um quadrado: andar e virar 90 graus, 4 vezes
 3. Zigue-zague: repetir 5 vezes andar, virar 45° para um lado, andar, virar 45° para o outro.
 
 **Erros comuns:** esquecer o `:`; linhas de dentro sem espaço no começo (o programa avisa as duas coisas).
+
+**Python de verdade:** quando a turma já estiver à vontade com o `with`, mostre que o `if`, o `else`,
+o `elif` e o `while` do Python também funcionam com os sensores: `if luz_refletida(1) < 50:` faz o
+mesmo que `with se(luz_refletida(1) < 50):`. É o mesmo Python que eles vão encontrar fora do robô.
 
 ## Aula 3: sensores e decisões
 
@@ -215,7 +220,9 @@ apagar_luz()
 **Desafios**
 1. Campainha: cada toque faz um bip.
 2. Sinal de trânsito do robô: luz azul (pode ir), roxa (atenção), vermelha (pare), com esperas entre elas.
-3. Uma musiquinha com `tocar` (dó = 262, ré = 294, mi = 330, fá = 349, sol = 392 Hz).
+3. Uma musiquinha com `melodia('do re mi fa sol sol:0.6')` (as notas também vão no `tocar('la', 0.5)`).
+4. Andar e tocar a música ao mesmo tempo, com `with ao_mesmo_tempo():` e um `with tarefa():` para
+   cada parte (ainda não testado no robô: confira no simulador e depois no robô).
 
 ## Aula 7: medindo com sensores
 
@@ -238,6 +245,9 @@ with para_sempre():
 **Roteiro**
 - Os alunos anotam numa tabela o valor da luz refletida em cima do preto e em cima do branco.
 - O limite para decidir é a média dos dois. Usem esse número num `se_luz`.
+
+**Dica:** `painel(s1=luz_refletida(1), s2=luz_refletida(2))` mostra os dois sensores ao mesmo tempo,
+um em cada linha.
 
 **Desafios**
 1. Medir também o verde, o vermelho e o azul. Qual é fácil de separar do preto?
@@ -284,7 +294,7 @@ Teste antes de levar para a turma.
 
 **Movimentos seguidos:** depois de cada movimento que freia (`andar`, `re`, `andar_cm`, `girar_*`,
 `virar_*`), o robô fica parado meio segundo antes do próximo comando. Sem essa pausa ele emenda um
-movimento no outro e as viradas saem erradas. Dá para mudar com `configurar(pausa=...)`.
+movimento no outro e as viradas saem erradas. Dá para mudar a `PAUSA` no `calibracao.py`.
 
 **Sensor de cor:** cada sensor deve ser usado num modo só. Misturar comandos de cor (`cor_vista`, `se_ver_cor`) com
 comandos de luz refletida (`luz_refletida`, `se_luz`) no mesmo sensor faz ele trocar de modo o tempo todo, ficar lento

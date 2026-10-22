@@ -123,6 +123,9 @@ simulador serve para testar a lógica, mas confira no robô.
 
 | Repetir e decidir | |
 |---|---|
+| `if luz_refletida(1) < 50:` / `elif ...:` / `else:` | decide pelo sensor, com o `if` normal do Python (vale `and`, `or` e `not`) |
+| `while distancia(4) > 15:` / `while True:` | repete enquanto a condição valer / para sempre |
+| `for _ in range(4):` | repete 4 vezes (vira o "repetir" do robô) |
 | `with para_sempre():` / `with repetir(4):` | repete o que está dentro |
 | `with repetir_ate(lambda: distancia(4) < 20):` | repete até a condição acontecer |
 | `with repetir_ate_luz(1, '<', 30):`, `with repetir_ate_cor(1, PRETO):` | repete até o sensor de cor ver |
@@ -134,28 +137,55 @@ simulador serve para testar a lógica, mas confira no robô.
 | Tela, som, luz e variáveis | |
 |---|---|
 | `mostrar('Oi')`, `mostrar(distancia(4), linha=2)` | escreve texto ou valor na tela (3 linhas; a linha 1 apaga a tela) |
-| `tocar(440, 0.5)`, `bip()` | som (frequência em Hz, duração em segundos) |
+| `tocar(440, 0.5)`, `tocar('la', 0.5)`, `bip()` | som pela frequência em Hz ou pelo nome da nota, com a duração em segundos |
+| `melodia('do re mi fa sol:0.6')` | várias notas seguidas (`:segundos` muda a duração de uma nota, `-` é pausa) |
 | `luz('azul')`, `apagar_luz()` | luz do robô: `'azul'`, `'roxo'` ou `'vermelho'` |
 | `guardar('contador', 0)`, `ler('contador')` | variáveis guardadas no robô |
+| `painel(erro=..., vel=...)` | mostra até 3 valores na tela, um por linha, com o nome na frente (para ver o PID andando) |
 
-Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores funcionam dentro de `se(...)` e
-`repetir_ate(...)`. O `if` do Python não serve para isso, porque a leitura acontece no robô, e não
-no computador: o programa avisa se for usado assim.
+| Ainda não testados no robô (funcionam no simulador) | |
+|---|---|
+| `with ao_mesmo_tempo():` com um `with tarefa():` para cada parte | faz várias coisas ao mesmo tempo (ex.: andar e tocar uma música) e continua quando todas acabam |
+| `esperar_botao()`, `botao_apertado()` | os botões da própria controladora: esperar apertar e soltar, ou o número do botão apertado (0 = nenhum) |
+| `with ajustando('kp', 0.4, 0.05):` | ajusta um número com os botões de cima e de baixo enquanto o programa roda, sem reenviar (use `ler('kp')`) |
 
-### Ajustando ao seu robô
+### Para competição: obr.py
 
-```python
-configurar(esquerdo='B', direito='C', invertido=False, roda_cm=4.3, entre_rodas_cm=12, pausa=0.5)
-```
+Quem compete pode usar funções prontas com `from obr import *`: `Seguidor(kp=..., kd=..., velocidade=...)`
+com `seguidor.passo()` dentro do laço (PID com velocidade adaptativa opcional), `curva_esquerda()` /
+`curva_direita()` (avança até as rodas chegarem na esquina, vira 90° e procura a linha),
+`procurar_linha()`, `ve_verde(porta)` e `desviar('direita')`. São um ponto de partida, ainda não
+testadas no robô: cada robô tem sensores e rodas num lugar diferente, então ajuste os números no seu.
+Veja o exemplo no começo do [obr.py](obr.py).
 
-Os valores acima são os padrões, medidos num robô EST: com eles, `andar_cm(30)` anda 30 cm e
-`virar_direita(90)` vira 90°. Só use `configurar` se o seu robô for diferente.
+Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
+no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura
+acontece no robô, e não no computador, o `if` e o `while` com sensor viram os blocos de decisão e de
+repetição do robô; `and` e `or` viram um `if` dentro do outro. Um `while` com sensor ainda não aceita
+`break`, e o `x if ... else y` numa linha só não funciona com sensor (o programa avisa nos dois casos).
 
-- `invertido=True` se o robô andar de ré quando deveria ir para frente.
-- `roda_cm` (diâmetro da roda) acerta o `andar_cm`.
-- `entre_rodas_cm` acerta o `virar_direita(90)`: se o robô virar a mais, diminua; se virar a menos, aumente.
-- `pausa` é o tempo parado depois de cada movimento que freia. Sem ela, o robô emenda um movimento no
-  outro e as viradas saem erradas; `pausa=0` desliga.
+### Ajustando ao seu robô: calibracao.py
+
+As medidas do robô ficam no [calibracao.py](calibracao.py), e todos os programas da pasta usam esses
+números sozinhos. Os valores que vêm nele foram medidos num robô EST: com eles, `andar_cm(30)` anda
+30 cm e `virar_direita(90)` vira 90°. Meça uma vez por robô:
+
+- `MOTOR_ESQUERDO`, `MOTOR_DIREITO` e `INVERTIDO` (True se o robô andar de ré quando deveria ir para frente).
+- `RODA_CM` acerta o `andar_cm`: se `andar_cm(30)` andar menos que 30 cm, diminua.
+- `ENTRE_RODAS_CM` acerta o `virar_direita(90)`: se o robô virar a mais, diminua; se virar a menos, aumente.
+- `PAUSA` é o tempo parado depois de cada movimento que freia. Sem ela, o robô emenda um movimento no
+  outro e as viradas saem erradas; `0` desliga.
+- `PRETO` e `BRANCO`: a luz refletida de cada sensor no preto e no branco. Para ver os números,
+  **Terminal → Executar Tarefa → Ver sensores na tela do robô** (a controladora não manda as leituras
+  pelo USB: elas aparecem na tela dela). Nos programas, `limite(1)` dá o meio entre o preto e o
+  branco do sensor 1: `if luz_refletida(1) < limite(1):`.
+
+Um programa pode mudar algum valor só para ele com `configurar(roda_cm=5.6)`, por exemplo.
+
+Antes de enviar, o programa confere o robô e avisa:
+- se a IDE EST estiver aberta, porque ela conversa com o robô ao mesmo tempo e pode atrapalhar;
+- se o programa usar uma porta em que o robô não tem nada ligado, por exemplo um sensor na porta 4
+  ou o motor A. O robô informa pelo USB o que está ligado em cada porta.
 
 ## Exemplo
 
@@ -183,6 +213,8 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [gabaritos/](gabaritos/) | programas compilados pela IDE oficial, usados como referência |
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
 | [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
+| [ferramentas/ver_sensores.py](ferramentas/ver_sensores.py) | mostra a luz dos sensores S1, S2 e S3 na tela do robô (para medir o preto e o branco) |
+| [calibracao.py](calibracao.py) | as medidas do robô (roda, entre rodas, motores, preto e branco de cada sensor) |
 | [ferramentas/publicar_simulador.py](ferramentas/publicar_simulador.py) | copia o simulador para `docs/simulador/` com o exemplo compilado (a demonstração online) |
 | [instalar.bat](instalar.bat) | prepara um computador novo |
 | [docs/formato.md](docs/formato.md) | protocolo, estrutura do programa e instruções da VM |

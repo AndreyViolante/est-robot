@@ -51,6 +51,15 @@
             "problemMatcher": []
         },
         {
+            "label": "Ver sensores na tela do robô",
+            "type": "shell",
+            "command": "python",
+            "args": ["${workspaceFolder}/ferramentas/ver_sensores.py"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true},
+            "problemMatcher": []
+        },
+        {
             "label": "Conferir compilador com os gabaritos da IDE",
             "type": "shell",
             "command": "python",

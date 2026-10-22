@@ -13,9 +13,13 @@ def main():
         sys.exit('ERRO: falta instalar o pywinusb. Rode o instalar.bat ou: pip install pywinusb')
 
     import robo
+    from enviar import AVISO_IDE, ide_est_aberta
     from estc import compilar
     from est_protocol import find_robot, upload
 
+    if ide_est_aberta():
+        print(f'{AVISO_IDE}
+')
     print('Procurando o robô no USB...')
     try:
         find_robot()

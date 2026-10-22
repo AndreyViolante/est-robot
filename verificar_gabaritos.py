@@ -1,7 +1,7 @@
 """Compila os programas de teste e compara byte a byte com o que a IDE EST gerou (gabaritos/).
 Uso: python verificar_gabaritos.py
 """
-import os, sys
+import os, re, sys
 
 import blocos
 from blocos import *
@@ -255,7 +255,7 @@ def verificar_robo():
             robo.virar_direita(90)
             if pausa_a_mao: robo.esperar(0.5)
         feito = compilar(robo.programa())
-        robo.configurar()
+        robo.configurar(pausa=0.5)
         return feito
     iguais = quadrado(False) == quadrado(True)
     print(f'  {"OK   " if iguais else "FALHA"} pausa depois de cada movimento = esperar(0.5) testado no robô')
@@ -299,7 +299,8 @@ def verificar_mensagens():
         ('andar(rotacoes=0,5)', 3, 'use ponto'),
         ('mostrar("Ola)', 3, 'faltou fechar as aspas'),
         ('esperar()', 3, 'faltou informar segundos'),
-        ('if distancia(4) < 20:\n    parar()', 3, 'use "with se(...)"'),
+        ('VEL = 30 if distancia(4) < 20 else 10', 3, 'não funciona aqui'),
+        ('while distancia(4) > 10:\n    andar(rotacoes=1)\n    break', 3, '"break"'),
     ]
     ok = True
     with tempfile.TemporaryDirectory() as pasta:
@@ -329,6 +330,238 @@ def verificar_mensagens():
     return ok
 
 
+# if/while do Python (enviar.py troca por se/senao/repetir_ate): cada par tem que dar os mesmos bytes
+IF_WHILE = [
+    ('if com sensor = se/senao',
+     """with para_sempre():
+    if luz_refletida(1) < 50:
+        motores(10, 30)
+    else:
+        motores(30, 10)""",
+     """with para_sempre():
+    with se(luz_refletida(1) < 50):
+        motores(10, 30)
+    with senao():
+        motores(30, 10)"""),
+    ('if sem else',
+     """if distancia(4) < 20:
+    parar()
+bip()""",
+     """with se(distancia(4) < 20):
+    parar()
+bip()"""),
+    ('elif = se dentro do senao',
+     """with para_sempre():
+    if cor_vista(1) == PRETO:
+        motores(10, 30)
+    elif cor_vista(2) == PRETO:
+        motores(30, 10)
+    else:
+        motores(30, 30)""",
+     """with para_sempre():
+    with se(cor_vista(1) == PRETO):
+        motores(10, 30)
+    with senao():
+        with se(cor_vista(2) == PRETO):
+            motores(30, 10)
+        with senao():
+            motores(30, 30)"""),
+    ('if not = comparação ao contrário',
+     """if not luz_refletida(1) < 50:
+    bip()""",
+     """with se(luz_refletida(1) >= 50):
+    bip()"""),
+    ('while com sensor = se + repetir_ate',
+     """while distancia(4) > 15:
+    motores(30, 30)
+parar()""",
+     """with se(distancia(4) > 15):
+    with repetir_ate(lambda: distancia(4) <= 15):
+        motores(30, 30)
+parar()"""),
+    ('while True = para_sempre',
+     """while True:
+    mostrar(luz_refletida(1))""",
+     """with para_sempre():
+    mostrar(luz_refletida(1))"""),
+    ('if e while do Python continuam do Python',
+     """VELOCIDADE = 30
+if VELOCIDADE > 20:
+    andar(rotacoes=1, potencia=VELOCIDADE)
+else:
+    andar(rotacoes=1)
+n = 0
+while n < 2:
+    bip()
+    n += 1""",
+     """andar(rotacoes=1, potencia=30)
+bip()
+bip()"""),
+    ('and com sensores = se dentro do se',
+     """if luz_refletida(1) < 50 and luz_refletida(2) < 50:
+    parar()
+else:
+    bip()""",
+     """c1 = luz_refletida(1) < 50
+guardar('x', 0)
+with se(c1):
+    with se(luz_refletida(2) < 50):
+        guardar('x', 1)
+with se(ler('x') == 1):
+    parar()
+with senao():
+    bip()"""),
+    ('or com sensores = se e senao',
+     """if distancia(4) < 10 or luz_refletida(1) < 30:
+    parar()""",
+     """c1 = distancia(4) < 10
+guardar('x', 0)
+with se(c1):
+    guardar('x', 1)
+with senao():
+    with se(luz_refletida(1) < 30):
+        guardar('x', 1)
+with se(ler('x') == 1):
+    parar()"""),
+    ('and/or do Python continuam do Python',
+     """VEL = 30
+a = 0 or 5
+b = 3 and 0
+guardar('a', a)
+guardar('b', b)
+if VEL > 10 and VEL < 50 and not VEL == 40:
+    bip()""",
+     """guardar('a', 5)
+guardar('b', 0)
+bip()"""),
+    ('for com range = repetir do robô',
+     """for _ in range(4):
+    andar_cm(30)
+    virar_direita(90)
+for i in range(2):
+    bip()""",
+     """with repetir(4):
+    andar_cm(30)
+    virar_direita(90)
+with repetir(2):
+    bip()"""),
+    ('for que usa a variável continua repetindo no Python',
+     """for i in range(3):
+    tocar(400 + i * 100, 0.2)
+t = 0
+for _ in range(3):
+    t += 1
+guardar('t', t)""",
+     """tocar(400, 0.2)
+tocar(500, 0.2)
+tocar(600, 0.2)
+guardar('t', 3)"""),
+    ('notas pelo nome e melodia',
+     """tocar('la4', 0.5)
+melodia('do re - mi:0.6')""",
+     """tocar(440, 0.5)
+tocar(523, 0.3)
+tocar(587, 0.3)
+esperar(0.3)
+tocar(659, 0.6)"""),
+]
+
+
+def verificar_novidades():
+    """Comandos novos sem referência da IDE: compilam e geram as instruções esperadas."""
+    import tempfile
+    from enviar import carregar, explicar
+    casos = [
+        ('ao_mesmo_tempo inicia as tarefas antes de esperar',
+         """with ao_mesmo_tempo():
+    with tarefa():
+        andar_cm(30)
+    with tarefa():
+        melodia('do re mi')""",
+         lambda d: re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00\x20\x01\x00\x20\x02\x00', d, re.S) is not None),
+        ('botões da controladora (leitura interna 0x32)',
+         """esperar_botao()
+if botao_apertado() == 2:
+    bip()""",
+         lambda d: b'\x32\x03\x00\x01' in d),
+        ('painel mostra nome e valor em cada linha',
+         """painel(erro=luz_refletida(1) - luz_refletida(2), vel=20)""",
+         lambda d: b'erro:' in d and b'vel:' in d),
+        ('ajustando: botões em paralelo com o programa',
+         """with ajustando('kp', 0.4, 0.05):
+    while True:
+        motores(20 + ler('kp'), 20 - ler('kp'))""",
+         lambda d: b'\x32\x03\x00\x01' in d and re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00', d, re.S) is not None),
+        ('biblioteca obr compila',
+         """from obr import *
+seguidor = Seguidor(kp=0.4, kd=1.5, velocidade=22, minima=14)
+while True:
+    if luz_refletida(1) < limite(1) - 25:
+        curva_esquerda()
+        seguidor.recomecar()
+    elif distancia(4) < 10:
+        desviar('direita')
+    else:
+        seguidor.passo()""",
+         lambda d: len(d) > 0),
+        ('while com and compila',
+         """while luz_refletida(1) > 50 and distancia(4) > 10:
+    motores(30, 30)
+parar()""",
+         lambda d: len(d) > 0),
+    ]
+    erros = [
+        ('comando solto no ao_mesmo_tempo', 'with ao_mesmo_tempo():\n    bip()', 'cada parte num "with tarefa():"'),
+        ('tarefa fora do ao_mesmo_tempo', 'with tarefa():\n    bip()', 'logo dentro de um "with ao_mesmo_tempo():"'),
+        ('nota que não existe', "tocar('dó maior')", 'não conheço a nota'),
+        ('nota grave demais', "tocar('do4')", 'grave demais'),
+    ]
+    ok = True
+    with tempfile.TemporaryDirectory() as pasta:
+        arq = os.path.join(pasta, 'novo.py')
+        for nome, codigo, confere in casos:
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write('from robo import *\n\n' + codigo + '\n')
+            try:
+                certo = confere(compilar(carregar(arq)))
+            except Exception as e:
+                certo = False
+                nome += f' ({type(e).__name__}: {e})'
+            ok &= certo
+            print(f'  {"OK   " if certo else "FALHA"} {nome}')
+        for nome, codigo, trecho in erros:
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write('from robo import *\n\n' + codigo + '\n')
+            try:
+                carregar(arq)
+                texto = 'nenhum erro'
+            except Exception as e:
+                texto = explicar(e, arq)[2]
+            certo = trecho in texto
+            ok &= certo
+            print(f'  {"OK   " if certo else "FALHA"} avisa: {nome} -> {texto}')
+    return ok
+
+
+def verificar_if_while():
+    """O if/while normal do Python gera o mesmo programa que os with se(...)/repetir_ate equivalentes."""
+    import tempfile
+    from enviar import carregar
+    ok = True
+    with tempfile.TemporaryDirectory() as pasta:
+        for nome, com_if, com_with in IF_WHILE:
+            feitos = []
+            for i, codigo in enumerate((com_if, com_with)):
+                arq = os.path.join(pasta, f'p{i}.py')
+                with open(arq, 'w', encoding='utf-8') as f:
+                    f.write('from robo import *\n\n' + codigo + '\n')
+                feitos.append(compilar(carregar(arq)))
+            certo = feitos[0] == feitos[1]
+            ok &= certo
+            print(f'  {"OK   " if certo else "FALHA"} {nome}')
+    return ok
+
+
 def main():
     blocos.MOTORS = 'B+C'
     ok = 0
@@ -342,6 +575,8 @@ def main():
         ok += comparar(fn.__name__, nosso, ide)
     print(f'\n{ok}/{len(TESTES)} gabaritos identicos\n')
     robo_ok = verificar_robo()
+    robo_ok &= verificar_if_while()
+    robo_ok &= verificar_novidades()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

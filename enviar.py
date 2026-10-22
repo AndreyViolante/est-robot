@@ -6,9 +6,127 @@ Uso:  python enviar.py quadrado.py                 compila, envia e já executa
       python enviar.py quadrado.py --so-gravar     envia sem executar (iniciar pelo menu do robô)
       python enviar.py quadrado.py --so-compilar   só compila (não precisa do robô)
 """
-import difflib, importlib.util, inspect, os, re, sys, traceback
+import ast, difflib, inspect, os, re, subprocess, sys, tokenize, traceback, types
 
 from estc import compilar
+
+
+class _IfWhileDoRobo(ast.NodeTransformer):
+    """Troca cada if/while do programa por robo._Decisao/_Repeticao, que montam os blocos se/senão/repetir
+    quando a condição vem do robô (sensor, variável) e deixam o if/while normal quando ela é do Python.
+
+        if T: A else: B          _rb1 = __robo__._Decisao(T)
+                                 if _rb1.sim(): A
+                                 _rb1.fim()
+                                 if _rb1.nao(): B
+                                 _rb1.fim()
+
+        while T: A               _rb2 = __robo__._Repeticao(lambda: T)
+                                 while _rb2.volta(): A
+                                 _rb2.fim()
+
+    E também: a and b -> __robo__._e(lambda: a, lambda: b); a or b -> __robo__._ou(...);
+    not a -> __robo__._nao_geral(a); for _ in range(n) (variável sem uso) -> for _rb3 in __robo__._vezes(n).
+    """
+    def __init__(self, arvore):
+        self.n = 0
+        self.usados = {no.id for no in ast.walk(arvore) if isinstance(no, ast.Name) and isinstance(no.ctx, ast.Load)}
+
+    def _nome(self):
+        self.n += 1
+        return f'_rb{self.n}'
+
+    @staticmethod
+    def _chama(var, metodo):
+        return ast.Call(ast.Attribute(ast.Name(var, ast.Load()), metodo, ast.Load()), [], [])
+
+    @staticmethod
+    def _teste(no):
+        if isinstance(no.test, ast.UnaryOp) and isinstance(no.test.op, ast.Not):
+            return no.test.operand, True
+        return no.test, False
+
+    def _cria(self, var, classe, argumentos, negar, extras=()):
+        robo_ = ast.Attribute(ast.Name('__robo__', ast.Load()), classe, ast.Load())
+        palavras = [ast.keyword('negar', ast.Constant(negar))] + list(extras)
+        return ast.Assign([ast.Name(var, ast.Store())], ast.Call(robo_, argumentos, palavras))
+
+    @staticmethod
+    def _robo(funcao, argumentos):
+        return ast.Call(ast.Attribute(ast.Name('__robo__', ast.Load()), funcao, ast.Load()), argumentos, [])
+
+    def visit_BoolOp(self, no):
+        self.generic_visit(no)
+        if any(isinstance(n, (ast.NamedExpr, ast.Yield, ast.YieldFrom, ast.Await))
+               for v in no.values for n in ast.walk(v)):
+            return no                                   # := e yield não cabem num lambda
+        partes = [ast.Lambda(ast.arguments([], [], None, [], [], None, []), v) for v in no.values]
+        return _na_linha(self._robo('_e' if isinstance(no.op, ast.And) else '_ou', partes), no)
+
+    def visit_UnaryOp(self, no):
+        self.generic_visit(no)
+        if not isinstance(no.op, ast.Not):
+            return no
+        return _na_linha(self._robo('_nao_geral', [no.operand]), no)
+
+    def visit_For(self, no):
+        self.generic_visit(no)
+        it = no.iter
+        if (isinstance(no.target, ast.Name) and no.target.id not in self.usados and not no.orelse
+                and isinstance(it, ast.Call) and isinstance(it.func, ast.Name) and it.func.id == 'range'
+                and len(it.args) == 1 and not it.keywords
+                and not any(isinstance(n, (ast.Break, ast.Continue)) for n in _sem_lacos_internos(no.body))):
+            no.target = ast.Name(self._nome(), ast.Store())
+            no.iter = self._robo('_vezes', it.args)
+            _na_linha(no, no)
+        return no
+
+    def visit_If(self, no):
+        self.generic_visit(no)
+        teste, negar = self._teste(no)
+        var = self._nome()
+        novos = [self._cria(var, '_Decisao', [teste], negar),
+                 ast.If(self._chama(var, 'sim'), no.body, []),
+                 ast.Expr(self._chama(var, 'fim'))]
+        if no.orelse:
+            novos += [ast.If(self._chama(var, 'nao'), no.orelse, []), ast.Expr(self._chama(var, 'fim'))]
+        return [_na_linha(n, no) for n in novos]
+
+    def visit_While(self, no):
+        self.generic_visit(no)
+        if no.orelse:
+            return no                                   # while ... else: fica do jeito do Python
+        tem_break = any(isinstance(n, (ast.Break, ast.Continue)) for n in _sem_lacos_internos(no.body))
+        if isinstance(no.test, ast.Constant) and no.test.value is True:
+            if tem_break:
+                return no                               # while True com break: lógica do Python
+            sempre = ast.Call(ast.Attribute(ast.Name('__robo__', ast.Load()), 'para_sempre', ast.Load()), [], [])
+            return ast.copy_location(ast.With([ast.withitem(sempre)], no.body), no)
+        teste, negar = self._teste(no)
+        var = self._nome()
+        condicao = ast.Lambda(ast.arguments([], [], None, [], [], None, []), teste)
+        novos = [self._cria(var, '_Repeticao', [condicao], negar, [ast.keyword('tem_break', ast.Constant(tem_break))]),
+                 ast.While(self._chama(var, 'volta'), no.body, []),
+                 ast.Expr(self._chama(var, 'fim'))]
+        return [_na_linha(n, no) for n in novos]
+
+
+def _na_linha(novo, original):
+    """Os pedaços criados ficam na linha do if/while original: um erro neles aponta para essa linha."""
+    for no in ast.walk(novo):
+        if isinstance(no, (ast.stmt, ast.expr)) and getattr(no, 'lineno', None) is None:
+            no.lineno = no.end_lineno = original.lineno
+            no.col_offset = no.end_col_offset = original.col_offset
+    return novo
+
+
+def _sem_lacos_internos(corpo):
+    """Os comandos de um laço, sem entrar em laços e funções de dentro (o break deles é deles)."""
+    for no in corpo:
+        yield no
+        if not isinstance(no, (ast.For, ast.While, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            for campo in ('body', 'orelse', 'finalbody', 'handlers'):
+                yield from _sem_lacos_internos(getattr(no, campo, []) or [])
 
 
 def carregar(arquivo):
@@ -17,9 +135,13 @@ def carregar(arquivo):
         sys.path.insert(0, pasta)
     import robo
     robo.novo_programa()
-    spec = importlib.util.spec_from_file_location('programa_usuario', arquivo)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    with tokenize.open(arquivo) as f:
+        arvore = ast.parse(f.read(), filename=arquivo)
+    arvore = ast.fix_missing_locations(_IfWhileDoRobo(arvore).visit(arvore))
+    mod = types.ModuleType('programa_usuario')
+    mod.__file__ = arquivo
+    mod.__robo__ = robo
+    exec(compile(arvore, arquivo, 'exec'), mod.__dict__)
     if hasattr(mod, 'PROGRAMA'):
         return mod.PROGRAMA
     feito = robo.programa()
@@ -67,7 +189,7 @@ def _parametros(funcao):
 def explicar(erro, arquivo):
     """Transforma um erro do programa do aluno numa mensagem curta em portugues: (linha, texto, mensagem)."""
     linha, codigo = None, ''
-    if isinstance(erro, SyntaxError):
+    if isinstance(erro, SyntaxError) and erro.lineno is not None:      # erro de digitação (o robo.py levanta sem linha)
         linha, codigo = erro.lineno, (erro.text or '').rstrip()
         texto = next((pt for en, pt in _SINTAXE if en in str(erro.msg)), f'erro de escrita: {erro.msg}')
         return linha, codigo, texto
@@ -114,6 +236,60 @@ def _mostrar_erro(erro, arquivo):
     print(f'  {texto}\n')
 
 
+def ide_est_aberta():
+    """True se a IDE EST (maintest.exe) estiver aberta: ela conversa com o robô junto e atrapalha o envio."""
+    if os.name != 'nt':
+        return False
+    try:
+        saida = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq maintest.exe', '/NH'],
+                               capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return 'maintest.exe' in saida.lower()
+
+
+_SENSORES = {'3002', '3008', '3009', '2002', '2003', '2004'}      # blocos que leem um sensor numa porta
+_MOTORES = {'1001', '1002', '1003', '1004'}
+
+
+def portas_usadas(programa):
+    """{porta: 'sensor' | 'motor'} das portas que os blocos do programa usam."""
+    usadas = {}
+
+    def percorre(blocos):
+        for b in blocos:
+            porta = str(b.port).strip().upper()
+            if b.t in _SENSORES and porta in ('1', '2', '3', '4'):
+                usadas[porta] = 'sensor'
+            elif b.t in _MOTORES:
+                for p in porta.split('+'):
+                    if p in ('A', 'B', 'C', 'D'):
+                        usadas[p] = 'motor'
+            percorre(b.b1); percorre(b.b2)
+            for ramo in getattr(b, 'ramos', []):
+                percorre(ramo)
+    percorre(programa)
+    return usadas
+
+
+def avisos_de_portas(programa, ligadas):
+    """Avisa quando o programa usa uma porta em que o robô diz não ter nada ligado."""
+    avisos = []
+    for porta, coisa in sorted(portas_usadas(programa).items()):
+        if porta not in ligadas:
+            if coisa == 'sensor':
+                avisos.append(f'o programa usa o sensor da porta {porta}, mas o robô não tem nada ligado nela. '
+                              f'Confira o cabo e a porta.')
+            else:
+                avisos.append(f'o programa usa o motor da porta {porta}, mas o robô não tem motor ligado nela. '
+                              f'Confira o cabo, ou as portas MOTOR_ESQUERDO e MOTOR_DIREITO no calibracao.py.')
+    return avisos
+
+
+AVISO_IDE = ('AVISO: a IDE EST está aberta. Ela fica conversando com o robô ao mesmo tempo e pode '
+             'atrapalhar o envio. Feche a IDE se o programa não começar.')
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -137,7 +313,13 @@ def main():
 
     if '--so-compilar' in sys.argv:
         return
-    from est_protocol import upload
+    from est_protocol import portas_ligadas, upload
+    if ide_est_aberta():
+        print(f'\n{AVISO_IDE}\n')
+    ligadas = portas_ligadas()
+    if ligadas is not None:
+        for aviso in avisos_de_portas(programa, ligadas):
+            print(f'\nAVISO: {aviso}\n')
     so_gravar = '--so-gravar' in sys.argv
     try:
         upload(dados, prog_path=f'/vscode/{nome}', executar=not so_gravar)

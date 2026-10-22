@@ -178,6 +178,46 @@ def read_response(handle, timeout_ms: int = 400) -> bytes | None:
     return data[:j+1] if j > 0 else None
 
 
+CONSULTA_ESTADO = frame(0x02, b'\x01\x00\x00')      # a IDE manda isto sem parar
+NOMES_PORTAS = ['1', '2', '3', '4', 'A', 'B', 'C', 'D']
+
+
+def ler_portas(resposta: bytes) -> dict | None:
+    """Resposta da consulta de estado -> {porta: tipo} só das portas com algo ligado.
+    Visto no robô (22/10): 8 grupos [00, porta, tipo, ?] (porta 1-4 sensores, 5-8 = A-D; porta 0 = nada).
+    Tipos vistos: 1 = sensor de cor, 4 = motor. Ex.: {'1': 1, '2': 1, 'B': 4, 'C': 4}"""
+    i = resposta.find(b'\x68\x21\x02')
+    if i < 0 or len(resposta) < i + 5 + 33:
+        return None
+    dados = resposta[i + 5:i + 5 + 33]          # depois de 68 21 02 e do tamanho (2 bytes)
+    portas = {}
+    for k in range(8):
+        _, porta, tipo, _ = dados[1 + 4 * k:5 + 4 * k]
+        if 1 <= porta <= 8:
+            portas[NOMES_PORTAS[porta - 1]] = tipo
+    return portas
+
+
+def portas_ligadas(timeout_ms: int = 400) -> dict | None:
+    """Pergunta ao robô o que está ligado em cada porta. None se não der para saber."""
+    try:
+        handle = open_device(find_robot())
+    except RuntimeError:
+        return None
+    try:
+        while read_response(handle, 50):          # descarta respostas velhas
+            pass
+        for _ in range(3):
+            send_report(handle, CONSULTA_ESTADO)
+            resposta = read_response(handle, timeout_ms)
+            portas = ler_portas(resposta) if resposta else None
+            if portas is not None:
+                return portas
+        return None
+    finally:
+        k32.CloseHandle(handle)
+
+
 def upload(program_data: bytes,
            prog_path: str = '/vscode/programa',
            verbose: bool = True, executar: bool = True):

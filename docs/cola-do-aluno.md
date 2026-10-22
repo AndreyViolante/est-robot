@@ -50,6 +50,27 @@ with repetir_ate(lambda: distancia(4) < 15):   # repete até chegar perto
     motores(30, 30)
 ```
 
+Também dá para usar o `if` e o `while` normais do Python com os sensores:
+
+```python
+while True:                      # repete sem parar
+    if luz_refletida(1) < 50:    # se o sensor 1 vê escuro...
+        motores(10, 30)
+    else:                        # ...senão
+        motores(30, 10)
+
+while distancia(4) > 15:         # anda enquanto estiver longe
+    motores(30, 30)
+parar()
+
+if luz_refletida(1) < 50 and luz_refletida(2) < 50:   # os dois no preto: cruzamento
+    andar_cm(5)
+
+for _ in range(4):               # repete 4 vezes
+    andar_cm(30)
+    virar_direita(90)
+```
+
 Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<', 30)`,
 `esperar_cor(1, VERDE)`, `se_tocado(4)`, `se_luz(1, '<', 30)`, `repetir_ate_cor(1, PRETO)`.
 
@@ -58,7 +79,9 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 | Comando | O que faz |
 |---|---|
 | `mostrar('Oi')` / `mostrar(distancia(4), linha=2)` | escreve na tela (linhas 1, 2 e 3; a linha 1 apaga a tela) |
-| `bip()` / `tocar(440, 0.5)` | som (frequência, segundos) |
+| `bip()` / `tocar(440, 0.5)` / `tocar('la', 0.5)` | som (frequência ou nota, segundos) |
+| `melodia('do re mi fa sol')` | várias notas seguidas (`-` é pausa) |
+| `painel(erro=..., vel=...)` | mostra até 3 valores na tela, com o nome na frente |
 | `luz('azul')` / `apagar_luz()` | luz do robô (`'azul'`, `'roxo'`, `'vermelho'`) |
 | `guardar('pontos', 0)` / `ler('pontos')` | guarda e lê um número |
 
@@ -67,7 +90,6 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 - Número com casa decimal usa **ponto**: `0.5` (e não `0,5`).
 - `with ...` termina com **dois-pontos** `:` e as linhas de dentro começam com **4 espaços**.
 - Texto vai entre **aspas**: `mostrar('Oi')`.
-- Para comparar sensores use `with se(...)`, e não `if`.
 - Para linha preta no chão branco, use a **luz refletida** (`luz_refletida`, `se_luz`): é mais confiável que a cor.
 - Use **um modo só para cada sensor**: misturar cor e luz refletida no mesmo sensor deixa ele lento e errando (o programa avisa).
 - Se der erro, leia a mensagem: ela diz **a linha** e o que corrigir.

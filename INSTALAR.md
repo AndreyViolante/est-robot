@@ -44,8 +44,9 @@ Leva uns 10 minutos por computador. Funciona no **Windows**.
 | `Falta o pywinusb` | Rode o `instalar.bat` de novo (precisa de internet) |
 | O `Ctrl+Shift+B` pergunta qual tarefa usar | Escolha **Enviar para o Robô** |
 | `ERRO na linha …` | É um erro no programa: a mensagem explica o que corrigir |
-| O robô anda de ré quando deveria ir para frente | Coloque `configurar(invertido=True)` no começo do programa |
-| O robô vira mais ou menos que 90° | Ajuste `configurar(entre_rodas_cm=...)`: diminua se virar a mais, aumente se virar a menos. Se você usou `configurar(pausa=0)`, volte a pausa para 0.5 |
+| O robô anda de ré quando deveria ir para frente | No `calibracao.py`, mude para `INVERTIDO = True` |
+| O robô vira mais ou menos que 90° | No `calibracao.py`, ajuste `ENTRE_RODAS_CM`: diminua se virar a mais, aumente se virar a menos. Se a `PAUSA` estiver em 0, volte para 0.5 |
+| O envio avisa que a IDE EST está aberta | Feche a IDE: ela conversa com o robô ao mesmo tempo e pode impedir o programa de começar |
 
 Em computadores da escola, a instalação do Python e do `pywinusb` pode precisar de permissão do
 responsável pela rede.
