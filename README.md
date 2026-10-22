@@ -39,7 +39,16 @@ reversa e é testado comparando, byte a byte, a saída dele com programas compil
 
 ## Uso
 
-Funciona no **Windows**, com Python 3.10+ e VS Code (veja o [INSTALAR.md](INSTALAR.md)).
+Funciona no **Windows**, com Python 3.10+ ou com o pacote que já traz o Python, e VS Code (veja o
+[INSTALAR.md](INSTALAR.md)).
+
+**Computador da escola que não deixa instalar programas?** Use o pacote para Windows com o Python
+dentro: baixe o `est-robot-windows.zip` em [Releases](https://github.com/AndreyViolante/est-robot/releases/latest),
+clique com o botão direito → **Extrair Tudo** e abra a pasta no VS Code. Não instala o Python e não
+precisa de administrador nem de internet: as tarefas do VS Code usam sozinhas o Python da pasta
+`python`. Para receber as novidades, use **Terminal → Executar Tarefa… → Atualizar o projeto**: ela
+baixa a versão nova do GitHub e não mexe no `calibracao.py`, no `meu_programa.py` nem nos programas
+dos alunos.
 
 1. Abra esta pasta no VS Code.
 2. Abra o [meu_programa.py](meu_programa.py) e aperte **`Ctrl+Shift+B`**: se o robô acender a luz,
@@ -70,6 +79,21 @@ Pelo terminal:
 python enviar.py meu_programa.py
 python enviar.py meu_programa.py --so-gravar
 ```
+
+### Programas gravados no robô e bateria
+
+Cada envio grava o programa na pasta **vscode** do robô, e ela vai enchendo. Para ver e apagar:
+**Terminal → Executar Tarefa → Programas no robô**. Aparecem a bateria e a lista de programas; para
+apagar um, digite o número dele e confirme com `s`. Arquivos de outras pastas (gravados pela IDE EST)
+só são apagados se você digitar o caminho completo, como aparece na lista. Apagar não tem volta.
+
+**Terminal → Executar Tarefa → Bateria do robô** mostra só a bateria, de 0 a 4 tracinhos, como na IDE.
+Com 0 ou 1 tracinho, carregue o robô: bateria fraca deixa os motores fracos e os sensores lendo errado,
+e o programa parece estar com defeito sem estar. Pelo terminal: `python ferramentas/programas_no_robo.py`
+(também aceita `--listar`, `--bateria` e `--apagar nome`), com a IDE EST fechada.
+
+Os comandos de listar, apagar e ler a bateria são os mesmos que a IDE manda, mas **ainda não foram
+testados no robô**.
 
 ### Simulador (sem o robô)
 
@@ -214,6 +238,10 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
 | [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
 | [ferramentas/ver_sensores.py](ferramentas/ver_sensores.py) | mostra a luz dos sensores S1, S2 e S3 na tela do robô (para medir o preto e o branco) |
+| [ferramentas/programas_no_robo.py](ferramentas/programas_no_robo.py) | lista e apaga os programas gravados no robô e mostra a bateria |
+| [ferramentas/rodar.cmd](ferramentas/rodar.cmd) | as tarefas do VS Code usam o Python do pacote, se houver, ou o do computador |
+| [ferramentas/atualizar.py](ferramentas/atualizar.py) | tarefa "Atualizar o projeto" (baixa a versão nova sem mexer nos arquivos do professor) |
+| [ferramentas/empacotar.py](ferramentas/empacotar.py) | monta o pacote para Windows com o Python dentro |
 | [calibracao.py](calibracao.py) | as medidas do robô (roda, entre rodas, motores, preto e branco de cada sensor) |
 | [ferramentas/publicar_simulador.py](ferramentas/publicar_simulador.py) | copia o simulador para `docs/simulador/` com o exemplo compilado (a demonstração online) |
 | [instalar.bat](instalar.bat) | prepara um computador novo |

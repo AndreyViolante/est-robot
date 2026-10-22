@@ -258,3 +258,140 @@ def upload(program_data: bytes,
 
     finally:
         k32.CloseHandle(handle)
+
+
+# ── Arquivos gravados e bateria ──────────────────────────────────────────────
+# Achados no maintest.exe da IDE (22/10): ao conectar ela manda 01, 0C 01, 09 03 e 03 (ver o
+# order_content.txt). O 09 é o comando de arquivos: sub 03 = listar, 02 = apagar, 04 = ler, 01 = copiar.
+# Resposta do robô: 68 21 [CMD] [len16] [payload] [soma] 16, igual aos pacotes que vão.
+
+LISTAR_ARQUIVOS = frame(0x09, b'\x01\x00\x03')
+INFO_ROBO = DOWNLOAD          # 0C 01: a resposta traz o nível da bateria (o upload já manda este pacote)
+NIVEL_FRACO = 1               # 0 ou 1 tracinho de 4: bateria fraca
+
+
+def _partes(caminho: str) -> tuple:
+    """'/pasta/arquivo' -> ('pasta', 'arquivo'). Como a IDE: sempre pasta e arquivo, nunca uma pasta inteira."""
+    partes = caminho.split('/')
+    if (len(partes) != 3 or partes[0] or not partes[1] or not partes[2] or '..' in partes
+            or not all(32 < ord(c) < 127 for c in caminho)):
+        raise ValueError(f'caminho inválido: {caminho!r} (use /pasta/arquivo, como aparece na lista)')
+    return partes[1], partes[2]
+
+
+def pkt_apagar(caminho: str) -> bytes:
+    """Apaga um arquivo do robô: 09 sub 02 + '/pasta/arquivo' (como a IDE monta no send_deletefile)."""
+    pasta, arquivo = _partes(caminho)
+    path_b = f'/{pasta}/{arquivo}'.encode('ascii')
+    return frame(0x09, (1 + len(path_b)).to_bytes(2, 'little') + b'\x02' + path_b)
+
+
+def pacotes_resposta(resposta: bytes, cmd: int) -> list:
+    """Payloads (o que vem depois do tamanho) dos pacotes 68 21 [cmd] inteiros e com a soma certa."""
+    achados, cabeca = [], bytes([0x68, 0x21, cmd])
+    i = resposta.find(cabeca)
+    while i >= 0:
+        fim = i + 5 + int.from_bytes(resposta[i + 3:i + 5], 'little')
+        if fim + 2 <= len(resposta) and resposta[fim + 1] == 0x16 and checksum(resposta[i:fim]) == resposta[fim]:
+            achados.append(resposta[i + 5:fim])
+            i = resposta.find(cabeca, fim + 2)
+        else:
+            i = resposta.find(cabeca, i + 1)
+    return achados
+
+
+def ler_info(resposta: bytes) -> tuple | None:
+    """Resposta do 0C 01 -> (nível da bateria de 0 a 4, texto). O nível é o número de tracinhos da pilha na
+    tela de monitor da IDE (figuras dianchi/0..4.png). O texto a IDE só guarda (não se sabe o que é)."""
+    for p in pacotes_resposta(resposta, 0x0C):
+        if p:
+            return p[0], p[1:].split(b'\x00')[0].decode('ascii', 'replace')
+    return None
+
+
+def ler_lista(payload: bytes) -> list:
+    """Payload de uma resposta 09 sub 03 -> [(total, número, tamanho, '/pasta/arquivo')].
+    Depois do 03 vem cada arquivo: [total] [número, de 1 a total] [tamanho: float de 4 bytes] [/pasta/arquivo] 00."""
+    itens, i = [], 1
+    while i + 7 <= len(payload):
+        fim = payload.find(b'\x00', i + 6)
+        if fim < 0:
+            fim = len(payload)
+        tamanho = struct.unpack('<f', payload[i + 2:i + 6])[0]
+        tamanho = int(tamanho) if abs(tamanho) < 2 ** 31 else 0          # (NaN também vira 0)
+        itens.append((payload[i], payload[i + 1], tamanho, payload[i + 6:fim].decode('ascii', 'replace')))
+        i = fim + 1
+    return itens
+
+
+def _abrir():
+    handle = open_device(find_robot())
+    while read_response(handle, 50):          # descarta respostas velhas
+        pass
+    return handle
+
+
+def info_robo(timeout_ms: int = 600) -> tuple:
+    """Pergunta ao robô o nível da bateria: (nível de 0 a 4, texto). RuntimeError se não der."""
+    handle = _abrir()
+    try:
+        for _ in range(3):
+            send_report(handle, INFO_ROBO)
+            resposta = read_response(handle, timeout_ms)
+            info = ler_info(resposta) if resposta else None
+            if info is not None:
+                return info
+    finally:
+        k32.CloseHandle(handle)
+    raise RuntimeError('o robô não respondeu à pergunta da bateria')
+
+
+def bateria(timeout_ms: int = 600) -> int | None:
+    """Nível da bateria de 0 (vazia) a 4 (cheia), como os tracinhos da IDE. None se não der para saber.
+    Bateria fraca (nível <= NIVEL_FRACO) deixa motores e sensores estranhos."""
+    try:
+        return info_robo(timeout_ms)[0]
+    except RuntimeError:
+        return None
+
+
+def listar_arquivos(timeout_ms: int = 1500) -> list:
+    """Arquivos gravados no robô, em todas as pastas: [('/vscode/meu_programa.dbf', tamanho), ...].
+    RuntimeError se o robô não estiver no USB, não responder ou mandar a lista pela metade."""
+    handle = _abrir()
+    try:
+        send_report(handle, LISTAR_ARQUIVOS)
+        arquivos, total, respondeu = {}, 0, False
+        while not respondeu or len(arquivos) < total:
+            resposta = read_response(handle, timeout_ms)
+            if resposta is None:
+                break
+            for p in pacotes_resposta(resposta, 0x09):
+                if p[:1] == b'\x03':
+                    respondeu = True
+                    for total, n, tamanho, nome in ler_lista(p):
+                        arquivos[n] = (nome, tamanho)
+    finally:
+        k32.CloseHandle(handle)
+    if not respondeu:
+        raise RuntimeError('o robô não mandou a lista de arquivos')
+    if len(arquivos) < total:
+        raise RuntimeError(f'a lista de arquivos veio pela metade ({len(arquivos)} de {total}): tente de novo')
+    return [arquivos[n] for n in sorted(arquivos)]
+
+
+def apagar_arquivo(caminho: str, timeout_ms: int = 10000) -> bool:
+    """Apaga um arquivo do robô ('/pasta/arquivo', como vem em listar_arquivos). True se o robô disse que
+    apagou, False se disse que não. A IDE espera a resposta (09 sub 02 [1 = apagou]) por até 10 s."""
+    pacote = pkt_apagar(caminho)
+    handle = _abrir()
+    try:
+        send_report(handle, pacote)
+        limite = time.monotonic() + timeout_ms / 1000
+        while time.monotonic() < limite:
+            for p in pacotes_resposta(read_response(handle, 500) or b'', 0x09):
+                if len(p) >= 2 and p[0] == 0x02:
+                    return p[1] == 1
+    finally:
+        k32.CloseHandle(handle)
+    raise RuntimeError('o robô não respondeu ao pedido de apagar')

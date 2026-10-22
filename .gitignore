@@ -14,3 +14,9 @@ order_content*.txt
 
 # programa do aluno gerado por simular.py a cada simulação
 simulador/programa.js
+
+# pacote para Windows (ferramentas/empacotar.py) e o Python que vai dentro dele
+/dist/
+/python/
+# guardadas pelo "Atualizar o projeto" (ferramentas/atualizar.py)
+/copias_de_seguranca/

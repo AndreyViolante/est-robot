@@ -6,7 +6,15 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
 
 ## Antes da primeira aula
 
-- Instale tudo em cada computador seguindo o [INSTALAR.md](../INSTALAR.md).
+- Instale tudo em cada computador seguindo o [INSTALAR.md](../INSTALAR.md). Onde não dá para instalar
+  programas, use o `est-robot-windows.zip`, que já traz o Python: copie para cada computador (pode ser
+  por pendrive), use **Extrair Tudo** e abra a pasta no VS Code. Dica: prepare um computador, meça o
+  robô no `calibracao.py` e copie a pasta inteira para os outros.
+- De tempos em tempos, rode a tarefa **Atualizar o projeto**. Ela troca só os arquivos do projeto e
+  nunca mexe no `calibracao.py`, no `meu_programa.py` nem em programas criados por vocês; a versão
+  antiga do que foi trocado fica em `copias_de_seguranca`. Peça a cada aluno que salve o programa num
+  arquivo com nome próprio (ex.: `aulas\joao_aula3.py`).
+- A tarefa **Programas no robô** mostra a bateria e apaga os programas antigos da pasta vscode do robô.
 - Em cada computador, com o robô no USB, abra o `meu_programa.py` e aperte **`Ctrl+Shift+B`**: luz,
   som e "Funcionou!" na tela mostram que conectou (a tarefa **Testar conexão com o robô** faz o mesmo).
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
