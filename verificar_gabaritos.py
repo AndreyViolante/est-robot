@@ -562,6 +562,25 @@ def verificar_if_while():
     return ok
 
 
+def verificar_sintaxe():
+    """Todos os .py do projeto compilam (um erro de escrita numa ferramenta passaria despercebido)."""
+    raiz = os.path.dirname(os.path.abspath(__file__))
+    ruins = []
+    for pasta in ('', 'ferramentas', 'exemplos'):
+        for nome in sorted(os.listdir(os.path.join(raiz, pasta))):
+            if nome.endswith('.py'):
+                arq = os.path.join(raiz, pasta, nome)
+                try:
+                    with open(arq, encoding='utf-8') as f:
+                        compile(f.read(), arq, 'exec')
+                except SyntaxError as e:
+                    ruins.append(f'{os.path.join(pasta, nome)} linha {e.lineno}: {e.msg}')
+    for r in ruins:
+        print(f'  FALHA erro de escrita em {r}')
+    print(f'  {"OK   " if not ruins else "FALHA"} todos os arquivos .py compilam')
+    return not ruins
+
+
 def main():
     blocos.MOTORS = 'B+C'
     ok = 0
@@ -577,6 +596,7 @@ def main():
     robo_ok = verificar_robo()
     robo_ok &= verificar_if_while()
     robo_ok &= verificar_novidades()
+    robo_ok &= verificar_sintaxe()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

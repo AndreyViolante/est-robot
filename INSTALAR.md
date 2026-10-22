@@ -52,17 +52,21 @@ computador quando não existe (jeito B).
 
 ## Atualizar o projeto
 
-Quando sair uma versão nova: **Terminal → Executar Tarefa… → Atualizar o projeto** (precisa de
-internet). A tarefa baixa a versão mais nova do GitHub, troca os arquivos do projeto e mostra o que
-mudou:
+Quando sair uma versão nova, o envio para o robô avisa (ele pergunta ao GitHub no máximo uma vez por
+dia). Para atualizar: **Terminal → Executar Tarefa… → Atualizar o projeto** (precisa de internet). A
+tarefa baixa a **última versão publicada** em [Releases](https://github.com/AndreyViolante/est-robot/releases),
+que já passou pelos testes, mostra as novidades e troca os arquivos do projeto:
 
-- **não mexe** no `calibracao.py`, no `meu_programa.py`, no `minha_pid.py` nem nos programas que você
-  e os alunos criaram (qualquer `.py` que não seja do projeto);
+- **não mexe** no `meu_programa.py`, no `minha_pid.py` nem nos programas que você e os alunos criaram
+  (qualquer `.py` que não seja do projeto);
+- no `calibracao.py`, só acrescenta os campos que a versão nova trouxer, com o valor padrão: as suas
+  medidas ficam como estão;
 - não apaga nada; a versão antiga de cada arquivo trocado fica guardada num zip na pasta
-  `copias_de_seguranca`.
+  `copias_de_seguranca`. Se algo der errado, **Terminal → Executar Tarefa… → Voltar para a versão
+  anterior** desfaz a última atualização.
 
-Computador sem internet: em outro computador, baixe o ZIP do projeto no GitHub (**Code → Download
-ZIP**), traga num pendrive e, no terminal do VS Code (**Terminal → Novo Terminal**), rode:
+Computador sem internet: em outro computador, baixe o zip da última versão no GitHub (**Releases →
+Source code (zip)**), traga num pendrive e, no terminal do VS Code (**Terminal → Novo Terminal**), rode:
 
     ferramentas\rodar.cmd ferramentas\atualizar.py D:\est-robot-master.zip
 

@@ -104,6 +104,16 @@
             "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
             "presentation": {"reveal": "always", "panel": "shared", "clear": true},
             "problemMatcher": []
+        },
+        {
+            "label": "Voltar para a versão anterior",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/ferramentas/atualizar.py", "--desfazer"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true},
+            "problemMatcher": []
         }
     ]
 }

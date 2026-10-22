@@ -20,3 +20,5 @@ simulador/programa.js
 /python/
 # guardadas pelo "Atualizar o projeto" (ferramentas/atualizar.py)
 /copias_de_seguranca/
+# o envio guarda aqui quando perguntou ao GitHub pela versão nova
+/.ultima_verificacao

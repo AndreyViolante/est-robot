@@ -1,0 +1,40 @@
+# Ao enviar uma tag de versão (ex.: git tag v0.2.0 && git push origin v0.2.0): testa, monta o pacote
+# para Windows com o Python dentro e publica a versão em Releases, com as novidades do NOVIDADES.md.
+name: Publicar versão
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: O número da tag bate com o arquivo VERSAO
+        shell: bash
+        run: |
+          v="$(tr -d '\r\n' < VERSAO)"
+          if [ "v$v" != "$GITHUB_REF_NAME" ]; then echo "O VERSAO diz $v, mas a tag é $GITHUB_REF_NAME"; exit 1; fi
+      - name: Testes
+        run: python verificar_gabaritos.py
+      - name: Monta e testa o pacote com o Python dentro
+        run: python ferramentas/empacotar.py --testar
+      - name: Publica em Releases
+        shell: bash
+        run: |
+          python ferramentas/notas_da_versao.py "$GITHUB_REF_NAME" > notas.md
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/est-robot-windows.zip --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/est-robot-windows.zip --title "EST-ROBOT ${GITHUB_REF_NAME#v}" --notes-file notas.md
+          fi

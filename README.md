@@ -269,10 +269,31 @@ python verificar_gabaritos.py
 
 O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: OK`.
 
-**Já testado no robô:** movimento, seguidor de linha (liga-desliga e proporcional), tela, som, luz,
-esperar, ultrassom (`distancia`, `esperar_distancia`, `se_distancia`), `se(...)` e `repetir_ate(...)`.
-**Ainda não visto funcionando:** a calibragem padrão de `andar_cm` e `virar_*` e o sensor de toque
-(os bytes batem com a IDE, mas não foram testados no robô). Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+**Já testado no robô:** movimento (com `andar_cm` e `virar_*` calibrados), seguidores de linha
+(liga-desliga, proporcional e PID), parar na linha, tela, som, luz, esperar, ultrassom, `se(...)`,
+`repetir_ate(...)`, variáveis, `cor_vista`, envio em pedaços e "gravar sem executar".
+**Ainda não visto funcionando no robô:** o sensor de toque (os bytes batem com a IDE), `ao_mesmo_tempo`,
+os botões da controladora, `ajustando`, o envio pelo navegador e as tarefas "Programas no robô" e
+"Bateria do robô". Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+
+### Versões e testes automáticos
+
+A versão instalada fica no arquivo [VERSAO](VERSAO) e o que mudou em cada uma, no
+[NOVIDADES.md](NOVIDADES.md). A cada envio para o GitHub, os testes rodam sozinhos
+([.github/workflows/testes.yml](.github/workflows/testes.yml)): conferência com a IDE, testes da
+linguagem e erros de escrita nos arquivos Python e JavaScript.
+
+Para publicar uma versão nova: mude o número no `VERSAO`, escreva as novidades no `NOVIDADES.md`, faça
+o commit e o push, e envie a tag com o mesmo número:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+O GitHub testa, monta o pacote para Windows com o Python dentro e publica a versão em Releases
+([.github/workflows/publicar.yml](.github/workflows/publicar.yml)). É dessa versão publicada que o
+"Atualizar o projeto" dos professores baixa.
 
 ## Licença e aviso
 

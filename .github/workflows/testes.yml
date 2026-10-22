@@ -1,0 +1,26 @@
+# A cada envio para o GitHub: confere o compilador e a linguagem antes que um erro chegue aos professores.
+name: Testes
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Todos os arquivos Python compilam
+        run: python -m compileall -q .
+      - name: Conferência com os programas da IDE e testes da linguagem
+        run: python verificar_gabaritos.py
+      - name: Os arquivos JavaScript não têm erro de escrita
+        shell: bash
+        run: for f in simulador/*.js docs/simulador/*.js docs/programar/*.js docs/programar/simulador/*.js; do node --check "$f"; done
+      - name: O tasks.json do VS Code é válido
+        run: python -c "import json; json.load(open('.vscode/tasks.json', encoding='utf-8'))"
