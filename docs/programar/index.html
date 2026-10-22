@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Programe o robô EST pelo navegador, sem instalar nada: em Python ou com blocos, simule e envie pelo USB (Chrome ou Edge).">
+<title>Programar o robô EST</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css"
+      integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous">
+<link rel="stylesheet" href="programar.css">
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="../" title="Voltar ao início do EST-ROBOT">
+    <span class="leds" aria-hidden="true"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>
+    EST-ROBOT <b>programar</b>
+  </a>
+  <nav class="links">
+    <a href="https://github.com/AndreyViolante/est-robot/blob/main/docs/cola-do-aluno.md" target="_blank" rel="noopener">Cola de comandos</a>
+    <a href="#ajuda">Como enviar</a>
+  </nav>
+</header>
+
+<main class="layout">
+  <section class="cartao editor" aria-label="Programa">
+    <div class="barra">
+      <div class="abas" role="tablist" aria-label="Como escrever o programa">
+        <button id="abaPython" class="aba" type="button" role="tab" aria-selected="true" aria-controls="areaPython">Python</button>
+        <button id="abaBlocos" class="aba" type="button" role="tab" aria-selected="false" aria-controls="areaBlocos">Blocos</button>
+      </div>
+      <label class="campo nome">Nome
+        <input id="nome" type="text" value="meu_programa" maxlength="20" spellcheck="false" autocomplete="off"
+               autocapitalize="off" title="Nome do programa no robô: letras, números e _ (até 20)"><span>.py</span>
+      </label>
+      <label class="campo">Exemplo <select id="exemplo"><option value="">Escolha…</option></select></label>
+      <span class="arquivos">
+        <button id="btAbrir" class="bt pequeno" type="button" title="Abrir um arquivo .py do computador">Abrir .py</button>
+        <button id="btBaixar" class="bt pequeno" type="button" title="Baixar o programa como arquivo .py">Baixar .py</button>
+      </span>
+      <input id="arquivo" type="file" accept=".py,text/x-python,text/plain" hidden>
+    </div>
+    <div class="area-codigo" id="areaPython" role="tabpanel" aria-labelledby="abaPython">
+      <textarea id="codigo" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Código do programa"></textarea>
+    </div>
+    <div class="area-blocos" id="areaBlocos" role="tabpanel" aria-labelledby="abaBlocos" hidden>
+      <div class="blockly" id="blockly"></div>
+      <div class="espelho">
+        <div class="espelho-barra">
+          <span>Python dos blocos</span>
+          <button id="btLevar" class="bt pequeno" type="button" title="Copia este Python para a aba Python, para continuar escrevendo">Levar para o Python</button>
+        </div>
+        <div class="espelho-codigo">
+          <textarea id="pythonBlocos" spellcheck="false" aria-label="Python gerado pelos blocos (só leitura)"></textarea>
+        </div>
+      </div>
+    </div>
+    <p class="nota" id="guardado">O programa fica guardado neste navegador.</p>
+  </section>
+
+  <aside class="painel">
+    <section class="cartao acoes" aria-label="Simular e enviar">
+      <button id="btSimular" class="bt principal" type="button" title="Compila e mostra o robô andando no simulador">▶ Simular</button>
+      <div id="blocoEnvio" class="envio">
+        <button id="btEnviar" class="bt principal azul" type="button" title="Compila, envia pelo USB e já executa (Ctrl+Shift+B)">⬆ Enviar ao robô</button>
+        <button id="btGravar" class="bt" type="button" title="Grava no robô sem executar: inicie pelo menu do robô">Gravar sem executar</button>
+        <p class="robo" id="estadoRobo" role="status"></p>
+      </div>
+      <p class="sem-usb" id="semUsb" hidden>Para enviar ao robô, abra esta página no <b>Chrome</b> ou no <b>Edge</b>
+        de um computador (Windows, Mac ou Linux) ou de um Chromebook, com o robô no USB. Aqui dá para escrever e simular.</p>
+      <p class="python" id="estadoPython" role="status">Preparando o Python do navegador…</p>
+    </section>
+
+    <section class="cartao" aria-label="Mensagens">
+      <h2>Mensagens</h2>
+      <div id="mensagens" class="mensagens" aria-live="polite">
+        <p class="vazio">Aperte <b>Simular</b> para ver o programa rodando, ou <b>Enviar ao robô</b>.</p>
+      </div>
+    </section>
+
+    <details class="cartao ajuda" id="ajuda">
+      <summary>Como enviar ao robô</summary>
+      <ol>
+        <li>Use o <b>Chrome</b> ou o <b>Edge</b> num computador ou Chromebook.</li>
+        <li>Ligue o robô e conecte o cabo USB. Feche a IDE EST, se estiver aberta: ela conversa com o robô ao mesmo
+          tempo e atrapalha o envio.</li>
+        <li>Clique em <b>Enviar ao robô</b>. Na primeira vez o navegador mostra uma lista: escolha o robô e clique em
+          <b>Conectar</b>. Nas próximas ele já lembra.</li>
+        <li>O robô começa a andar logo: deixe-o no chão. <b>Gravar sem executar</b> só grava; inicie pelo menu do
+          robô (pasta <code>vscode</code>).</li>
+      </ol>
+      <p>No Linux, se o robô não aparecer na lista ou não abrir, o sistema precisa liberar o USB para o navegador
+        (regra do udev para o dispositivo <code>0483:5750</code>).</p>
+      <p>Na aba <b>Blocos</b> o programa é montado arrastando blocos, e ao lado aparece o Python que eles geram.
+        <b>Levar para o Python</b> copia esse código para a aba Python, para continuar escrevendo.</p>
+      <p>O programa fica guardado neste navegador. Para levar a outro computador, use <b>Baixar .py</b>; o mesmo
+        arquivo funciona no <a href="https://github.com/AndreyViolante/est-robot">EST-ROBOT do VS Code</a>.</p>
+    </details>
+  </aside>
+</main>
+
+<div class="sim" id="sim" hidden role="dialog" aria-modal="true" aria-label="Simulador">
+  <div class="sim-barra">
+    <button id="btFecharSim" class="bt" type="button">← Voltar ao código</button>
+    <span class="sim-titulo">Simulador</span>
+  </div>
+  <iframe id="quadroSim" title="Simulador do robô EST"></iframe>
+</div>
+
+<noscript><p class="cartao">Esta página precisa de JavaScript ligado.</p></noscript>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"
+        integrity="sha512-6cPYokihlrofMNApz7OXVQNObWjLiKGIBBb7+UB+AuMiRCLKmFKgrwms21sHq3bdFFZWpfHYRJBJvMFMPj1S9g==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/python/python.min.js"
+        integrity="sha512-Vs2GKxnxnTQBRW7o2xXZ9A28njjmu5RToS42efiKNEWmikov0inZY522EtGVK5CcVo0M/FQwmXsTfl9skgRnvw==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/matchbrackets.min.js"
+        integrity="sha512-GSYCbN/le5gNmfAWVEjg1tKnOH7ilK6xCLgA7c48IReoIR2g2vldxTM6kZlN6o3VtWIe6fHu/qhwxIt11J8EBA==" crossorigin="anonymous"></script>
+<script src="protocolo.js"></script>
+<script src="modo_blocos.js"></script>
+<script src="programar.js"></script>
+</body>
+</html>

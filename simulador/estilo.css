@@ -87,6 +87,42 @@ button, select, input { font: inherit; color: inherit; }
 .quadro { background: var(--mesa); border-radius: 12px; overflow: hidden; touch-action: none; }
 .quadro canvas { display: block; width: 100%; cursor: default; }
 .quadro canvas.pega { cursor: grab; } .quadro canvas.girar { cursor: crosshair; } .quadro canvas.arrastando { cursor: grabbing; }
+.quadro canvas.desenhar { cursor: crosshair; } .quadro canvas.apagar { cursor: pointer; }
+/* trilha de desafios */
+.desafio { display: grid; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--led-azul);
+           border-radius: 12px; padding: 10px 14px; }
+.desafio.cumprido { border-left-color: var(--ok); }
+.desafio-topo { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
+                font: 600 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.desafio h2 { margin: 0; font-size: 1.05rem; }
+.desafio p { margin: 0; }
+.desafio-status { font-weight: 600; }
+.desafio-status.ok { color: var(--ok); font-size: 1.05rem; }
+.desafio-status.falhou { color: var(--erro); }
+.desafio-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.professor summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
+.professor[open] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.campo select:disabled { opacity: 0.6; }
+
+/* editor da "Minha pista" */
+.editor { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px;
+          border: 1px dashed var(--line); border-radius: 12px; }
+.editor .itens { display: contents; }
+.bt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.ferramentas { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--panel); }
+.ferramentas label { position: relative; cursor: pointer; }
+.ferramentas input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.ferramentas span { display: block; padding: 4px 12px; font-size: 0.85rem; font-weight: 600; }
+.ferramentas label + label span { border-left: 1px solid var(--line); }
+.ferramentas label:hover span { color: var(--led-azul); }
+.ferramentas input:checked + span { background: var(--fg); color: var(--bg); }
+.ferramentas input:focus-visible + span { outline: 3px solid var(--led-azul); outline-offset: -3px; }
+.campo input[type="number"] { width: 4.6em; color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+                              border-radius: 6px; padding: 3px 5px; font-variant-numeric: tabular-nums; }
+.etiqueta { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--alerta); color: var(--panel);
+            letter-spacing: 0.04em; text-transform: none; }
+
 .dica { margin: 0; font-size: 0.88rem; color: var(--muted); }
 .avisos { border-left: 4px solid var(--alerta); background: var(--panel); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
 .avisos p { margin: 4px 0; }
@@ -106,6 +142,15 @@ details.cartao[open] summary { margin-bottom: 8px; }
 .som { margin-left: auto; font: 600 0.85rem var(--mono); color: var(--led-azul); }
 .bt.toque { margin-top: 10px; width: 100%; justify-content: center; }
 .bt.toque.apertado { background: var(--fg); color: var(--bg); }
+.botoes { margin-top: 10px; }
+.botoes .nota { margin-bottom: 6px; }
+.cruz { display: grid; grid-template-columns: repeat(3, 2.6em); grid-template-rows: repeat(3, 2.2em); gap: 4px; justify-content: center; }
+.cruz button { border: 2px solid var(--fg); border-radius: 8px; background: var(--panel); cursor: pointer; font-size: 0.9rem;
+               touch-action: none; user-select: none; }
+.cruz button:hover { border-color: var(--led-azul); color: var(--led-azul); }
+.cruz button.apertado { background: var(--fg); color: var(--bg); }
+.cruz .b-cima { grid-area: 1 / 2; } .cruz .b-esq { grid-area: 2 / 1; } .cruz .b-centro { grid-area: 2 / 2; }
+.cruz .b-dir { grid-area: 2 / 3; } .cruz .b-baixo { grid-area: 3 / 2; }
 
 .tabela { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
 .tabela td { padding: 3px 4px; border-top: 1px solid var(--line); vertical-align: baseline; }
@@ -127,7 +172,16 @@ details.cartao[open] summary { margin-bottom: 8px; }
 .fonte { position: relative; margin: 0; background: var(--code-bg); color: var(--code-fg); border-radius: 8px; padding: 8px 0; font: 0.8rem/1.55 var(--mono);
          max-height: 46vh; overflow: auto; }
 .fonte .ln { display: block; padding: 0 10px 0 0; white-space: pre; border-left: 3px solid transparent; }
-.fonte .ln::before { content: attr(data-n); display: inline-block; width: 3.2em; padding-right: 10px; text-align: right; color: #5d6785; }
+.fonte .nl { position: relative; display: inline-block; width: 3.2em; padding-right: 10px; text-align: right; color: #5d6785;
+             user-select: none; }
+.fonte .nl.cod { cursor: pointer; color: #8a94b4; }
+/* ponto de parada: bolinha vermelha antes do número */
+.fonte .nl.cod::before { content: ""; position: absolute; left: 4px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
+                         border-radius: 50%; background: transparent; }
+.fonte .nl.cod:hover::before { background: rgba(255, 96, 100, 0.45); }
+.fonte .nl.parada { color: #ff8a8d; font-weight: 600; }
+.fonte .nl.parada::before, .fonte .nl.parada:hover::before { background: #ff6064; }
+.fonte .nl:focus-visible { outline: 2px solid #6187ff; outline-offset: -2px; border-radius: 3px; }
 .fonte .ln.ativa { background: rgba(97, 135, 255, 0.28); border-left-color: #6187ff; }
 .fonte .ln.dentro { background: rgba(97, 135, 255, 0.10); }
 .fonte .ln.erro { background: rgba(255, 96, 100, 0.3); border-left-color: #ff6064; }

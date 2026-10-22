@@ -1,0 +1,16 @@
+{
+ "arquivos": [
+  "blocos.py",
+  "enviar.py",
+  "estc.py",
+  "robo.py",
+  "simular.py",
+  "calibracao.py"
+ ],
+ "exemplos": [
+  {
+   "arquivo": "11_seguidor_dois_sensores.py",
+   "titulo": "Seguidor básico com dois sensores"
+  }
+ ]
+}

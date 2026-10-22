@@ -8,6 +8,13 @@ proprietária. Pensado para aulas de robótica: os comandos são em português.
 **Quer ver antes de instalar?** O exemplo roda no simulador, no navegador:
 [andreyviolante.github.io/est-robot/simulador](https://andreyviolante.github.io/est-robot/simulador/)
 
+**Sem instalar nada:** abra [andreyviolante.github.io/est-robot/programar](https://andreyviolante.github.io/est-robot/programar/)
+no Chrome ou no Edge (Windows, Mac, Linux ou Chromebook). Dá para escrever em Python ou montar o
+programa com blocos, vendo ao lado o Python que os blocos geram. A página compila no próprio
+navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
+portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). No
+celular dá para programar e simular. O mesmo arquivo `.py` funciona no VS Code.
+
 ```python
 from robo import *
 
@@ -114,6 +121,15 @@ e o som. Funciona sem internet e sem instalar nada. O exemplo do projeto está n
 ```bash
 python simular.py meu_programa.py
 ```
+
+O simulador também tem pistas de prova: cruzamentos com quadrado verde (na cor o verde dá 3; na luz
+refletida fica perto do preto) e um seguidor com uma caixa em cima da linha. A caixa "Sensores com
+ruído" faz a luz variar como num sensor de verdade. Em "Minha pista" dá para desenhar a sua pista com
+linhas, quadrados verdes e caixas (fica guardada no navegador). O botão "Próxima linha" executa o
+programa linha por linha, e clicar no número de uma linha põe um ponto de parada. A trilha de desafios
+traz 8 desafios, do "andar 30 cm" ao "desviar do obstáculo", com verificação automática; cada um
+cumprido destrava o próximo. Os botões da controladora aparecem na tela do robô simulado quando o
+programa usa `botao_apertado()`.
 
 O robô de verdade escorrega, a bateria muda a velocidade e a luz da sala muda os sensores: o
 simulador serve para testar a lógica, mas confira no robô.

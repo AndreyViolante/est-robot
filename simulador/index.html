@@ -22,6 +22,7 @@
     <div class="comandos">
       <button id="btExecutar" class="bt principal" type="button" disabled>▶ Executar</button>
       <button id="btReiniciar" class="bt" type="button">⟲ Reiniciar</button>
+      <button id="btProxima" class="bt" type="button" disabled title="Executa até o programa chegar na próxima linha e pausa (tecla N)">⏭ Próxima linha</button>
       <label class="campo">Velocidade
         <select id="velocidade">
           <option value="0.25">¼×</option>
@@ -36,17 +37,53 @@
       <span class="estado" id="estado" role="status">Carregando…</span>
     </div>
 
+    <section class="desafio" id="cartaoDesafio" hidden aria-labelledby="desafioTitulo">
+      <div class="desafio-topo"><span id="desafioNum">Desafio</span><span id="desafioProgresso"></span></div>
+      <h2 id="desafioTitulo"></h2>
+      <p id="desafioObjetivo"></p>
+      <p class="nota" id="desafioDica"></p>
+      <p class="desafio-status" id="desafioStatus"></p>
+      <p class="so-leitor" id="avisoDesafio" aria-live="polite"></p>
+      <div class="desafio-acoes">
+        <button id="btProximoDesafio" class="bt pequeno" type="button" hidden>Próximo desafio ▶</button>
+        <button id="btSairDesafio" class="bt pequeno" type="button">Sair do desafio</button>
+        <details class="professor">
+          <summary>Professor</summary>
+          <button id="btLiberar" class="bt pequeno" type="button">Liberar todos os desafios</button>
+          <button id="btZerar" class="bt pequeno" type="button">Zerar o progresso</button>
+        </details>
+      </div>
+    </section>
+
     <div class="quadro" id="quadro">
       <canvas id="cena" aria-label="Pista vista de cima com o robô"></canvas>
     </div>
 
     <div class="opcoes">
+      <label class="campo">Desafio <select id="desafio"></select></label>
       <label class="campo">Pista <select id="pista"></select></label>
       <button id="btLargada" class="bt pequeno" type="button" title="Volta o robô (e a caixa) para a posição original da pista">Largada original</button>
       <label class="marcar"><input type="checkbox" id="lupa"> Lupa (segue o robô)</label>
       <label class="marcar"><input type="checkbox" id="rastro" checked> Rastro</label>
       <button id="btLimparRastro" class="bt pequeno" type="button">Limpar rastro</button>
       <label class="marcar"><input type="checkbox" id="somLigado" checked> Som</label>
+      <label class="marcar" title="A luz refletida varia alguns pontos a cada leitura, como num sensor de verdade"><input type="checkbox" id="ruido"> Sensores com ruído</label>
+    </div>
+    <div class="editor" id="editor" hidden>
+      <button id="btEditar" class="bt pequeno" type="button" aria-pressed="false">✎ Desenhar a pista</button>
+      <div class="itens" id="itensEditor" hidden>
+        <div class="ferramentas" role="radiogroup" aria-label="Ferramenta de desenho">
+          <label><input type="radio" name="ferramenta" value="linha" checked><span>Linha</span></label>
+          <label><input type="radio" name="ferramenta" value="verde"><span>Quadrado verde</span></label>
+          <label><input type="radio" name="ferramenta" value="caixa"><span>Caixa</span></label>
+          <label><input type="radio" name="ferramenta" value="apagar"><span>Apagar</span></label>
+        </div>
+        <button id="btDesfazer" class="bt pequeno" type="button" title="Desfaz a última mudança (Ctrl+Z)">↶ Desfazer</button>
+        <button id="btApagarTudo" class="bt pequeno" type="button">Apagar tudo</button>
+        <label class="campo">Mesa
+          <input type="number" id="larguraMinha" min="60" max="400" step="10" aria-label="Largura da mesa em centímetros"> ×
+          <input type="number" id="alturaMinha" min="60" max="300" step="10" aria-label="Altura da mesa em centímetros"> cm</label>
+      </div>
     </div>
     <p class="dica" id="dica"></p>
     <div class="avisos" id="avisos" hidden></div>
@@ -62,10 +99,20 @@
         <span class="som" id="som" aria-live="off"></span>
       </div>
       <button id="btToque" class="bt toque" type="button" hidden>Sensor de toque (segure)</button>
+      <div class="botoes" id="botoes" hidden>
+        <p class="nota">Botões da controladora (segure):</p>
+        <div class="cruz">
+          <button type="button" class="b-cima" data-botao="4" aria-label="Botão de cima">▲</button>
+          <button type="button" class="b-esq" data-botao="1" aria-label="Botão da esquerda">◀</button>
+          <button type="button" class="b-centro" data-botao="2" aria-label="Botão do centro">●</button>
+          <button type="button" class="b-dir" data-botao="3" aria-label="Botão da direita">▶</button>
+          <button type="button" class="b-baixo" data-botao="5" aria-label="Botão de baixo">▼</button>
+        </div>
+      </div>
     </section>
 
     <section class="cartao">
-      <h2>Sensores</h2>
+      <h2>Sensores <span class="etiqueta" id="etiquetaRuido" hidden>com ruído</span></h2>
       <table class="tabela" id="sensores"></table>
     </section>
 
@@ -81,6 +128,7 @@
 
     <section class="cartao">
       <h2>Programa</h2>
+      <p class="nota">Clique no número de uma linha para pôr um ponto de parada: o programa pausa quando chegar nela.</p>
       <pre class="fonte" id="fonte"></pre>
     </section>
 
@@ -100,12 +148,13 @@
     escolha <b>Terminal → Executar Tarefa → Simular no computador</b>.</p>
   O simulador executa os mesmos bytes que vão para o robô, mas o robô de verdade escorrega, a bateria
   muda a velocidade e os sensores variam com a luz: confira no robô antes da prova.
-  Atalhos: <kbd>Espaço</kbd> executa/pausa, <kbd>R</kbd> reinicia.
+  Atalhos: <kbd>Espaço</kbd> executa/pausa, <kbd>N</kbd> próxima linha, <kbd>R</kbd> reinicia.
 </footer>
 
 <script src="vm.js"></script>
 <script src="mundo.js"></script>
 <script src="robo.js"></script>
+<script src="desafios.js"></script>
 <script src="programa.js"></script>
 <script src="app.js"></script>
 </body>

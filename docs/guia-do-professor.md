@@ -55,6 +55,18 @@ Arraste o robô para a largada (a bolinha azul gira) e escolha a pista. Antes, m
 (roda, distância entre as rodas, posição dos sensores) e ajuste em **Medidas do robô**. O simulador
 não tem escorregão, bateria fraca nem variação de luz: o teste final é sempre no robô.
 
+**Desafios:** escolha um desafio no campo "Desafio": o robô sai sempre da largada marcada e a página
+diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bateu na caixa). O progresso
+fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar. Para mostrar por que
+confirmar a leitura importa, ligue "Sensores com ruído" e rode um programa que decide com uma leitura
+só. Para depurar, use "Próxima linha" ou um ponto de parada: o robô congela e os sensores e as
+variáveis ficam à mostra. Com "Minha pista" você monta a pista da sua escola, mas ela fica só no
+navegador onde foi desenhada.
+
+**Sem instalar nada:** a página [programar](https://andreyviolante.github.io/est-robot/programar/)
+roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou monta com blocos
+(vendo o Python ao lado), simula e envia pelo cabo USB.
+
 ---
 
 ## Aula 1: sequência

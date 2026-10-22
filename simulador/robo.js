@@ -29,11 +29,22 @@ const TAU_DESLIZA = 0.12;     // s: sem freio, a roda perde velocidade aos pouco
 const RAIO_MANCHA = 0.5;      // cm: raio da área do chão que o sensor de cor enxerga
 const ULTRASSOM_MAX = 255;    // cm: leitura quando não há nada na frente
 const CONE_ULTRASSOM = [-10, -5, 0, 5, 10];     // graus
+const RUIDO = 6;              // "Sensores com ruído": a luz refletida varia até 6 pontos para cima ou para baixo
 
 // pontos da mancha do sensor de cor (centro, 6 a meio raio, 12 na borda): pesa mais o centro, como o sensor real
 const MANCHA = [[0, 0]];
 for (let i = 0; i < 6; i++) MANCHA.push([0.5 * RAIO_MANCHA * Math.cos(i * Math.PI / 3), 0.5 * RAIO_MANCHA * Math.sin(i * Math.PI / 3)]);
 for (let i = 0; i < 12; i++) MANCHA.push([RAIO_MANCHA * Math.cos(i * Math.PI / 6), RAIO_MANCHA * Math.sin(i * Math.PI / 6)]);
+
+// quanto a cor do chão reflete no modo luz refletida: a luminosidade, ou o 4º número da cor (o verde reflete pouco)
+const reflexo = c => c.length > 3 ? c[3] : 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+
+// número de -1 a 1, mais vezes perto de 0 (soma de dois sorteios)
+const sorteio = () => Math.random() + Math.random() - 1;
+
+/* botões da controladora (leitura interna 0x32, tipo 3): o número de cada um, 0 = nenhum apertado.
+   Como no robo.py (BOTAO_CIMA = 4, BOTAO_BAIXO = 5) e no EV3; ainda não conferidos no robô. */
+const BOTOES = {1: 'esquerda', 2: 'centro', 3: 'direita', 4: 'cima', 5: 'baixo'};
 
 const NOMES_COR = ['nenhuma', 'PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM'];
 const LETRAS = 'ABCD';
@@ -156,6 +167,8 @@ class Robo {
     this.aoEvento = null;      // a página recebe os sons por aqui
     this.x = 0; this.y = 0; this.ang = 0;
     this.toque = false;
+    this.botao = 0;            // botão da controladora apertado na página (0 = nenhum)
+    this.ruido = 0;            // pontos de variação aleatória na luz refletida (0 = sensores perfeitos)
     this.reiniciar();
   }
 
@@ -211,11 +224,18 @@ class Robo {
     for (const [ox, oy] of MANCHA) {
       const c = EST.corDoChao(this.pista, px + ox, py + oy);
       r += c[0]; g += c[1]; b += c[2];
-      if (c !== EST.FORA) luz += preto + (100 - preto) * (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]);
+      if (c !== EST.FORA) luz += preto + (100 - preto) * reflexo(c);
     }
     const n = MANCHA.length;
-    const leitura = {passo: this.passoN, x: px, y: py, luz: Math.round(Math.max(0, Math.min(100, luz / n))),
-                     cor: classificaCor(r / n, g / n, b / n)};
+    let lm = luz / n, rm = r / n, gm = g / n, bm = b / n;
+    if (this.ruido > 0) {
+      // sensor de verdade: a luz varia alguns pontos a cada leitura e, na borda da linha, a cor vista pode mudar
+      const z = sorteio(), k = this.ruido / 100;
+      lm += this.ruido * z;
+      rm += k * (z + sorteio() / 2); gm += k * (z + sorteio() / 2); bm += k * (z + sorteio() / 2);
+    }
+    const leitura = {passo: this.passoN, x: px, y: py, luz: Math.round(Math.max(0, Math.min(100, lm))),
+                     cor: classificaCor(rm, gm, bm)};
     this.cache.set(chave, leitura);
     return leitura;
   }
@@ -263,6 +283,13 @@ class Robo {
     }
     this.avisar(`Sensor do tipo 0x${tipo.toString(16)} (porta ${porta}) ainda não simulado: a leitura dá 0.`);
     return {float: 0};
+  }
+
+  /* leitura interna: tipo 3 = botões da controladora */
+  lerInterno(tipo, modo) {
+    if (tipo === 3) return {byte: this.botao};
+    this.avisar(`Leitura interna ${tipo} (modo ${modo}) ainda não simulada: a leitura dá 0.`);
+    return {byte: 0};
   }
 
   portasDoByte(b) {
@@ -315,7 +342,11 @@ class Robo {
     if (tipo === 1 && modo === 1) {
       // 10 bytes: endereço do texto, reservado, limpar, x, y, cor, fonte
       if (d.b(5)) this.tela = [];
-      this.tela.push({texto: d.texto(0), x: d.b(6), y: d.b(7)});
+      const item = {texto: d.texto(0), x: d.b(6), y: d.b(7)};
+      // o texto novo cobre o que estava no mesmo lugar: num laço com painel() a lista não cresce sem fim
+      this.tela = this.tela.filter(o => o.x !== item.x || o.y !== item.y);
+      this.tela.push(item);
+      if (this.tela.length > 100) this.tela.splice(0, this.tela.length - 100);
       this.telaVersao++;
       return null;
     }
@@ -401,6 +432,8 @@ class Robo {
 }
 
 EST.ROBO_PADRAO = ROBO_PADRAO;
+EST.RUIDO = RUIDO;
+EST.BOTOES = BOTOES;
 EST.Robo = Robo;
 EST.NOMES_COR = NOMES_COR;
 EST.classificaCor = classificaCor;

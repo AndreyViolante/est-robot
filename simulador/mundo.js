@@ -1,12 +1,14 @@
 'use strict';
 /* Pistas do simulador. Medidas em centímetros, com x para a direita e y para baixo (como na tela).
    O chão é calculado pela geometria (não por pixels): um ponto é preto se estiver a menos de meia
-   largura de linha de algum trecho. Paredes e caixas valem para o ultrassom e para as batidas. */
+   largura de linha de algum trecho, e verde se estiver dentro de um quadrado verde.
+   Paredes e caixas valem para o ultrassom e para as batidas. */
 (function () {
 const EST = (globalThis.EST = globalThis.EST || {});
 
 const LINHA = 2;                  // largura da linha preta (fita isolante tem 1,9 cm)
 const PAREDE = 2;                 // espessura das paredes, desenhadas por fora do segmento (a face é o segmento)
+const QUADRADO_VERDE = 2.5;       // lado do quadrado verde da OBR
 
 // trechos de linha: segmento {seg: [x1, y1, x2, y2]} ou arco {arco: [cx, cy, raio, inicio, varredura]} (graus)
 function caminho(pontos, fechado) {
@@ -24,6 +26,20 @@ function comFalha(x1, y1, x2, y2, em, falha) {
   const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L;
   return [{seg: [x1, y1, x1 + ux * em, y1 + uy * em]},
           {seg: [x1 + ux * (em + falha), y1 + uy * (em + falha), x2, y2]}];
+}
+
+/* quadrado verde encostado na linha, logo antes do cruzamento em (cx, cy), para quem chega na direção
+   'vindo' ('L' para a direita, 'O' para a esquerda, 'N' para cima, 'S' para baixo), do lado 'lado' do
+   robô ('esquerda' ou 'direita'). depois = true: o quadrado fica depois do cruzamento (não vale na OBR). */
+function verde(cx, cy, vindo, lado, depois = false) {
+  const m = LINHA / 2, Q = QUADRADO_VERDE;
+  const [fx, fy] = {L: [1, 0], O: [-1, 0], N: [0, -1], S: [0, 1]}[vindo];    // para a frente do robô
+  const [ex, ey] = [fy, -fx];                                                  // para a esquerda do robô
+  const s = lado === 'esquerda' ? 1 : -1, d = depois ? 1 : -1;
+  // centro: meia linha + meio quadrado para o lado e para antes (ou depois) do cruzamento
+  const qx = cx + s * ex * (m + Q / 2) + d * fx * (m + Q / 2);
+  const qy = cy + s * ey * (m + Q / 2) + d * fy * (m + Q / 2);
+  return {x: qx - Q / 2, y: qy - Q / 2, w: Q, h: Q};
 }
 
 function contorno(w, h) {
@@ -61,6 +77,30 @@ const PISTAS = [
     dica: 'Curvas de 90° para os dois lados e uma falha de 10 cm na reta de cima (exemplo 10).',
   },
   {
+    // volta no sentido horário: reta de cima (cruzamento sem verde), desce pela direita (verde depois do
+    // cruzamento, que não vale), volta por baixo (verde à direita: sobe), e no meio (verde à esquerda: vai para a esquerda)
+    id: 'verde', nome: 'Cruzamentos com verde', largura: 240, altura: 180,
+    linhas: [...caminho([[30, 30], [210, 30], [210, 150], [130, 150], [130, 90], [30, 90]], true),
+             {seg: [120, 14, 120, 46]},                              // cruzamento sem verde: segue reto
+             {seg: [194, 80, 226, 80]},                              // cruzamento com verde depois: segue reto
+             {seg: [130, 150, 112, 150]}, {seg: [130, 150, 130, 168]},     // cruzamento com verde à direita
+             {seg: [130, 90, 130, 72]}, {seg: [130, 90, 148, 90]}],        // cruzamento com verde à esquerda
+    verdes: [verde(210, 80, 'S', 'direita', true), verde(130, 150, 'O', 'direita'), verde(130, 90, 'N', 'esquerda')],
+    paredes: [], caixas: [],
+    largada: {x: 50, y: 30, ang: 0},
+    dica: 'Como na OBR: o quadrado verde antes do cruzamento mostra o lado da curva e, sem verde, segue reto ' +
+          '(o verde depois do cruzamento não vale). Na cor, o verde dá 3 (VERDE); na luz refletida ele fica perto do preto.',
+  },
+  {
+    id: 'obstaculo', nome: 'Seguidor com obstáculo', largura: 220, altura: 160,
+    linhas: [{seg: [60, 35, 160, 35]}, {arco: [160, 80, 45, -90, 180]},
+             {seg: [160, 125, 60, 125]}, {arco: [60, 80, 45, 90, 180]}],
+    paredes: [], caixas: [{x: 105, y: 120, w: 10, h: 10}],
+    largada: {x: 80, y: 35, ang: 0},
+    dica: 'Uma caixa em cima da linha: use o ultrassom (porta 4) para ver a caixa, desviar e voltar para a linha. ' +
+          'Arraste a caixa para mudar o lugar.',
+  },
+  {
     id: 'arena', nome: 'Arena com obstáculo', largura: 200, altura: 160,
     linhas: [], paredes: contorno(200, 160), caixas: [{x: 100, y: 66, w: 25, h: 25}],
     largada: {x: 40, y: 80, ang: 0},
@@ -88,9 +128,11 @@ function distArco(px, py, cx, cy, r, inicio, varredura) {
   return Math.min(Math.hypot(px - e1[0], py - e1[1]), Math.hypot(px - e2[0], py - e2[1]));
 }
 
-const BRANCO = [1, 1, 1], PRETO = [0, 0, 0], FORA = [0.05, 0.05, 0.05];
+/* [r, g, b] de 0 a 1. O verde tem um quarto número: quanto ele reflete no modo luz refletida, que é
+   pouco (fica perto do preto, como no robô). As outras cores refletem a sua luminosidade. */
+const BRANCO = [1, 1, 1], PRETO = [0, 0, 0], FORA = [0.05, 0.05, 0.05], VERDE = [0.1, 0.6, 0.3, 0.06];
 
-/* Cor do chão no ponto (x, y): [r, g, b] de 0 a 1. Fora da mesa é quase preto (nada reflete). */
+/* Cor do chão no ponto (x, y). Fora da mesa é quase preto (nada reflete). A linha preta fica por cima do verde. */
 function corDoChao(pista, x, y) {
   if (x < 0 || y < 0 || x > pista.largura || y > pista.altura) return FORA;
   const meia = LINHA / 2;
@@ -98,7 +140,18 @@ function corDoChao(pista, x, y) {
     const d = t.seg ? distSegmento(x, y, ...t.seg) : distArco(x, y, ...t.arco);
     if (d <= meia) return PRETO;
   }
+  for (const q of pista.verdes || []) {
+    if (x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h) return VERDE;
+  }
   return BRANCO;
+}
+
+/* distância do ponto (x, y) até a linha preta mais perta (Infinity sem linhas): os desafios usam para ver se o
+   robô saiu da linha */
+function distLinha(pista, x, y) {
+  let d = Infinity;
+  for (const t of pista.linhas) d = Math.min(d, t.seg ? distSegmento(x, y, ...t.seg) : distArco(x, y, ...t.arco));
+  return d;
 }
 
 // ---------------------------------------------------------------- paredes e caixas
@@ -133,11 +186,14 @@ function copiaPista(p) {
 
 EST.LINHA = LINHA;
 EST.PAREDE = PAREDE;
+EST.QUADRADO_VERDE = QUADRADO_VERDE;
+EST.VERDE = VERDE;
 EST.PISTAS = PISTAS;
 EST.corDoChao = corDoChao;
 EST.FORA = FORA;
 EST.solidos = solidos;
 EST.raio = raio;
 EST.distSegmento = distSegmento;
+EST.distLinha = distLinha;
 EST.copiaPista = copiaPista;
 })();

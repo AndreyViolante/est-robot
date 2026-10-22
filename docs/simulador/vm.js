@@ -16,7 +16,7 @@ const FATIA = 50;                 // instruções seguidas de uma thread antes d
 // tamanho de cada instrução (o 2F tem tamanho variável: 6 + n)
 const TAM = {0x01: 6, 0x02: 9, 0x03: 9, 0x04: 9, 0x07: 9, 0x08: 9, 0x09: 13, 0x0A: 13, 0x0B: 13, 0x0C: 13,
              0x0D: 10, 0x10: 14, 0x11: 13, 0x1A: 9, 0x1B: 9, 0x1D: 7, 0x1E: 11, 0x1F: 11, 0x20: 3, 0x21: 3,
-             0x23: 5, 0x24: 1, 0x29: 14, 0x2B: 17, 0x2D: 7, 0x30: 13, 0x31: 13, 0x33: 8, 0x37: 14, 0x47: 9,
+             0x23: 5, 0x24: 1, 0x29: 14, 0x2B: 17, 0x2D: 7, 0x30: 13, 0x31: 13, 0x32: 8, 0x33: 8, 0x37: 14, 0x47: 9,
              0x48: 1};
 
 class ErroVM extends Error {
@@ -66,6 +66,7 @@ class VM {
        ler(porta, tipo, modo, t)                 -> {byte: n} ou {float: x}
        escrever(porta, tipo, modo, dados, t)     -> null ou função pronto(t) (o motor terminou?)
        interno(tipo, modo, dados, t)             -> null ou função pronto(t) (tela, som, luz)
+       lerInterno(tipo, modo, t)                 -> {byte: n} ou {float: x} (3 = botões da controladora)
        fim(t)                                    o programa principal terminou */
   constructor(codigo, disp) {
     this.codigo = codigo;
@@ -73,6 +74,7 @@ class VM {
     this.mem = new Uint8Array(MEMORIA);
     this.dv = new DataView(this.mem.buffer);
     this.lista = instrucoes(codigo);
+    this.aoBloco = null;          // aoBloco(pc, thread): chamado no início de cada bloco; true = pausar ali
     this.reiniciar();
   }
 
@@ -80,6 +82,7 @@ class VM {
     this.mem.fill(0);
     this.threads = new Map();
     this.terminou = false;
+    this.parada = false;          // aoBloco pediu pausa: executar() parou logo depois do início do bloco
     this.erro = null;
     this.contador = 0;            // instruções executadas
     this.iniciar(0, 0);
@@ -144,13 +147,14 @@ class VM {
     th.espera = espera;
   }
 
-  /* Roda o programa no intervalo de tempo [t0, t0 + dt). */
+  /* Roda o programa no intervalo de tempo [t0, t0 + dt). Para antes do fim se aoBloco pedir (this.parada). */
   executar(t0, dt) {
     if (this.terminou || this.erro) return;
+    this.parada = false;
     const orcamento = Math.max(1, Math.round(dt / CUSTO));
     let usados = 0;
     try {
-      while (usados < orcamento && !this.terminou) {
+      while (usados < orcamento && !this.terminou && !this.parada) {
         let rodou = false;
         for (const th of this.threads.values()) {
           if (th.estado === 'fim') continue;
@@ -161,13 +165,13 @@ class VM {
             th.espera = null;
           }
           let n = 0;
-          while (n < FATIA && usados < orcamento && th.estado === 'rodando' && !this.terminou) {
+          while (n < FATIA && usados < orcamento && th.estado === 'rodando' && !this.terminou && !this.parada) {
             this.passo(th, t0 + usados * CUSTO);
             n++;
             usados++;
           }
           if (n) rodou = true;
-          if (this.terminou) break;
+          if (this.terminou || this.parada) break;
         }
         if (!rodou) break;        // todas esperando: o resto do intervalo fica parado
       }
@@ -191,7 +195,9 @@ class VM {
     const setB = (a, v) => { m[this.confere(a, 1, pc)] = v; };
 
     switch (op) {
-      case 0x48: break;                                                   // início de bloco
+      case 0x48:                                                          // início de bloco
+        if (this.aoBloco && this.aoBloco(pc, th)) this.parada = true;
+        break;
       case 0x01: setB(A(1), c[pc + 5]); break;                            // r = byte
       case 0x02: m.set(c.subarray(pc + 5, pc + 9), this.confere(A(1), 4, pc)); break;   // r = 4 bytes
       case 0x03: setB(A(1), B(A(5))); break;                              // copia 1 byte
@@ -271,6 +277,15 @@ class VM {
         const pronto = this.disp.escrever(porta, tipo, modo, this.dados(A(9), pc), t);
         if (pronto && !pronto(t)) this.bloqueia(th, {tipo: 'dispositivo', pronto});
         return;
+      }
+      case 0x32: {                                                        // lê interno (3 = botões)
+        const tipo = c[pc + 1], modo = c[pc + 2], tam = c[pc + 3], r = A(4);
+        const v = this.disp.lerInterno(tipo, modo, t);
+        this.confere(r, Math.max(tam, 1), pc);
+        m.fill(0, r, r + tam);
+        if ('float' in v) dv.setFloat32(r, v.float, true);
+        else m[r] = v.byte & 0xFF;
+        break;
       }
       case 0x33: {                                                        // tela, som, luz
         const tipo = c[pc + 1], modo = c[pc + 2];
