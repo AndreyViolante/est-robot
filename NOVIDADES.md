@@ -3,6 +3,14 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.1 (22/10/2026)
+
+- "Atualizar o projeto" pega a última versão publicada, que já passou pelos testes, e mostra as novidades.
+- O `calibracao.py` só ganha os campos novos de cada versão; as suas medidas ficam como estão.
+- Tarefa "Voltar para a versão anterior", para desfazer uma atualização.
+- O envio avisa quando sai uma versão nova (no máximo uma vez por dia).
+- Correção: a tarefa "Testar conexão com o robô" voltou a funcionar.
+
 ## 0.1.0 (22/10/2026)
 
 - Primeira versão beta: programar a controladora EST em Python pelo VS Code, sem a IDE do fabricante.
