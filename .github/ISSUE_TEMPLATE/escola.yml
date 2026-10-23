@@ -1,0 +1,55 @@
+name: Minha escola usa o EST-ROBOT
+description: Conte que você usa o EST-ROBOT nas suas aulas (o registro é público)
+title: "[Escola] "
+labels: ["escola"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por contar! Este registro é **público**: aparece aqui no GitHub para todo mundo.
+        **Não coloque nomes nem dados de alunos.**
+  - type: input
+    id: escola
+    attributes:
+      label: Escola, clube ou instituição
+      placeholder: "Ex.: Escola Estadual X"
+    validations:
+      required: true
+  - type: input
+    id: cidade
+    attributes:
+      label: Cidade
+    validations:
+      required: true
+  - type: dropdown
+    id: estado
+    attributes:
+      label: Estado
+      options: [AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SC, SP, SE, TO, Fora do Brasil]
+    validations:
+      required: true
+  - type: dropdown
+    id: uso
+    attributes:
+      label: Onde você usa
+      multiple: true
+      options:
+        - Aulas regulares
+        - Clube ou oficina de robótica
+        - Preparação para competição
+        - Formação de professores
+        - Outro
+    validations:
+      required: true
+  - type: textarea
+    id: comentario
+    attributes:
+      label: Como tem sido? (opcional)
+      description: Turmas, idades, resultados, sugestões.
+  - type: checkboxes
+    id: publico
+    attributes:
+      label: Registro público
+      options:
+        - label: Entendo que este registro fica público no GitHub e não tem dados de alunos.
+          required: true

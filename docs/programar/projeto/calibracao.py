@@ -14,3 +14,7 @@ PAUSA = 0.5                # segundos parado depois de cada movimento que freia 
 # limite(1) devolve o meio entre os dois, para usar em: if luz_refletida(1) < limite(1):
 PRETO = {1: 18, 2: 21, 3: 10}
 BRANCO = {1: 100, 2: 100, 3: 100}
+
+# Uma vez por dia, ao enviar, o programa pergunta ao GitHub se saiu versão nova. O GitHub só conta
+# quantas vezes isso acontece (um número, sem nada de quem perguntou). False desliga as duas coisas.
+AVISO_DE_VERSAO = True

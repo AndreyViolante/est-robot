@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Guia do professor
+    url: https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md
+    about: As 8 aulas, a calibração do robô e as dúvidas mais comuns.

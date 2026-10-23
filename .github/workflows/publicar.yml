@@ -33,8 +33,13 @@ jobs:
         shell: bash
         run: |
           python ferramentas/notas_da_versao.py "$GITHUB_REF_NAME" > notas.md
+          # contadores: o aviso de versão nova baixa o versao.txt e as páginas baixam o visita-*.txt;
+          # o GitHub conta os downloads (só números, sem saber quem baixou)
+          mkdir -p contadores
+          echo "$GITHUB_REF_NAME" > contadores/versao.txt
+          for p in site programar simulador; do echo EST-ROBOT > "contadores/visita-$p.txt"; done
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/est-robot-windows.zip --clobber
+            gh release upload "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/est-robot-windows.zip --title "EST-ROBOT ${GITHUB_REF_NAME#v}" --notes-file notas.md
+            gh release create "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --title "EST-ROBOT ${GITHUB_REF_NAME#v}" --notes-file notas.md
           fi

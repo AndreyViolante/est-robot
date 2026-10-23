@@ -293,7 +293,9 @@ def aviso_versao_nova():
     """Uma vez por dia pergunta ao GitHub se saiu versão nova (desiste em poucos segundos; calado sem
     internet). Devolve o aviso ou None. Não pergunta na pasta do git de quem desenvolve o projeto."""
     raiz = os.path.dirname(os.path.abspath(__file__))
-    if os.environ.get('EST_SEM_AVISO_VERSAO') or os.path.exists(os.path.join(raiz, '.git')):
+    import robo
+    if (os.environ.get('EST_SEM_AVISO_VERSAO') or not robo.AVISO_DE_VERSAO
+            or os.path.exists(os.path.join(raiz, '.git'))):
         return None
     try:
         with open(os.path.join(raiz, 'VERSAO'), encoding='utf-8') as f:
@@ -309,7 +311,7 @@ def aviso_versao_nova():
     except (OSError, ValueError):
         visto = {}
     if time.time() - visto.get('quando', 0) > 24 * 3600:
-        visto = {'quando': time.time(), 'ultima': atualizar.ultima_versao(timeout=2)}
+        visto = {'quando': time.time(), 'ultima': atualizar.ultima_versao_contando(timeout=2)}
         try:
             with open(cache, 'w', encoding='utf-8') as f:
                 json.dump(visto, f)

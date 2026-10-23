@@ -118,6 +118,7 @@ def configurar(esquerdo=None, direito=None, invertido=None, roda_cm=None, entre_
 
 # luz refletida de cada sensor no preto e no branco, do calibracao.py (para limite())
 _PRETO, _BRANCO = {}, {}
+AVISO_DE_VERSAO = True        # calibracao.py: False desliga o aviso diário de versão nova (enviar.py)
 
 
 def _carregar_calibracao():
@@ -134,6 +135,8 @@ def _carregar_calibracao():
     configurar(esquerdo=getattr(cal, 'MOTOR_ESQUERDO', None), direito=getattr(cal, 'MOTOR_DIREITO', None),
                invertido=getattr(cal, 'INVERTIDO', None), roda_cm=getattr(cal, 'RODA_CM', None),
                entre_rodas_cm=getattr(cal, 'ENTRE_RODAS_CM', None), pausa=getattr(cal, 'PAUSA', None))
+    global AVISO_DE_VERSAO
+    AVISO_DE_VERSAO = bool(getattr(cal, 'AVISO_DE_VERSAO', True))
     _PRETO.update(getattr(cal, 'PRETO', {}))
     _BRANCO.update(getattr(cal, 'BRANCO', {}))
 

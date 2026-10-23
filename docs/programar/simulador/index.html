@@ -157,5 +157,12 @@
 <script src="desafios.js"></script>
 <script src="programa.js"></script>
 <script src="app.js"></script>
+<script>
+/* contagem anônima de visitas: o GitHub conta os downloads de um arquivinho; sem cookies, sem saber quem visitou */
+if (location.hostname.endsWith('github.io')) {
+  fetch('https://github.com/AndreyViolante/est-robot/releases/latest/download/visita-simulador.txt',
+        {mode: 'no-cors', cache: 'no-store'}).catch(function () {});
+}
+</script>
 </body>
 </html>

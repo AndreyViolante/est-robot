@@ -307,6 +307,8 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
       <div><h3>Para que idade serve?</h3><p>Os comandos são em português e os erros aparecem explicados, com a linha. Para quem está começando, há os blocos com o Python ao lado.</p></div>
       <div><h3>Funciona no Mac ou no Chromebook?</h3><p>Pelo navegador, sim: a página <a href="programar/">Programar</a> funciona no Chrome e no Edge, em Windows, Mac, Linux e Chromebook. O VS Code com envio pelo cabo é para Windows.</p></div>
       <div><h3>Isso é legal?</h3><p>É um projeto independente, feito para o robô conversar com outro programa (interoperabilidade). Não usa código do fabricante e não distribui nada da IDE. Também não tem relação com o fabricante.</p></div>
+      <div><h3>Usa nas suas aulas?</h3><p>Conte para o autor <a href="https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml" target="_blank" rel="noopener">registrando a sua escola</a> (opcional e público, sem dados de alunos).</p></div>
+      <div><h3>O EST-ROBOT coleta dados?</h3><p>Só números anônimos: quantas instalações perguntam pela versão nova por dia (no máximo uma vez cada) e quantas visitas estas páginas recebem. Nada de nomes, e-mails ou dados de alunos, e sem cookies. Para desligar no VS Code, ponha <code>AVISO_DE_VERSAO = False</code> no <code>calibracao.py</code>.</p></div>
       <div><h3>Encontrou um problema?</h3><p><a href="https://github.com/AndreyViolante/est-robot/issues/new" target="_blank" rel="noopener">Abra uma issue no GitHub</a> contando o que aconteceu e a mensagem de erro.</p></div>
     </div>
   </section>
@@ -367,6 +369,13 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   }
 
 })();
+</script>
+<script>
+/* contagem anônima de visitas: o GitHub conta os downloads de um arquivinho; sem cookies, sem saber quem visitou */
+if (location.hostname.endsWith('github.io')) {
+  fetch('https://github.com/AndreyViolante/est-robot/releases/latest/download/visita-site.txt',
+        {mode: 'no-cors', cache: 'no-store'}).catch(function () {});
+}
 </script>
 </body>
 </html>

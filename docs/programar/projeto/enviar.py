@@ -6,7 +6,7 @@ Uso:  python enviar.py quadrado.py                 compila, envia e já executa
       python enviar.py quadrado.py --so-gravar     envia sem executar (iniciar pelo menu do robô)
       python enviar.py quadrado.py --so-compilar   só compila (não precisa do robô)
 """
-import ast, difflib, inspect, os, re, subprocess, sys, tokenize, traceback, types
+import ast, difflib, inspect, json, os, re, subprocess, sys, time, tokenize, traceback, types
 
 from estc import compilar
 
@@ -286,6 +286,44 @@ def avisos_de_portas(programa, ligadas):
     return avisos
 
 
+_CACHE_VERSAO = '.ultima_verificacao'       # quando o GitHub foi consultado e qual era a última versão
+
+
+def aviso_versao_nova():
+    """Uma vez por dia pergunta ao GitHub se saiu versão nova (desiste em poucos segundos; calado sem
+    internet). Devolve o aviso ou None. Não pergunta na pasta do git de quem desenvolve o projeto."""
+    raiz = os.path.dirname(os.path.abspath(__file__))
+    import robo
+    if (os.environ.get('EST_SEM_AVISO_VERSAO') or not robo.AVISO_DE_VERSAO
+            or os.path.exists(os.path.join(raiz, '.git'))):
+        return None
+    try:
+        with open(os.path.join(raiz, 'VERSAO'), encoding='utf-8') as f:
+            instalada = f.read().strip()
+        sys.path.insert(0, os.path.join(raiz, 'ferramentas'))
+        import atualizar
+    except (OSError, ImportError):
+        return None
+    cache = os.path.join(raiz, _CACHE_VERSAO)
+    try:
+        with open(cache, encoding='utf-8') as f:
+            visto = json.load(f)
+    except (OSError, ValueError):
+        visto = {}
+    if time.time() - visto.get('quando', 0) > 24 * 3600:
+        visto = {'quando': time.time(), 'ultima': atualizar.ultima_versao_contando(timeout=2)}
+        try:
+            with open(cache, 'w', encoding='utf-8') as f:
+                json.dump(visto, f)
+        except OSError:
+            pass
+    ultima = visto.get('ultima')
+    if ultima and atualizar.numeros(ultima) > atualizar.numeros(instalada):
+        return (f'saiu uma versão nova do EST-ROBOT ({ultima.lstrip("vV")}; você tem a {instalada}). '
+                f'Para atualizar: Terminal > Executar Tarefa > Atualizar o projeto.')
+    return None
+
+
 AVISO_IDE = ('AVISO: a IDE EST está aberta. Ela fica conversando com o robô ao mesmo tempo e pode '
              'atrapalhar o envio. Feche a IDE se o programa não começar.')
 
@@ -314,6 +352,9 @@ def main():
     if '--so-compilar' in sys.argv:
         return
     from est_protocol import portas_ligadas, upload
+    novidade = aviso_versao_nova()
+    if novidade:
+        print(f'\nAVISO: {novidade}\n')
     if ide_est_aberta():
         print(f'\n{AVISO_IDE}\n')
     ligadas = portas_ligadas()

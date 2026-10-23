@@ -61,6 +61,23 @@ def ultima_versao(timeout=15):
     return None
 
 
+VERSAO_TXT = f'https://github.com/{REPO}/releases/latest/download/versao.txt'
+
+
+def ultima_versao_contando(timeout=2):
+    """Como ultima_versao, mas lendo o versao.txt anexado à última versão: o GitHub conta os downloads
+    dele, e como cada instalação pergunta no máximo uma vez por dia, a conta diária é o número de
+    instalações em uso (só um número, sem nome nem nada de quem perguntou)."""
+    try:
+        with _abrir(VERSAO_TXT, timeout) as r:
+            texto = r.read(64).decode('ascii', 'replace').strip()
+        if re.fullmatch(r'v?\d+\.\d+\.\d+', texto):
+            return texto
+    except Exception:
+        pass
+    return ultima_versao(timeout)
+
+
 def numeros(versao):
     """'v0.10.2' -> (0, 10, 2), para comparar versões."""
     return tuple(int(n) for n in re.findall(r'\d+', str(versao))[:3])
