@@ -27,6 +27,8 @@ URL_MASTER = f'https://github.com/{REPO}/archive/refs/heads/master.zip'
 RAIZ = Path(__file__).resolve().parent.parent
 # podem vir no projeto oficial, mas cada professor muda os seus: nunca são trocados
 DO_PROFESSOR = ['calibracao.py', 'meu_programa.py']
+# arquivos que já fizeram parte do projeto e saíram: a atualização tira (a cópia fica no zip de segurança)
+REMOVIDOS = ['obr.py']
 COPIAS = 'copias_de_seguranca'
 NAO_MEXER = {'.git', 'python', 'dist', COPIAS}           # pastas que a atualização nunca toca
 NAO_PROCURAR = NAO_MEXER | {'__pycache__', '_investigacao', '_legado', '.venv', 'venv'}
@@ -272,8 +274,15 @@ def main():
         local = (RAIZ / 'calibracao.py').read_text(encoding='utf-8')
         campos, trechos = campos_novos_da_calibracao(local, oficial['calibracao.py'].decode('utf-8', 'replace'))
 
-    copia = guardar_copia(trocar + (['calibracao.py'] if campos else [])) if trocar or campos else None
+    sair = [n for n in REMOVIDOS if n not in oficial and (RAIZ / n).is_file()]
+    guardar = trocar + (['calibracao.py'] if campos else []) + sair
+    copia = guardar_copia(guardar) if guardar else None
     falhas = {}
+    for nome in sair:
+        try:
+            (RAIZ / nome).unlink()
+        except OSError as e:
+            falhas[nome] = e.strerror or str(e)
     for nome in trocar + novos:
         try:
             gravar(nome, oficial[nome])
@@ -290,6 +299,7 @@ def main():
 
     mostrar('Atualizados', [n for n in trocar if n not in falhas])
     mostrar('Novos', [n for n in novos if n not in falhas])
+    mostrar('Saíram do projeto (a cópia ficou guardada)', [n for n in sair if n not in falhas])
     if campos and 'calibracao.py' not in falhas:
         print(f'\nNo seu calibracao.py entraram campos novos, com o valor padrão: {", ".join(campos)}.'
               '\nAs suas medidas não mudaram.')
@@ -305,7 +315,7 @@ def main():
         mostrar('NÃO deu para gravar (feche o programa que está usando o arquivo e rode de novo)',
                 [f'{n} ({motivo})' for n, motivo in falhas.items()])
         sys.exit(1)
-    if trocar or novos or campos:
+    if trocar or novos or campos or sair:
         print(f'\nPronto! Projeto atualizado para a versão {versao_instalada() or commit} '
               f'({em_dia} arquivos já estavam em dia).')
     else:

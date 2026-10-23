@@ -3,6 +3,12 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.2 (23/10/2026)
+
+- O pacote traz só os dois programas de exemplo: o `meu_programa.py` (luz, som e "Funcionou!") e o
+  seguidor de linha básico com dois sensores.
+- O `formato.md` documenta a consulta de bateria e os comandos de listar e apagar arquivos do robô.
+
 ## 0.1.1 (22/10/2026)
 
 - "Atualizar o projeto" pega a última versão publicada, que já passou pelos testes, e mostra as novidades.

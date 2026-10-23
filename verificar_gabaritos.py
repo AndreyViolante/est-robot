@@ -492,18 +492,6 @@ if botao_apertado() == 2:
     while True:
         motores(20 + ler('kp'), 20 - ler('kp'))""",
          lambda d: b'\x32\x03\x00\x01' in d and re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00', d, re.S) is not None),
-        ('biblioteca obr compila',
-         """from obr import *
-seguidor = Seguidor(kp=0.4, kd=1.5, velocidade=22, minima=14)
-while True:
-    if luz_refletida(1) < limite(1) - 25:
-        curva_esquerda()
-        seguidor.recomecar()
-    elif distancia(4) < 10:
-        desviar('direita')
-    else:
-        seguidor.passo()""",
-         lambda d: len(d) > 0),
         ('while com and compila',
          """while luz_refletida(1) > 50 and distancia(4) > 10:
     motores(30, 30)

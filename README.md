@@ -212,15 +212,6 @@ Antes de enviar, o programa confere o robô e avisa:
 | `esperar_botao()`, `botao_apertado()` | os botões da própria controladora: esperar apertar e soltar, ou o número do botão apertado (0 = nenhum) |
 | `with ajustando('kp', 0.4, 0.05):` | ajusta um número com os botões de cima e de baixo enquanto o programa roda, sem reenviar (use `ler('kp')`) |
 
-### Para competição: obr.py
-
-Quem compete pode usar funções prontas com `from obr import *`: `Seguidor(kp=..., kd=..., velocidade=...)`
-com `seguidor.passo()` dentro do laço (PID com velocidade adaptativa opcional), `curva_esquerda()` /
-`curva_direita()` (avança até as rodas chegarem na esquina, vira 90° e procura a linha),
-`procurar_linha()`, `ve_verde(porta)` e `desviar('direita')`. São um ponto de partida, ainda não
-testadas no robô: cada robô tem sensores e rodas num lugar diferente, então ajuste os números no seu.
-Veja o exemplo no começo do [obr.py](obr.py).
-
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
 no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura
 acontece no robô, e não no computador, o `if` e o `while` com sensor viram os blocos de decisão e de
