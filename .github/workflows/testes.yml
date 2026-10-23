@@ -12,6 +12,13 @@ jobs:
       PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Nenhum commit com e-mail pessoal (só o noreply do GitHub)
+        shell: bash
+        run: |
+          ruins=$(git log --format='%h %ae %ce' | awk '$2 !~ /@users\.noreply\.github\.com$/ || $3 !~ /@users\.noreply\.github\.com$/')
+          if [ -n "$ruins" ]; then echo "Commits com e-mail que não é o noreply do GitHub:"; echo "$ruins"; exit 1; fi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
