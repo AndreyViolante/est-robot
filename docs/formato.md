@@ -11,13 +11,21 @@ oficial (ver `gabaritos/`). Onde algo ainda é hipótese, está marcado.
 
 | CMD | Payload | Função |
 |---|---|---|
-| `0x01` | `00 00` | heartbeat |
-| `0x02` | `01 00 00` | consulta de estado (a IDE manda sem parar) |
+| `0x01` | `00 00` | heartbeat (a resposta traz a versão do firmware, ex. "03.04") |
+| `0x02` | `01 00 00` | consulta de estado: o que está ligado em cada porta (a IDE manda sem parar) |
+| `0x03` | `00 00` | consulta de memória (resposta de 4 bytes) |
 | `0x04` | `len16 01 01 00 [tam_dir] [caminho.dbf]` | nome do arquivo de programa |
 | `0x04` | `len16 02 [total] [n] [bytecode]` | conteúdo do programa, pedaço `n` de `total` |
 | `0x0A` | `len16 01 [caminho.dbf]` | **executar** o programa gravado |
-| `0x0A` | `len16 02 [caminho]` | selecionar (enviado antes do download; função exata desconhecida) |
-| `0x0C` | `01 00 01` | iniciar/confirmar download |
+| `0x0A` | `len16 02 [caminho]` | selecionar (enviado antes do envio; função exata desconhecida) |
+| `0x09` | `01 00 03` | listar os arquivos gravados (total, número, tamanho e caminho de cada um) |
+| `0x09` | `len16 02 [/pasta/arquivo]` | apagar um arquivo (responde 1 se apagou) |
+| `0x0C` | `01 00 01` | consulta a bateria (nível de 0 a 4). O envio manda antes e depois dos dados, como a IDE |
+
+A resposta da consulta de estado (`0x02`) tem 8 grupos `[00, porta, tipo, ?]`, um por porta (1–4 sensores,
+5–8 = A–D; porta 0 = nada ligado). Tipos vistos: 1 = sensor de cor, 4 = motor. A controladora **não**
+manda as leituras dos sensores pelo USB: elas só aparecem na tela dela. Os comandos `0x09` e `0x0C`
+foram descobertos na IDE; listar e apagar ainda não foram testados no robô.
 
 `len16` é o comprimento (little-endian) do que vem depois dele. O caminho tem a forma
 `/pasta/programa.dbf`; a pasta é criada pelo robô se não existir.

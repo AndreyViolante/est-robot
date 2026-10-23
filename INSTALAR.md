@@ -57,7 +57,7 @@ dia). Para atualizar: **Terminal → Executar Tarefa… → Atualizar o projeto*
 tarefa baixa a **última versão publicada** em [Releases](https://github.com/AndreyViolante/est-robot/releases),
 que já passou pelos testes, mostra as novidades e troca os arquivos do projeto:
 
-- **não mexe** no `meu_programa.py`, no `minha_pid.py` nem nos programas que você e os alunos criaram
+- **não mexe** no `meu_programa.py` nem nos programas que você e os alunos criaram
   (qualquer `.py` que não seja do projeto);
 - no `calibracao.py`, só acrescenta os campos que a versão nova trouxer, com o valor padrão: as suas
   medidas ficam como estão;

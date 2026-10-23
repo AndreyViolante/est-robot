@@ -2,7 +2,7 @@
 
 Baixa a última versão publicada (página Releases do GitHub), mostra o que mudou e troca os arquivos
 do projeto pelos novos. Nunca apaga nada e nunca troca:
-  - calibracao.py, meu_programa.py e minha_pid.py (as medidas do robô e os programas do professor);
+  - calibracao.py e meu_programa.py (as medidas do robô e o programa do professor);
     o calibracao.py só ganha os campos novos, com o valor padrão, e as medidas ficam como estão;
   - os .py que não existem no projeto oficial (os programas dos alunos);
   - a pasta python/ (o Python do pacote para Windows).
@@ -26,7 +26,7 @@ ZIP_DA_VERSAO = 'https://github.com/' + REPO + '/archive/refs/tags/{tag}.zip'
 URL_MASTER = f'https://github.com/{REPO}/archive/refs/heads/master.zip'
 RAIZ = Path(__file__).resolve().parent.parent
 # podem vir no projeto oficial, mas cada professor muda os seus: nunca são trocados
-DO_PROFESSOR = ['calibracao.py', 'meu_programa.py', 'minha_pid.py']
+DO_PROFESSOR = ['calibracao.py', 'meu_programa.py']
 COPIAS = 'copias_de_seguranca'
 NAO_MEXER = {'.git', 'python', 'dist', COPIAS}           # pastas que a atualização nunca toca
 NAO_PROCURAR = NAO_MEXER | {'__pycache__', '_investigacao', '_legado', '.venv', 'venv'}

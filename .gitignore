@@ -22,3 +22,5 @@ simulador/programa.js
 /copias_de_seguranca/
 # o envio guarda aqui quando perguntou ao GitHub pela versão nova
 /.ultima_verificacao
+# programas pessoais de quem desenvolve o projeto (não vão para o GitHub)
+/meus_programas/

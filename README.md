@@ -134,6 +134,29 @@ programa usa `botao_apertado()`.
 O robô de verdade escorrega, a bateria muda a velocidade e a luz da sala muda os sensores: o
 simulador serve para testar a lógica, mas confira no robô.
 
+## Ajustando ao seu robô: calibracao.py
+
+As medidas do robô ficam no [calibracao.py](calibracao.py), e todos os programas da pasta usam esses
+números sozinhos. Os valores que vêm nele foram medidos num robô EST: com eles, `andar_cm(30)` anda
+30 cm e `virar_direita(90)` vira 90°. Meça uma vez por robô:
+
+- `MOTOR_ESQUERDO`, `MOTOR_DIREITO` e `INVERTIDO` (True se o robô andar de ré quando deveria ir para frente).
+- `RODA_CM` acerta o `andar_cm`: se `andar_cm(30)` andar menos que 30 cm, diminua.
+- `ENTRE_RODAS_CM` acerta o `virar_direita(90)`: se o robô virar a mais, diminua; se virar a menos, aumente.
+- `PAUSA` é o tempo parado depois de cada movimento que freia. Sem ela, o robô emenda um movimento no
+  outro e as viradas saem erradas; `0` desliga.
+- `PRETO` e `BRANCO`: a luz refletida de cada sensor no preto e no branco. Para ver os números,
+  **Terminal → Executar Tarefa → Ver sensores na tela do robô** (a controladora não manda as leituras
+  pelo USB: elas aparecem na tela dela). Nos programas, `limite(1)` dá o meio entre o preto e o
+  branco do sensor 1: `if luz_refletida(1) < limite(1):`.
+
+Um programa pode mudar algum valor só para ele com `configurar(roda_cm=5.6)`, por exemplo.
+
+Antes de enviar, o programa confere o robô e avisa:
+- se a IDE EST estiver aberta, porque ela conversa com o robô ao mesmo tempo e pode atrapalhar;
+- se o programa usar uma porta em que o robô não tem nada ligado, por exemplo um sensor na porta 4
+  ou o motor A. O robô informa pelo USB o que está ligado em cada porta.
+
 ## Comandos
 
 | Movimento | |
@@ -204,34 +227,29 @@ acontece no robô, e não no computador, o `if` e o `while` com sensor viram os 
 repetição do robô; `and` e `or` viram um `if` dentro do outro. Um `while` com sensor ainda não aceita
 `break`, e o `x if ... else y` numa linha só não funciona com sensor (o programa avisa nos dois casos).
 
-### Ajustando ao seu robô: calibracao.py
-
-As medidas do robô ficam no [calibracao.py](calibracao.py), e todos os programas da pasta usam esses
-números sozinhos. Os valores que vêm nele foram medidos num robô EST: com eles, `andar_cm(30)` anda
-30 cm e `virar_direita(90)` vira 90°. Meça uma vez por robô:
-
-- `MOTOR_ESQUERDO`, `MOTOR_DIREITO` e `INVERTIDO` (True se o robô andar de ré quando deveria ir para frente).
-- `RODA_CM` acerta o `andar_cm`: se `andar_cm(30)` andar menos que 30 cm, diminua.
-- `ENTRE_RODAS_CM` acerta o `virar_direita(90)`: se o robô virar a mais, diminua; se virar a menos, aumente.
-- `PAUSA` é o tempo parado depois de cada movimento que freia. Sem ela, o robô emenda um movimento no
-  outro e as viradas saem erradas; `0` desliga.
-- `PRETO` e `BRANCO`: a luz refletida de cada sensor no preto e no branco. Para ver os números,
-  **Terminal → Executar Tarefa → Ver sensores na tela do robô** (a controladora não manda as leituras
-  pelo USB: elas aparecem na tela dela). Nos programas, `limite(1)` dá o meio entre o preto e o
-  branco do sensor 1: `if luz_refletida(1) < limite(1):`.
-
-Um programa pode mudar algum valor só para ele com `configurar(roda_cm=5.6)`, por exemplo.
-
-Antes de enviar, o programa confere o robô e avisa:
-- se a IDE EST estiver aberta, porque ela conversa com o robô ao mesmo tempo e pode atrapalhar;
-- se o programa usar uma porta em que o robô não tem nada ligado, por exemplo um sensor na porta 4
-  ou o motor A. O robô informa pelo USB o que está ligado em cada porta.
-
 ## Exemplo
 
 [exemplos/11_seguidor_dois_sensores.py](exemplos/11_seguidor_dois_sensores.py): seguidor básico com
 dois sensores (se S1 vê preto vira, senão se S2 vê preto vira para o outro lado, senão anda reto),
 conferido no simulador.
+
+## Escolas que usam
+
+Usa o EST-ROBOT nas suas aulas? [Registre a sua escola](https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml) (opcional e público, sem dados de
+alunos). Ajuda o autor a saber onde a ferramenta está chegando.
+
+## Privacidade
+
+O EST-ROBOT não coleta nomes, e-mails nem dados de alunos, e as páginas não usam cookies. Ele só gera
+números anônimos, contados pelo próprio GitHub:
+
+- uma vez por dia, ao enviar um programa, ele baixa o arquivo `versao.txt` da última versão para saber
+  se saiu versão nova; o GitHub conta quantas vezes esse arquivo foi baixado;
+- as páginas publicadas (site, programar e simulador) baixam um arquivo pequeno a cada visita, com a
+  mesma contagem.
+
+Para desligar no VS Code, ponha `AVISO_DE_VERSAO = False` no `calibracao.py` (isso também desliga o
+aviso de versão nova).
 
 ## Para quem quer ir além
 
@@ -294,24 +312,6 @@ git push origin v0.2.0
 O GitHub testa, monta o pacote para Windows com o Python dentro e publica a versão em Releases
 ([.github/workflows/publicar.yml](.github/workflows/publicar.yml)). É dessa versão publicada que o
 "Atualizar o projeto" dos professores baixa.
-
-## Escolas que usam
-
-Usa o EST-ROBOT nas suas aulas? [Registre a sua escola](https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml) (opcional e público, sem dados de
-alunos). Ajuda o autor a saber onde a ferramenta está chegando.
-
-## Privacidade
-
-O EST-ROBOT não coleta nomes, e-mails nem dados de alunos, e as páginas não usam cookies. Ele só gera
-números anônimos, contados pelo próprio GitHub:
-
-- uma vez por dia, ao enviar um programa, ele baixa o arquivo `versao.txt` da última versão para saber
-  se saiu versão nova; o GitHub conta quantas vezes esse arquivo foi baixado;
-- as páginas publicadas (site, programar e simulador) baixam um arquivo pequeno a cada visita, com a
-  mesma contagem.
-
-Para desligar no VS Code, ponha `AVISO_DE_VERSAO = False` no `calibracao.py` (isso também desliga o
-aviso de versão nova).
 
 ## Licença e aviso
 
