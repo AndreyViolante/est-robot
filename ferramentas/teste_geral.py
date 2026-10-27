@@ -7,7 +7,7 @@ Em cada passo o teste manda um programa para o robô, diz o que deve acontecer e
 
     python ferramentas/teste_geral.py --sem-robo     só confere se os programas do teste compilam
 """
-import datetime, os, re, sys
+import datetime, os, sys
 
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 sys.path.insert(0, RAIZ)
@@ -72,33 +72,29 @@ def preparar():
     if ide_est_aberta():
         print(AVISO_IDE)
         input('Feche a IDE EST e aperte Enter para continuar...')
-    from est_protocol import HEARTBEAT, find_robot, info_robo, k32, open_device, portas_ligadas, read_response, send_report
+    from est_protocol import NIVEL_FRACO, find_robot, firmware, info_robo, memoria_bruta, portas_ligadas
     while True:
         try:
-            handle = open_device(find_robot())
+            find_robot()
             break
         except RuntimeError as e:
             print(f'ERRO: {e}')
             input('Ligue o robô, ponha o cabo e aperte Enter para tentar de novo...')
-    try:
-        send_report(handle, HEARTBEAT)
-        resposta = read_response(handle, 600) or b''
-        versao = re.search(rb'\d+\.\d+', resposta[resposta.find(b'\x68\x21\x01'):]) if b'\x68\x21\x01' in resposta else None
-        firmware = versao.group().decode() if versao else '?'
-    finally:
-        k32.CloseHandle(handle)
+    versao = firmware() or '?'
     try:
         nivel, texto = info_robo()
         bateria = f'{nivel} de 4 (resposta "{texto}")'
     except RuntimeError as e:
         nivel, bateria = None, f'sem resposta ({e})'
     portas = portas_ligadas()
-    print(f'Robô encontrado. Firmware: {firmware}')
+    memoria = memoria_bruta()
+    print(f'Robô encontrado. Firmware: {versao}')
     print(f'Bateria: {bateria}')
     print(f'Portas com algo ligado: {portas}')
-    anotar('Firmware', firmware)
+    anotar('Firmware', versao)
     anotar('Portas ligadas', str(portas))
-    if nivel is not None and nivel <= 1:
+    anotar('Memória (resposta 03, antes)', memoria.hex(' ') if memoria else 'sem resposta')
+    if nivel is not None and nivel <= NIVEL_FRACO:
         print('\nATENÇÃO: bateria fraca. Carregue o robô antes de testar: com bateria fraca os resultados enganam.')
     return nivel, bateria
 
@@ -212,13 +208,15 @@ def passo_programas():
     if SEM_ROBO:
         programa(lambda: robo.bip())
         return anotar('7. Listar e apagar', 'p', 'sem robô')
-    from est_protocol import apagar_arquivo, listar_arquivos
+    from est_protocol import apagar_arquivo, listar_arquivos, memoria_bruta
     alvo = '/vscode/teste_apagar.dbf'
     try:
         antes = listar_arquivos()
         print(f'O robô tem {len(antes)} arquivo(s). Da pasta vscode: '
               + ', '.join(n for n, _ in antes if n.startswith('/vscode/')))
         enviar('teste_apagar', lambda: robo.bip(), executar=False)
+        memoria = memoria_bruta()           # comparada com a de antes, ajuda a decifrar a resposta 03
+        anotar('Memória (resposta 03, com 1 programa a mais)', memoria.hex(' ') if memoria else 'sem resposta')
         depois = [n for n, _ in listar_arquivos()]
         apareceu = alvo in depois
         apagou = apagar_arquivo(alvo) if apareceu else False

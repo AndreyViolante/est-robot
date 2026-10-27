@@ -157,15 +157,34 @@ _SINTAXE = [
     ('expected an indented block', 'as linhas de dentro de um "with ...:" precisam começar com espaços (4 espaços ou Tab)'),
     ('unexpected indent', 'tem espaço a mais no começo desta linha'),
     ('unindent does not match', 'os espaços no começo desta linha não batem com os das linhas de cima'),
+    ('inconsistent use of tabs and spaces', 'esta linha mistura Tab e espaços no começo: use só um dos dois em todas as linhas'),
     ('was never closed', 'faltou fechar um parêntese "(" ou colchete "["'),
-    ('unterminated string', 'faltou fechar as aspas do texto'),
+    ('unterminated', 'faltou fechar as aspas do texto'),
     ("unmatched ')'", 'tem um parêntese ")" sobrando'),
+    ("Maybe you meant '==' instead of '='", 'para comparar use "==" (dois iguais); um "=" só guarda um valor numa variável'),
+    ('cannot assign to', 'do lado esquerdo do "=" vai só o nome de uma variável, ex.: velocidade = 30'),
+    ("Missing parentheses in call to 'print'", 'faltaram os parênteses: print(...). Para escrever na tela do robô, use mostrar(...)'),
+    ("'return' outside function", '"return" só funciona dentro de uma função (def ...:)'),
+    ("'break' outside loop", '"break" só funciona dentro de um while ou de um for'),
+    ("'continue' not properly in loop", '"continue" só funciona dentro de um while ou de um for'),
+    ("expected 'except' or 'finally' block", 'depois do "try:" precisa vir um "except:"'),
+    ('leading zeros in decimal integer', 'número começando com zero (ex.: 05): escreva sem o zero'),
     ('positional argument follows keyword', 'número com vírgula? use ponto: 0.5 (e não 0,5)'),
     ('Perhaps you forgot a comma', 'parece que faltou uma vírgula entre dois valores'),
     ('invalid decimal literal', 'número escrito errado (use ponto: 0.5, e não 0,5)'),
+    ('non-printable character', 'tem um espaço especial invisível nesta linha (copiado de outro lugar?): apague os espaços e digite de novo'),
     ('invalid character', 'tem um caractere estranho nesta linha (aspas curvas copiadas de outro lugar?)'),
     ('invalid syntax', 'tem algo escrito errado nesta linha'),
 ]
+
+# nomes dos tipos do Python nas mensagens
+_TIPOS = {'int': 'um número', 'float': 'um número', 'str': 'um texto', 'bool': 'True/False', 'list': 'uma lista',
+          'tuple': 'uma lista', 'dict': 'um dicionário', 'NoneType': 'None (nada)', 'function': 'uma função',
+          'Valor': 'uma leitura de sensor', 'Condicao': 'uma comparação'}
+
+
+def _tipo(nome):
+    return _TIPOS.get(nome, f'"{nome}"')
 
 
 def _comandos():
@@ -192,6 +211,8 @@ def explicar(erro, arquivo):
     if isinstance(erro, SyntaxError) and erro.lineno is not None:      # erro de digitação (o robo.py levanta sem linha)
         linha, codigo = erro.lineno, (erro.text or '').rstrip()
         texto = next((pt for en, pt in _SINTAXE if en in str(erro.msg)), f'erro de escrita: {erro.msg}')
+        if 'invalid syntax' in str(erro.msg) and codigo.lstrip().startswith(('else', 'elif')):
+            texto = f'"{codigo.split()[0].rstrip(":")}" precisa vir logo depois de um "if", com os mesmos espaços no começo da linha'
         return linha, codigo, texto
 
     alvo = os.path.normcase(os.path.abspath(arquivo))
@@ -202,6 +223,8 @@ def explicar(erro, arquivo):
 
     if isinstance(erro, NameError):
         nome = getattr(erro, 'name', None) or re.findall(r"'(\w+)'", msg)[0]
+        if nome == 'robo':
+            return linha, codigo, 'escreva só o comando, sem "robo." na frente, ex.: bip()'
         if nome in _comandos():
             return linha, codigo, f'"{nome}" só funciona se a primeira linha do programa for:  from robo import *'
         texto = f'não conheço "{nome}".' + _sugestao(nome, _comandos())
@@ -220,7 +243,65 @@ def explicar(erro, arquivo):
             return linha, codigo, f'faltou informar {m[2].replace(chr(39), "")} no comando {m[1]}(...)'
         m = re.match(r"(\w+)\(\) takes .* but \d+ (were|was) given", msg)
         if m:
-            return linha, codigo, f'o comando {m[1]}(...) recebeu valores demais'
+            virgula = ' (número com vírgula? use ponto: 0.5, e não 0,5)' if re.search(r'\d,\d', codigo) else ''
+            return linha, codigo, f'o comando {m[1]}(...) recebeu valores demais{virgula}'
+        m = re.match(r'can only concatenate str \(not "(\w+)"\) to str', msg)
+        if m:
+            return linha, codigo, (f'não dá para juntar um texto com {_tipo(m[1])} usando "+": '
+                                   'mostre o texto e o valor separados, ex.: mostrar("Luz:") e mostrar(valor, linha=2)')
+        m = re.match(r"unsupported operand type\(s\) for (.+): '(\w+)' and '(\w+)'", msg)
+        if m:
+            return linha, codigo, f'não dá para fazer "{m[1]}" com {_tipo(m[2])} e {_tipo(m[3])}'
+        m = re.match(r"'(\w+)' object is not callable", msg)
+        if m:
+            return linha, codigo, (f'{_tipo(m[1])} não é um comando, então não leva parênteses. '
+                                   'Você deu a uma variável o nome de um comando?')
+        m = re.match(r"'(\w+)' object cannot be interpreted as an integer", msg)
+        if m:
+            if m[1] == 'Valor':
+                return linha, codigo, ('a leitura de um sensor só existe no robô, enquanto ele anda: aqui precisa '
+                                       'de um número escrito no programa, ex.: range(5)')
+            return linha, codigo, f'aqui precisa de um número inteiro, e veio {_tipo(m[1])}'
+        m = re.match(r"bad operand type for \w+\(\): '(\w+)'", msg)
+        if m:
+            return linha, codigo, (f'aqui precisa de um número, e veio {_tipo(m[1])}'
+                                   + (' (o que está entre aspas é texto)' if m[1] == 'str' else ''))
+        m = re.match(r"'(\w+)' object is not subscriptable", msg)
+        if m:
+            return linha, codigo, f'{_tipo(m[1])} não tem posições [ ]: os colchetes só funcionam com listas'
+        m = re.match(r"'([<>=!]+)' not supported between instances of '(\w+)' and '(\w+)'", msg)
+        if m:
+            return linha, codigo, f'não dá para comparar {_tipo(m[2])} com {_tipo(m[3])} usando "{m[1]}"'
+
+    if isinstance(erro, ModuleNotFoundError):
+        nome = erro.name or msg
+        if difflib.get_close_matches(nome.lower(), ['robo', 'robô'], n=1, cutoff=0.6):
+            return linha, codigo, f'não existe "{nome}": a primeira linha do programa é  from robo import *'
+        return linha, codigo, f'"{nome}" não existe aqui: os comandos do robô vêm do  from robo import *'
+    if isinstance(erro, ImportError):
+        m = re.match(r"cannot import name '(\w+)' from 'robo'", msg)
+        if m:
+            return linha, codigo, f'o robo não tem o comando "{m[1]}".' + _sugestao(m[1], _comandos())
+    if isinstance(erro, AttributeError):
+        m = re.match(r"module 'robo' has no attribute '(\w+)'", msg)
+        if m:
+            return linha, codigo, f'o robo não tem o comando "{m[1]}".' + _sugestao(m[1], _comandos())
+        m = re.match(r"'(\w+)' object has no attribute '(\w+)'", msg)
+        if m:
+            return linha, codigo, (f'{_tipo(m[1])} não tem ".{m[2]}". Os comandos do robô vão sem ponto na frente, '
+                                   'ex.: andar_cm(10)')
+    if isinstance(erro, ZeroDivisionError):
+        return linha, codigo, 'divisão por zero: confira a conta desta linha'
+    if isinstance(erro, IndexError):
+        return linha, codigo, 'a lista não tem essa posição (a primeira é [0] e a última é [len(lista) - 1])'
+    if isinstance(erro, KeyError):
+        return linha, codigo, f'o dicionário não tem a chave {msg}'
+    if isinstance(erro, RecursionError):
+        return linha, codigo, 'a função chama a si mesma sem parar: confira se ela tem um jeito de terminar'
+    if isinstance(erro, ValueError):
+        m = re.match(r"(?:invalid literal for int\(\) with base \d+|could not convert string to float): (.+)", msg)
+        if m:
+            return linha, codigo, f'{m[1]} não é um número'
 
     if isinstance(erro, (TypeError, ValueError, SyntaxError, RuntimeError, NotImplementedError)):
         return linha, codigo, msg

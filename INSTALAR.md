@@ -19,10 +19,18 @@ Funciona no **Windows**. Há dois jeitos:
 
 1. Baixe o **est-robot-windows.zip** na página
    [Releases do projeto](https://github.com/AndreyViolante/est-robot/releases/latest) no GitHub.
-2. Clique com o botão direito no zip → **Extrair Tudo…** e escolha uma pasta fácil de achar, por
+2. Antes de extrair: botão direito no zip → **Propriedades**, marque **Desbloquear** (embaixo, em
+   *Segurança*) e clique em **OK**. Assim o Windows não mostra avisos ao abrir os arquivos de dentro.
+   Se essa opção não aparecer, pule este passo.
+3. Clique com o botão direito no zip → **Extrair Tudo…** e escolha uma pasta fácil de achar, por
    exemplo `Documentos\robotica`. Extraia tudo antes de usar: não abra os arquivos de dentro do zip.
-3. Pronto: o Python está na pasta `python` do projeto, já com o que precisa para falar com o robô.
-   Não precisa rodar o `instalar.bat` (se rodar, ele só confere).
+4. Pronto: o Python está na pasta `python` do projeto, já com o que precisa para falar com o robô, e o
+   VS Code já vem configurado para usar esse Python. Não precisa rodar o `instalar.bat` (se rodar, ele
+   só confere).
+
+Para conferir que o zip é o original (opcional): a página da versão em Releases mostra o código
+SHA-256 do arquivo. No PowerShell, na pasta do download, `Get-FileHash est-robot-windows.zip` tem que
+mostrar o mesmo código.
 
 ## 2B. Este projeto, com o Python do computador (jeito B)
 
@@ -83,7 +91,7 @@ copie para a pasta nova o `calibracao.py` e os seus programas.
 | `Robo nao encontrado no USB` | Confira se o robô está ligado e o cabo bem encaixado; teste outra porta USB; feche a IDE EST se estiver aberta |
 | `Falta o pywinusb` | Jeito A: baixe e extraia o pacote de novo. Jeito B: rode o `instalar.bat` de novo (precisa de internet) |
 | O Windows não deixa abrir o `python.exe` do pacote ("bloqueado pelo administrador") | Alguns computadores de escola só rodam programas instalados pelo administrador: peça ao responsável para liberar a pasta do projeto |
-| O VS Code pede para escolher um Python (*Select Interpreter*) | No jeito A, escolha *Enter interpreter path…* e indique o `python\python.exe` da pasta do projeto. As tarefas funcionam mesmo sem isso |
+| O VS Code pede para escolher um Python (*Select Interpreter*) | No jeito A ele já usa o `python\python.exe` da pasta do projeto; se ainda pedir, escolha *Enter interpreter path…* e indique esse arquivo. As tarefas funcionam mesmo sem isso |
 | O `Ctrl+Shift+B` pergunta qual tarefa usar | Escolha **Enviar para o Robô** |
 | `ERRO na linha …` | É um erro no programa: a mensagem explica o que corrigir |
 | O robô anda de ré quando deveria ir para frente | No `calibracao.py`, mude para `INVERTIDO = True` |
@@ -93,3 +101,6 @@ copie para a pasta nova o `calibracao.py` e os seus programas.
 
 Em computadores da escola, instalar o Python e o `pywinusb` (jeito B) pode precisar de permissão do
 responsável pela rede. O pacote com o Python dentro (jeito A) evita isso.
+
+Não resolveu? **Terminal → Executar Tarefa… → Diagnóstico (para pedir ajuda)** copia um resumo do
+computador e do robô para colar no WhatsApp, junto com o que aconteceu.

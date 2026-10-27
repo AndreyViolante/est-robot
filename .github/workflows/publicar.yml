@@ -25,6 +25,7 @@ jobs:
         run: |
           v="$(tr -d '\r\n' < VERSAO)"
           if [ "v$v" != "$GITHUB_REF_NAME" ]; then echo "O VERSAO diz $v, mas a tag é $GITHUB_REF_NAME"; exit 1; fi
+          if ! grep -q "^version: \"$v\"" CITATION.cff; then echo "O CITATION.cff não está com a versão $v"; exit 1; fi
       - name: Testes
         run: python verificar_gabaritos.py
       - name: Monta e testa o pacote com o Python dentro
@@ -40,6 +41,7 @@ jobs:
           for p in site programar simulador; do echo EST-ROBOT > "contadores/visita-$p.txt"; done
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes-file notas.md      # o SHA-256 do zip novo
           else
             gh release create "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --title "EST-ROBOT ${GITHUB_REF_NAME#v}" --notes-file notas.md
           fi

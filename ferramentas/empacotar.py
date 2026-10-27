@@ -15,6 +15,8 @@ Para trocar a versão do Python: mude PYTHON_VERSAO e PYTHON_SHA256. O SHA-256 e
 import hashlib, io, os, shutil, subprocess, sys, tempfile, time, urllib.request, zipfile
 from pathlib import Path
 
+from atualizar import CONFIG_VSCODE, com_python_do_pacote
+
 RAIZ = Path(__file__).resolve().parent.parent
 DIST = RAIZ / 'dist'
 BAIXADOS = DIST / 'baixados'          # cópia dos downloads, para não baixar de novo a cada pacote
@@ -133,6 +135,8 @@ def montar(da_pasta):
     if b'rodar.cmd' not in projeto['.vscode/tasks.json']:
         raise SystemExit('ERRO: as tarefas (.vscode/tasks.json) não usam o ferramentas/rodar.cmd: '
                          'o Python do pacote ficaria sem uso.')
+    if CONFIG_VSCODE in projeto:                # o VS Code também usa o Python do pacote
+        projeto[CONFIG_VSCODE] = com_python_do_pacote(projeto[CONFIG_VSCODE])
     python = arquivos_do_python()
 
     DIST.mkdir(exist_ok=True)
@@ -160,6 +164,9 @@ def testar():
             ('o Python do pacote acha o pywinusb', [py, '-c', 'import pywinusb.hid']),
             ('o rodar.cmd escolhe o Python do pacote',
              [str(pasta / 'ferramentas' / 'rodar.cmd'), '-c', 'import sys; print(sys.executable)']),
+            ('o VS Code aponta para o Python do pacote',
+             [py, '-c', 'import json, os; c = json.load(open(".vscode/settings.json", encoding="utf-8")); '
+                        'assert os.path.isfile(c["python.defaultInterpreterPath"].replace("${workspaceFolder}/", ""))']),
             ('compila o meu_programa.py', [py, 'enviar.py', 'meu_programa.py', '--so-compilar']),
             ('confere os gabaritos', [py, 'verificar_gabaritos.py']),
         ]

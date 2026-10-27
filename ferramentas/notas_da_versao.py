@@ -1,10 +1,19 @@
-"""Texto da página de uma versão em Releases: as novidades dela (do NOVIDADES.md) e como instalar.
+"""Texto da página de uma versão em Releases: as novidades dela (do NOVIDADES.md), como instalar e o
+SHA-256 do pacote (de dist/est-robot-windows.zip, se ele já foi montado).
 Uso: python ferramentas/notas_da_versao.py v0.2.0     (usado pelo .github/workflows/publicar.yml)
 """
-import re, sys
+import hashlib, re, sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+PACOTE = RAIZ / 'dist' / 'est-robot-windows.zip'
+
+CONFERIR = """**Conferir o arquivo (opcional):** o código SHA-256 do est-robot-windows.zip desta versão é
+
+`{sha}`
+
+No PowerShell, na pasta onde o zip foi baixado: `Get-FileHash est-robot-windows.zip`. Se o código for
+igual, o arquivo é exatamente o que foi publicado aqui."""
 
 COMO_INSTALAR = """**est-robot-windows.zip**: o projeto com o Python dentro. Não instala o Python e não precisa de administrador.
 1. Clique com o botão direito no zip → **Extrair Tudo**.
@@ -33,6 +42,8 @@ def main():
     versao = sys.argv[1].lstrip('vV')
     texto = novidades(versao)
     partes = ([f'## Novidades da {versao}\n\n{texto}'] if texto else []) + [COMO_INSTALAR]
+    if PACOTE.exists():
+        partes.append(CONFERIR.format(sha=hashlib.sha256(PACOTE.read_bytes()).hexdigest().upper()))
     sys.stdout.reconfigure(encoding='utf-8')
     print('\n\n'.join(partes))
 

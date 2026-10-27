@@ -144,6 +144,23 @@ def _carregar_calibracao():
 _carregar_calibracao()
 
 
+def _sensor(porta):
+    """Confere a porta de um sensor (1 a 4). Devolve como veio, para o bloco sair igual ao da IDE."""
+    if isinstance(porta, bool) or str(porta).strip() not in ('1', '2', '3', '4'):
+        raise ValueError(f'a porta {porta!r} não é de sensor: os sensores vão nas portas 1, 2, 3 ou 4 '
+                         '(os motores, nas letras "A" a "D")')
+    return porta
+
+
+def _motor(porta):
+    """Confere a porta de um motor ('A' a 'D', maiúscula ou minúscula) e devolve em maiúscula."""
+    p = str(porta).strip().upper()
+    if p not in ('A', 'B', 'C', 'D'):
+        raise ValueError(f'a porta {porta!r} não é de motor: os motores vão nas portas "A", "B", "C" ou "D", '
+                         'com aspas (os sensores, nos números 1 a 4)')
+    return p
+
+
 def limite(porta):
     """O meio do caminho entre o preto e o branco do sensor, medidos no calibracao.py.
     Ex.: with se_luz(1, '<', limite(1)):   ou   if luz_refletida(1) < limite(1):"""
@@ -251,7 +268,7 @@ def motor(porta, potencia=POTENCIA_PADRAO, rotacoes=None, graus=None, segundos=N
     dados = [v for v in (rotacoes, graus, segundos) if v is not None]
     if len(dados) > 1:
         raise ValueError('use só um: rotacoes=..., graus=... ou segundos=...')
-    p = porta.upper()
+    p = _motor(porta)
     if rotacoes is not None:
         return _adiciona(_b.motor_rot(p, potencia, rotacoes, frear))
     if segundos is not None:
@@ -261,12 +278,12 @@ def motor(porta, potencia=POTENCIA_PADRAO, rotacoes=None, graus=None, segundos=N
 
 def ligar_motor(porta, potencia=POTENCIA_PADRAO):
     """Liga um motor e deixa ligado."""
-    return _adiciona(_b.motor_on(porta.upper(), potencia))
+    return _adiciona(_b.motor_on(_motor(porta), potencia))
 
 
 def desligar_motor(porta, frear=True):
     """Desliga um motor."""
-    return _adiciona(_b.motor_off(porta.upper(), frear))
+    return _adiciona(_b.motor_off(_motor(porta), frear))
 
 
 def esperar(segundos):
@@ -355,7 +372,7 @@ class Condicao:
 
 def luz_refletida(porta):
     """Lê a luz refletida (0 = escuro, 100 = claro) do sensor de cor na porta."""
-    return Valor(_adiciona(_b.sensor_refl(porta)), 7)
+    return Valor(_adiciona(_b.sensor_refl(_sensor(porta))), 7)
 
 
 def cor_vista(porta):
@@ -363,17 +380,17 @@ def cor_vista(porta):
     Na tela aparece um número: PRETO = 1, AZUL = 2, VERDE = 3, AMARELO = 4, VERMELHO = 5, BRANCO = 6,
     e 0 quando o sensor não reconhece a cor (o branco às vezes dá 0).
     Para linha preta no chão branco, luz_refletida é mais confiável."""
-    return Valor(_adiciona(_b.sensor_color_id(porta)), 5, byte=True, cor=True)
+    return Valor(_adiciona(_b.sensor_color_id(_sensor(porta))), 5, byte=True, cor=True)
 
 
 def distancia(porta):
     """Lê a distância em centímetros do sensor ultrassônico na porta."""
-    return Valor(_adiciona(_b.ultrasonic_cm(porta)), 4)
+    return Valor(_adiciona(_b.ultrasonic_cm(_sensor(porta))), 4)
 
 
 def tocado(porta):
     """Lê o sensor de toque: 1 = apertado, 0 = solto."""
-    return Valor(_adiciona(_b.touch_state(porta)), 2, byte=True)
+    return Valor(_adiciona(_b.touch_state(_sensor(porta))), 2, byte=True)
 
 
 def botao_apertado():
@@ -412,22 +429,22 @@ def _cmp(comparacao):
 
 def esperar_toque(porta):
     """Espera o sensor de toque ser apertado."""
-    return _adiciona(_b.wait_touch(porta))
+    return _adiciona(_b.wait_touch(_sensor(porta)))
 
 
 def esperar_distancia(porta, comparacao, cm):
     """Espera a distância ficar menor/maior que cm. Ex.: esperar_distancia(4, '<', 20)"""
-    return _adiciona(_b.wait_dist(porta, _cmp(comparacao), cm))
+    return _adiciona(_b.wait_dist(_sensor(porta), _cmp(comparacao), cm))
 
 
 def esperar_luz(porta, comparacao, valor):
     """Espera a luz refletida passar de um valor. Ex.: esperar_luz(1, '<', 30)"""
-    return _adiciona(_b.wait_refl(porta, _cmp(comparacao), valor))
+    return _adiciona(_b.wait_refl(_sensor(porta), _cmp(comparacao), valor))
 
 
 def esperar_cor(porta, cor):
     """Espera o sensor ver a cor. Ex.: esperar_cor(1, VERDE)"""
-    return _adiciona(_b.wait_color(porta, cor))
+    return _adiciona(_b.wait_color(_sensor(porta), cor))
 
 
 # ---------------------------------------------------------------- tela, som e luz
@@ -582,13 +599,13 @@ def repetir_ate(condicao):
 
 def repetir_ate_luz(porta, comparacao, valor):
     """Repete até a luz refletida passar de um valor. Ex.: repetir_ate_luz(1, '<', 30)"""
-    blk = _adiciona(_b.loop_refl(porta, _cmp(comparacao), valor))
+    blk = _adiciona(_b.loop_refl(_sensor(porta), _cmp(comparacao), valor))
     return _Bloco(blk, blk.b1)
 
 
 def repetir_ate_cor(porta, cor):
     """Repete até o sensor ver a cor."""
-    blk = _adiciona(_b.loop_color(porta, cor))
+    blk = _adiciona(_b.loop_color(_sensor(porta), cor))
     return _Bloco(blk, blk.b1)
 
 
@@ -644,22 +661,22 @@ def se(condicao):
 
 def se_ver_cor(porta, cor):
     """Faz o que estiver dentro se o sensor da porta ver a cor (ou uma das cores: PRETO + VERDE)."""
-    return _se(_b.switch_color(porta, cor))
+    return _se(_b.switch_color(_sensor(porta), cor))
 
 
 def se_tocado(porta):
     """Faz o que estiver dentro se o sensor de toque estiver apertado."""
-    return _se(_b.switch_touch(porta))
+    return _se(_b.switch_touch(_sensor(porta)))
 
 
 def se_distancia(porta, comparacao, cm):
     """Ex.: with se_distancia(4, '<', 20):"""
-    return _se(_b.switch_dist(porta, _cmp(comparacao), cm))
+    return _se(_b.switch_dist(_sensor(porta), _cmp(comparacao), cm))
 
 
 def se_luz(porta, comparacao, valor):
     """Ex.: with se_luz(1, '<', 30):"""
-    return _se(_b.switch_refl(porta, _cmp(comparacao), valor))
+    return _se(_b.switch_refl(_sensor(porta), _cmp(comparacao), valor))
 
 
 def senao():

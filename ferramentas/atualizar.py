@@ -32,6 +32,9 @@ REMOVIDOS = ['obr.py']
 COPIAS = 'copias_de_seguranca'
 NAO_MEXER = {'.git', 'python', 'dist', COPIAS}           # pastas que a atualização nunca toca
 NAO_PROCURAR = NAO_MEXER | {'__pycache__', '_investigacao', '_legado', '.venv', 'venv'}
+# no pacote para Windows, o VS Code usa o Python da pasta python/ (autocompletar, erros sublinhados)
+CONFIG_VSCODE = '.vscode/settings.json'
+PYTHON_DO_PACOTE = {'python.defaultInterpreterPath': '${workspaceFolder}/python/python.exe'}
 
 SEM_INTERNET = """Não foi possível baixar a versão nova: o computador está sem internet
 (ou a rede bloqueou o GitHub). Confira a conexão e rode a tarefa de novo. Nada foi mudado.
@@ -152,6 +155,17 @@ def campos_novos_da_calibracao(local, novo):
     return campos, trechos
 
 
+def com_python_do_pacote(dados):
+    """O .vscode/settings.json com o VS Code apontando para o Python da pasta python/ do pacote.
+    Usado pelo empacotar.py e aqui, para a atualização não desfazer isso."""
+    try:
+        config = json.loads(dados.decode('utf-8'))
+    except ValueError:
+        return dados
+    config.update(PYTHON_DO_PACOTE)
+    return (json.dumps(config, indent=4, ensure_ascii=False) + '\n').encode('utf-8')
+
+
 def iguais(atual, novo, nome):
     if atual == novo:
         return True
@@ -245,6 +259,8 @@ def main():
         print(f'Versão instalada: {instalada or "desconhecida"}  ->  nova: {nova}')
         dados = baixar(ZIP_DA_VERSAO.format(tag=nome))
     oficial, commit = ler_projeto(dados)
+    if CONFIG_VSCODE in oficial and (RAIZ / 'python' / 'python.exe').is_file():
+        oficial[CONFIG_VSCODE] = com_python_do_pacote(oficial[CONFIG_VSCODE])
 
     if 'NOVIDADES.md' in oficial:
         secoes = novidades_desde(oficial['NOVIDADES.md'].decode('utf-8', 'replace'), instalada)

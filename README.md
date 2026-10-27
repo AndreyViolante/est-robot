@@ -102,6 +102,13 @@ e o programa parece estar com defeito sem estar. Pelo terminal: `python ferramen
 Os comandos de listar, apagar e ler a bateria são os mesmos que a IDE manda, mas **ainda não foram
 testados no robô**.
 
+### Pedir ajuda
+
+**Terminal → Executar Tarefa → Diagnóstico (para pedir ajuda)** junta num texto curto a versão do
+projeto, o Python, o robô (firmware, bateria, portas, programas gravados) e o `calibracao.py`, e já
+copia: é só colar no WhatsApp junto com o que aconteceu. Não vai nada pessoal (nem nome do computador,
+nem usuário, nem pastas).
+
 ### Simulador (sem o robô)
 
 **Terminal → Executar Tarefa → Simular no computador** abre o programa no navegador, numa pista
@@ -313,6 +320,9 @@ robótica, para o aluno aprender a programar.
 
 Código e material sob a [licença MIT](LICENSE): pode usar, copiar e adaptar livremente, mantendo o
 aviso de licença.
+
+Para citar num trabalho acadêmico, artigo ou relato de aula, use o botão **Cite this repository** da
+página do projeto no GitHub (os dados estão no [CITATION.cff](CITATION.cff)).
 
 Projeto independente, sem relação com o fabricante do robô. O formato foi obtido por engenharia
 reversa, para interoperabilidade. Use por sua conta e risco.

@@ -301,6 +301,17 @@ def verificar_mensagens():
         ('esperar()', 3, 'faltou informar segundos'),
         ('VEL = 30 if distancia(4) < 20 else 10', 3, 'não funciona aqui'),
         ('while distancia(4) > 10:\n    andar(rotacoes=1)\n    break', 3, '"break"'),
+        ('if distancia(4) = 20:\n    bip()', 3, 'use "=="'),
+        ('else:\n    bip()', 3, 'logo depois de um "if"'),
+        ('esperar(0,5)', 3, 'use ponto'),
+        ('mostrar(luz_refletida(9))', 3, 'não é de sensor'),
+        ('motor(1, 50)', 3, 'não é de motor'),
+        ("mostrar('Luz ' + 5)", 3, 'não dá para juntar um texto'),
+        ("andar_cm('dez')", 3, 'precisa de um número'),
+        ('x = 10 / 0', 3, 'divisão por zero'),
+        ('for i in range(distancia(4)):\n    bip()', 3, 'só existe no robô'),
+        ('robo.bip()', 3, 'sem "robo." na frente'),
+        ('import robo\nrobo.bipp()', 4, 'Você quis dizer "bip"'),
     ]
     ok = True
     with tempfile.TemporaryDirectory() as pasta:

@@ -2,7 +2,7 @@
 Protocolo HID do robo EST.
 Monta os pacotes, envia e le as respostas via USB HID.
 """
-import struct, ctypes, ctypes.wintypes as wt, time
+import re, struct, ctypes, ctypes.wintypes as wt, time
 
 VID, PID = 0x0483, 0x5750
 REPORT_SIZE = 1025   # 1 byte report-ID + 1024 bytes payload
@@ -395,3 +395,37 @@ def apagar_arquivo(caminho: str, timeout_ms: int = 10000) -> bool:
     finally:
         k32.CloseHandle(handle)
     raise RuntimeError('o robô não respondeu ao pedido de apagar')
+
+
+# ── Firmware e memória ───────────────────────────────────────────────────────
+
+CONSULTA_MEMORIA = frame(0x03, b'\x00\x00')     # a IDE chama de send_queryraminfo
+
+
+def _perguntar(pacote: bytes, cmd: int, timeout_ms: int) -> bytes | None:
+    """Manda um pacote e devolve o payload da resposta 68 21 [cmd]. None se o robô não responder."""
+    handle = _abrir()
+    try:
+        for _ in range(3):
+            send_report(handle, pacote)
+            payloads = pacotes_resposta(read_response(handle, timeout_ms) or b'', cmd)
+            if payloads:
+                return payloads[0]
+    finally:
+        k32.CloseHandle(handle)
+    return None
+
+
+def firmware(timeout_ms: int = 600) -> str | None:
+    """Versão do firmware da controladora (ex.: '03.04'), pela resposta do heartbeat. None se não der."""
+    p = _perguntar(HEARTBEAT, 0x01, timeout_ms)
+    if p is None:
+        return None
+    versao = re.search(rb'\d+\.\d+', p)
+    return versao.group().decode() if versao else p.hex(' ')
+
+
+def memoria_bruta(timeout_ms: int = 600) -> bytes | None:
+    """Resposta da consulta de memória: 4 bytes que ainda não foram decifrados (ex.: 80 6e 6c 6e).
+    O diagnóstico mostra os bytes para comparar robôs diferentes. None se o robô não responder."""
+    return _perguntar(CONSULTA_MEMORIA, 0x03, timeout_ms)

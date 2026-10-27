@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "Se usar o EST-ROBOT num trabalho acadêmico, artigo ou relato de aula, cite assim."
+type: software
+title: "EST-ROBOT: programação da controladora EST em Python pelo VS Code"
+abstract: >-
+  Ferramenta para uso pedagógico que permite programar a controladora do robô educacional EST em
+  Python, pelo VS Code ou pelo navegador, sem a IDE do fabricante. Os comandos são em português, o
+  compilador gera o mesmo código que a IDE gera para os blocos equivalentes e um simulador mostra o
+  robô na tela antes de enviar.
+authors:
+  - given-names: Andrey
+    family-names: Violante
+version: "0.1.2"
+date-released: "2026-10-23"
+license: MIT
+repository-code: "https://github.com/AndreyViolante/est-robot"
+url: "https://andreyviolante.github.io/est-robot/"
+keywords:
+  - robótica educacional
+  - Python
+  - VS Code
+  - controladora EST
+  - ensino de programação

@@ -76,6 +76,16 @@
             "problemMatcher": []
         },
         {
+            "label": "Diagnóstico (para pedir ajuda)",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/ferramentas/diagnostico.py"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true, "focus": true},
+            "problemMatcher": []
+        },
+        {
             "label": "Programas no robô",
             "type": "shell",
             "command": "python",
