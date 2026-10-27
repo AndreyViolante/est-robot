@@ -3,6 +3,11 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.4 (27/10/2026)
+
+- Registro no Zenodo: cada versão publicada ganha um DOI permanente, para citar o EST-ROBOT em
+  trabalhos acadêmicos, artigos e relatos de aula.
+
 ## 0.1.3 (27/10/2026)
 
 - Atalhos no VS Code: digite `para_sempre`, `seguidor_2_sensores`, `desviar`, `mostrar_sensor`... e

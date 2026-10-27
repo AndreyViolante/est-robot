@@ -325,7 +325,8 @@ Código e material sob a [licença MIT](LICENSE): pode usar, copiar e adaptar li
 aviso de licença.
 
 Para citar num trabalho acadêmico, artigo ou relato de aula, use o botão **Cite this repository** da
-página do projeto no GitHub (os dados estão no [CITATION.cff](CITATION.cff)).
+página do projeto no GitHub (os dados estão no [CITATION.cff](CITATION.cff)). Cada versão publicada
+também fica guardada no [Zenodo](https://zenodo.org), com um DOI permanente.
 
 Projeto independente, sem relação com o fabricante do robô. O formato foi obtido por engenharia
 reversa, para interoperabilidade. Use por sua conta e risco.
