@@ -1,5 +1,7 @@
 # est-robot
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23692767.svg)](https://doi.org/10.5281/zenodo.23692767)
+
 Programe o robô educacional **Dr. Luck EST** em Python, direto do **VS Code**, sem a IDE
 proprietária. Pensado para aulas de robótica: os comandos são em português.
 
@@ -326,7 +328,8 @@ aviso de licença.
 
 Para citar num trabalho acadêmico, artigo ou relato de aula, use o botão **Cite this repository** da
 página do projeto no GitHub (os dados estão no [CITATION.cff](CITATION.cff)). Cada versão publicada
-também fica guardada no [Zenodo](https://zenodo.org), com um DOI permanente.
+também fica guardada no [Zenodo](https://doi.org/10.5281/zenodo.23692767), com um DOI permanente; o
+DOI de todas as versões é **10.5281/zenodo.23692767**.
 
 Projeto independente, sem relação com o fabricante do robô. O formato foi obtido por engenharia
 reversa, para interoperabilidade. Use por sua conta e risco.
