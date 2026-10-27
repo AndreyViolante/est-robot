@@ -580,6 +580,40 @@ def verificar_sintaxe():
     return not ruins
 
 
+def expandir_atalho(corpo):
+    """O texto que um atalho do VS Code (.vscode/robo.code-snippets) escreve, com os valores sugeridos.
+    Onde o aluno ainda vai escrever ($0, $1...) entra um bip(), para o programa ficar completo."""
+    texto = '\n'.join(corpo).replace('\t', '    ')
+    texto = re.sub(r'\$\{\d+:([^}]*)\}', r'\1', texto)
+    return re.sub(r'\$\{?\d+\}?', 'bip()', texto)
+
+
+def verificar_atalhos():
+    """Cada atalho do VS Code vira um programa que compila."""
+    import json, tempfile
+    from enviar import carregar
+    raiz = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(raiz, '.vscode', 'robo.code-snippets'), encoding='utf-8') as f:
+        atalhos = json.load(f)
+    ok = True
+    with tempfile.TemporaryDirectory() as pasta:
+        for nome, atalho in atalhos.items():
+            codigo = expandir_atalho(atalho['body'])
+            if not codigo.startswith('from robo import'):
+                codigo = 'from robo import *\n\n' + codigo
+            arq = os.path.join(pasta, 'atalho.py')
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write(codigo + '\n')
+            try:
+                compilar(carregar(arq))
+                erro = ''
+            except Exception as e:
+                erro = f' -> {type(e).__name__}: {e}'
+            ok &= not erro
+            print(f'  {"OK   " if not erro else "FALHA"} atalho {atalho["prefix"]}{erro}')
+    return ok
+
+
 def main():
     blocos.MOTORS = 'B+C'
     ok = 0
@@ -596,6 +630,7 @@ def main():
     robo_ok &= verificar_if_while()
     robo_ok &= verificar_novidades()
     robo_ok &= verificar_sintaxe()
+    robo_ok &= verificar_atalhos()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

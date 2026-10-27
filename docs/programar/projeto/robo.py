@@ -16,9 +16,12 @@ Cada comando entra no programa na ordem em que aparece. Exemplo:
 Leituras de sensor podem entrar em contas: erro = luz_refletida(1) - luz_refletida(2)
 O resultado vira um valor que pode ir para os motores: motores(25 + erro * 0.4, 25 - erro * 0.4)
 """
+from __future__ import annotations
+
 import importlib.util as _imp
 import math as _m
 import os as _os
+from typing import Callable, Literal
 
 import blocos as _b
 from blocos import PRETO, AZUL, VERDE, AMARELO, VERMELHO, BRANCO, MARROM
@@ -34,6 +37,14 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'melodia', 'botao_apertado', 'esperar_botao', 'ao_mesmo_tempo', 'tarefa', 'painel', 'ajustando',
            'BOTAO_CIMA', 'BOTAO_BAIXO',
            'novo_programa', 'programa']
+
+# Tipos das opções: o VS Code mostra estes valores no autocompletar enquanto o aluno escreve
+# (só ajudam a escrever; quem confere de verdade são os próprios comandos).
+PortaSensor = Literal[1, 2, 3, 4]
+PortaMotor = Literal['A', 'B', 'C', 'D']
+Comparacao = Literal['<', '<=', '>', '>=', '=', '!=']
+CorDaLuz = Literal['azul', 'roxo', 'vermelho']
+Linha = Literal[1, 2, 3]
 
 POTENCIA_PADRAO = 50
 _config = {'esquerdo': 'B', 'direito': 'C', 'sentido': 1, 'roda_cm': 4.3, 'entre_rodas_cm': 12.0, 'pausa': 0.5}
@@ -95,7 +106,8 @@ novo_programa()
 
 # ---------------------------------------------------------------- configuracao
 
-def configurar(esquerdo=None, direito=None, invertido=None, roda_cm=None, entre_rodas_cm=None, pausa=None):
+def configurar(esquerdo: PortaMotor | None = None, direito: PortaMotor | None = None, invertido: bool | None = None,
+               roda_cm: float | None = None, entre_rodas_cm: float | None = None, pausa: float | None = None):
     """Ajusta só este programa ao robô (o que não for informado fica como está no calibracao.py).
 
     esquerdo, direito   portas dos motores das rodas
@@ -161,7 +173,7 @@ def _motor(porta):
     return p
 
 
-def limite(porta):
+def limite(porta: PortaSensor) -> float:
     """O meio do caminho entre o preto e o branco do sensor, medidos no calibracao.py.
     Ex.: with se_luz(1, '<', limite(1)):   ou   if luz_refletida(1) < limite(1):"""
     p = int(str(porta).strip())
@@ -202,30 +214,34 @@ def _mover(esq, dir_, rotacoes, graus, segundos, frear):
 
 # ---------------------------------------------------------------- movimento
 
-def andar(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, frear=True):
+def andar(rotacoes: float | None = None, graus: float | None = None, segundos: float | None = None,
+          potencia: float = POTENCIA_PADRAO, frear: bool = True):
     """Anda para frente. Ex.: andar(rotacoes=2), andar(segundos=1.5, potencia=30)"""
     return _mover(potencia, potencia, rotacoes, graus, segundos, frear)
 
 
-def re(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, frear=True):
+def re(rotacoes: float | None = None, graus: float | None = None, segundos: float | None = None,
+       potencia: float = POTENCIA_PADRAO, frear: bool = True):
     """Anda de ré. Ex.: re(rotacoes=1)"""
     return _mover(-potencia, -potencia, rotacoes, graus, segundos, frear)
 
 
-def andar_cm(cm, potencia=POTENCIA_PADRAO, frear=True):
+def andar_cm(cm: float, potencia: float = POTENCIA_PADRAO, frear: bool = True):
     """Anda cm centímetros (negativo = ré). Ajuste o tamanho da roda em configurar(roda_cm=...)."""
     graus = abs(cm) / (_m.pi * _config['roda_cm']) * 360
     p = potencia if cm >= 0 else -potencia
     return _mover(p, p, None, round(graus, 1), None, frear)
 
 
-def girar_direita(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, frear=True):
+def girar_direita(rotacoes: float | None = None, graus: float | None = None, segundos: float | None = None,
+                  potencia: float = POTENCIA_PADRAO, frear: bool = True):
     """Gira no lugar para a direita (as rodas giram em sentidos opostos).
     graus e rotações são das rodas; para virar o robô um angulo, use virar_direita."""
     return _mover(potencia, -potencia, rotacoes, graus, segundos, frear)
 
 
-def girar_esquerda(rotacoes=None, graus=None, segundos=None, potencia=POTENCIA_PADRAO, frear=True):
+def girar_esquerda(rotacoes: float | None = None, graus: float | None = None, segundos: float | None = None,
+                   potencia: float = POTENCIA_PADRAO, frear: bool = True):
     """Gira no lugar para a esquerda."""
     return _mover(-potencia, potencia, rotacoes, graus, segundos, frear)
 
@@ -234,17 +250,17 @@ def _graus_da_roda(angulo_robo):
     return round(angulo_robo * _config['entre_rodas_cm'] / _config['roda_cm'], 1)
 
 
-def virar_direita(angulo=90, potencia=30):
+def virar_direita(angulo: float = 90, potencia: float = 30):
     """Vira o robô angulo graus para a direita, no lugar. Calibre com configurar(entre_rodas_cm=...)."""
     return _mover(potencia, -potencia, None, _graus_da_roda(angulo), None, True)
 
 
-def virar_esquerda(angulo=90, potencia=30):
+def virar_esquerda(angulo: float = 90, potencia: float = 30):
     """Vira o robô angulo graus para a esquerda, no lugar."""
     return _mover(-potencia, potencia, None, _graus_da_roda(angulo), None, True)
 
 
-def motores(esquerdo, direito):
+def motores(esquerdo: float | Valor, direito: float | Valor):
     """Liga os dois motores e deixa ligados. Aceita números ou valores de sensor/contas."""
     esq, dir_ = _pot(esquerdo), _pot(direito)
     ce = 0 if isinstance(esq, Valor) else esq
@@ -258,12 +274,13 @@ def motores(esquerdo, direito):
     return blk
 
 
-def parar(frear=True):
+def parar(frear: bool = True):
     """Desliga os dois motores."""
     return _tanque(lambda e, d, brake: _b.tank_off(brake), 0, 0, brake=frear)
 
 
-def motor(porta, potencia=POTENCIA_PADRAO, rotacoes=None, graus=None, segundos=None, frear=True):
+def motor(porta: PortaMotor, potencia: float = POTENCIA_PADRAO, rotacoes: float | None = None,
+          graus: float | None = None, segundos: float | None = None, frear: bool = True):
     """Gira um motor sozinho. Ex.: motor('A', 50, graus=180), motor('D', 30, segundos=2)"""
     dados = [v for v in (rotacoes, graus, segundos) if v is not None]
     if len(dados) > 1:
@@ -276,17 +293,17 @@ def motor(porta, potencia=POTENCIA_PADRAO, rotacoes=None, graus=None, segundos=N
     return _adiciona(_b.motor_deg(p, potencia, 360 if graus is None else graus, frear))
 
 
-def ligar_motor(porta, potencia=POTENCIA_PADRAO):
+def ligar_motor(porta: PortaMotor, potencia: float = POTENCIA_PADRAO):
     """Liga um motor e deixa ligado."""
     return _adiciona(_b.motor_on(_motor(porta), potencia))
 
 
-def desligar_motor(porta, frear=True):
+def desligar_motor(porta: PortaMotor, frear: bool = True):
     """Desliga um motor."""
     return _adiciona(_b.motor_off(_motor(porta), frear))
 
 
-def esperar(segundos):
+def esperar(segundos: float):
     """Espera alguns segundos."""
     return _adiciona(_b.wait_sec(segundos))
 
@@ -370,12 +387,12 @@ class Condicao:
                         '(o "x if ... else y" numa linha só ainda não funciona com o robô)')
 
 
-def luz_refletida(porta):
+def luz_refletida(porta: PortaSensor) -> Valor:
     """Lê a luz refletida (0 = escuro, 100 = claro) do sensor de cor na porta."""
     return Valor(_adiciona(_b.sensor_refl(_sensor(porta))), 7)
 
 
-def cor_vista(porta):
+def cor_vista(porta: PortaSensor) -> Valor:
     """Lê a cor vista pelo sensor. Compare com os nomes: with se(cor_vista(1) == VERDE):
     Na tela aparece um número: PRETO = 1, AZUL = 2, VERDE = 3, AMARELO = 4, VERMELHO = 5, BRANCO = 6,
     e 0 quando o sensor não reconhece a cor (o branco às vezes dá 0).
@@ -383,27 +400,27 @@ def cor_vista(porta):
     return Valor(_adiciona(_b.sensor_color_id(_sensor(porta))), 5, byte=True, cor=True)
 
 
-def distancia(porta):
+def distancia(porta: PortaSensor) -> Valor:
     """Lê a distância em centímetros do sensor ultrassônico na porta."""
     return Valor(_adiciona(_b.ultrasonic_cm(_sensor(porta))), 4)
 
 
-def tocado(porta):
+def tocado(porta: PortaSensor) -> Valor:
     """Lê o sensor de toque: 1 = apertado, 0 = solto."""
     return Valor(_adiciona(_b.touch_state(_sensor(porta))), 2, byte=True)
 
 
-def botao_apertado():
+def botao_apertado() -> Valor:
     """Número do botão da controladora que está apertado (0 = nenhum). Ainda não conferido no robô."""
     return Valor(_adiciona(_b.Blk(3001, 1, '2|1|0|0', ' ')), 3, byte=True)
 
 
-def ler(nome):
+def ler(nome: str) -> Valor:
     """Lê o número guardado numa variável do robô. Ex.: ler('contador')"""
     return Valor(_adiciona(_b.var_rn(nome)), 2)
 
 
-def guardar(nome, valor):
+def guardar(nome: str, valor: float | Valor):
     """Guarda um número ou valor numa variável do robô. Ex.: guardar('erro', erro)"""
     if isinstance(valor, Valor):
         return _adiciona(_b.var_wn(nome, src=valor.bloco, out=valor.saida))
@@ -427,22 +444,22 @@ def _cmp(comparacao):
         raise ValueError(f'comparação {comparacao!r} invalida: use "<", "<=", ">", ">=", "=" ou "!="') from None
 
 
-def esperar_toque(porta):
+def esperar_toque(porta: PortaSensor):
     """Espera o sensor de toque ser apertado."""
     return _adiciona(_b.wait_touch(_sensor(porta)))
 
 
-def esperar_distancia(porta, comparacao, cm):
+def esperar_distancia(porta: PortaSensor, comparacao: Comparacao, cm: float):
     """Espera a distância ficar menor/maior que cm. Ex.: esperar_distancia(4, '<', 20)"""
     return _adiciona(_b.wait_dist(_sensor(porta), _cmp(comparacao), cm))
 
 
-def esperar_luz(porta, comparacao, valor):
+def esperar_luz(porta: PortaSensor, comparacao: Comparacao, valor: float):
     """Espera a luz refletida passar de um valor. Ex.: esperar_luz(1, '<', 30)"""
     return _adiciona(_b.wait_refl(_sensor(porta), _cmp(comparacao), valor))
 
 
-def esperar_cor(porta, cor):
+def esperar_cor(porta: PortaSensor, cor: int):
     """Espera o sensor ver a cor. Ex.: esperar_cor(1, VERDE)"""
     return _adiciona(_b.wait_color(_sensor(porta), cor))
 
@@ -458,7 +475,7 @@ def _ascii(texto):
 LINHAS_DA_TELA = {1: 0, 2: 20, 3: 40}     # conferido no robo em 2026-10-13: abaixo de y=40 o texto nao aparece
 
 
-def mostrar(texto, linha=1, x=0, limpar=None, y=None):
+def mostrar(texto: str | float | Valor, linha: Linha = 1, x: int = 0, limpar: bool | None = None, y: int | None = None):
     """Escreve um texto ou um valor na tela do robô, que tem 3 linhas.
     Ex.: mostrar('Luz:'), mostrar(luz_refletida(1), linha=2)
     Escrever na linha 1 apaga a tela antes; nas linhas 2 e 3 escreve sem apagar."""
@@ -501,7 +518,7 @@ def _frequencia(nota):
 _X_DO_VALOR = 70              # um nome de até 6 letras cabe antes disso (8 letras já encostavam em x=80)
 
 
-def painel(**valores):
+def painel(**valores: float | Valor):
     """Mostra até 3 valores na tela do robô, um por linha, com o nome na frente. Bom para ver o PID andando:
     painel(erro=ler('erro'), vel=ler('vel'), s1=luz_refletida(1))
     A controladora não manda as leituras para o computador, então a tela dela é o jeito de ver os números.
@@ -513,7 +530,7 @@ def painel(**valores):
         mostrar(valor if isinstance(valor, Valor) else str(valor), linha=linha, x=_X_DO_VALOR, limpar=False)
 
 
-def tocar(frequencia=440, segundos=1, volume=100):
+def tocar(frequencia: float | str = 440, segundos: float = 1, volume: int = 100):
     """Toca um som e espera ele acabar. Ex.: tocar(440, 0.5) ou, pelo nome da nota, tocar('la', 0.5).
     Notas: do re mi fa sol la si (sustenido: 'do#'), na oitava 5 se não disser outra ('la4' = 440 Hz)."""
     if isinstance(frequencia, str):
@@ -521,7 +538,7 @@ def tocar(frequencia=440, segundos=1, volume=100):
     return _adiciona(_b.sound_tone(frequencia, segundos, volume))
 
 
-def melodia(notas, tempo=0.3, volume=100):
+def melodia(notas: str, tempo: float = 0.3, volume: int = 100):
     """Toca uma sequência de notas separadas por espaço. Cada nota dura tempo segundos;
     'nota:segundos' muda a duração de uma nota e '-' é uma pausa. Ex.: melodia('do re mi fa sol:0.6')"""
     for parte in str(notas).split():
@@ -541,7 +558,7 @@ def bip():
 _CORES_LUZ = {'azul': 0, 'roxo': 1, 'vermelho': 2}      # conferido no robo em 2026-10-13
 
 
-def luz(cor='azul', piscar=False):
+def luz(cor: CorDaLuz = 'azul', piscar: bool = False):
     """Acende a luz do robô: 'azul', 'roxo' ou 'vermelho'."""
     try:
         return _adiciona(_b.light_on(_CORES_LUZ[cor.lower()], piscar))
@@ -582,13 +599,13 @@ def para_sempre():
     return _Bloco(blk, blk.b1)
 
 
-def repetir(vezes):
+def repetir(vezes: int):
     """Repete vezes vezes o que estiver dentro do with."""
     blk = _adiciona(_b.loop_count(vezes))
     return _Bloco(blk, blk.b1)
 
 
-def repetir_ate(condicao):
+def repetir_ate(condicao: Callable[[], Condicao]):
     """Repete até a condição acontecer. A condição vai num lambda para ser medida a cada volta:
     with repetir_ate(lambda: distancia(4) < 20): ..."""
     if not callable(condicao):
@@ -597,13 +614,13 @@ def repetir_ate(condicao):
     return _Bloco(blk, blk.b1, condicao_no_fim=condicao)
 
 
-def repetir_ate_luz(porta, comparacao, valor):
+def repetir_ate_luz(porta: PortaSensor, comparacao: Comparacao, valor: float):
     """Repete até a luz refletida passar de um valor. Ex.: repetir_ate_luz(1, '<', 30)"""
     blk = _adiciona(_b.loop_refl(_sensor(porta), _cmp(comparacao), valor))
     return _Bloco(blk, blk.b1)
 
 
-def repetir_ate_cor(porta, cor):
+def repetir_ate_cor(porta: PortaSensor, cor: int):
     """Repete até o sensor ver a cor."""
     blk = _adiciona(_b.loop_color(_sensor(porta), cor))
     return _Bloco(blk, blk.b1)
@@ -652,29 +669,29 @@ def _se(blk):
     return _Bloco(_adiciona(blk), blk.b1, abre_senao=True)
 
 
-def se(condicao):
+def se(condicao: Condicao):
     """Faz o que estiver dentro se a comparação for verdadeira. Ex.: with se(distancia(4) < 20):"""
     if not isinstance(condicao, Condicao):
         raise TypeError('se(...) precisa de uma comparação, ex.: se(distancia(4) < 20)')
     return _se(_b.switch_logic(condicao.bloco, condicao.saida))
 
 
-def se_ver_cor(porta, cor):
+def se_ver_cor(porta: PortaSensor, cor: int):
     """Faz o que estiver dentro se o sensor da porta ver a cor (ou uma das cores: PRETO + VERDE)."""
     return _se(_b.switch_color(_sensor(porta), cor))
 
 
-def se_tocado(porta):
+def se_tocado(porta: PortaSensor):
     """Faz o que estiver dentro se o sensor de toque estiver apertado."""
     return _se(_b.switch_touch(_sensor(porta)))
 
 
-def se_distancia(porta, comparacao, cm):
+def se_distancia(porta: PortaSensor, comparacao: Comparacao, cm: float):
     """Ex.: with se_distancia(4, '<', 20):"""
     return _se(_b.switch_dist(_sensor(porta), _cmp(comparacao), cm))
 
 
-def se_luz(porta, comparacao, valor):
+def se_luz(porta: PortaSensor, comparacao: Comparacao, valor: float):
     """Ex.: with se_luz(1, '<', 30):"""
     return _se(_b.switch_refl(_sensor(porta), _cmp(comparacao), valor))
 
@@ -899,7 +916,7 @@ class _Ajustando:
         return self.paralelo.__exit__(tipo_erro, *erro)
 
 
-def ajustando(nome, inicial, passo):
+def ajustando(nome: str, inicial: float, passo: float):
     """Deixa ajustar um número com os botões da controladora enquanto o programa roda, sem reenviar:
     o botão de cima soma passo, o de baixo tira, e o valor aparece na linha 3 da tela. Ex.:
         with ajustando('kp', 0.4, 0.05):

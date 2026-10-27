@@ -85,6 +85,18 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 | `luz('azul')` / `apagar_luz()` | luz do robô (`'azul'`, `'roxo'`, `'vermelho'`) |
 | `guardar('pontos', 0)` / `ler('pontos')` | guarda e lê um número |
 
+## Atalhos no VS Code
+
+Digite o nome e aperte **Tab**: o modelo aparece pronto, é só trocar os números (Tab pula para o próximo).
+
+| Digite | Aparece |
+|---|---|
+| `programa` | a primeira linha, `from robo import *` |
+| `para_sempre`, `repetir`, `enquanto`, `se_senao`, `funcao` | o modelo do comando |
+| `quadrado`, `desviar`, `parar_na_linha` | um movimento pronto |
+| `seguidor_1_sensor`, `seguidor_2_sensores`, `seguidor_proporcional` | um seguidor de linha para ajustar |
+| `mostrar_sensor`, `painel`, `contar`, `ao_mesmo_tempo`, `esperar_botao` | tela, variáveis e outros |
+
 ## Regras que evitam erro
 
 - Número com casa decimal usa **ponto**: `0.5` (e não `0,5`).

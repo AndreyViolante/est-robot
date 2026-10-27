@@ -3,6 +3,22 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.3 (27/10/2026)
+
+- Atalhos no VS Code: digite `para_sempre`, `seguidor_2_sensores`, `desviar`, `mostrar_sensor`... e
+  aperte Tab. O modelo aparece pronto para trocar os números (a lista está na cola de comandos).
+- Enquanto você escreve, o VS Code mostra as opções de cada comando: as portas, as comparações
+  (`'<'`, `'>'`...) e as cores da luz.
+- Mais erros explicados em português: `=` no lugar de `==`, `else` sem `if`, texto + número, vírgula no
+  número, `from robot import *`... Porta de sensor fora de 1 a 4 ou de motor fora de A a D agora avisa.
+- Cola de comandos em PDF, frente e verso, para imprimir: `docs/cola-do-aluno.pdf`.
+- Tarefa "Teste geral no robô": confere um por um os comandos ainda não vistos funcionando no robô e
+  grava o resultado em `resultado_teste_geral.txt`.
+- Tarefa "Diagnóstico (para pedir ajuda)": copia um resumo do computador e do robô para colar no
+  WhatsApp, sem dados pessoais.
+- No pacote com o Python dentro, o VS Code já usa esse Python (sem pedir *Select Interpreter*).
+- A página de cada versão mostra o código SHA-256 do pacote, para conferir o download.
+
 ## 0.1.2 (23/10/2026)
 
 - O pacote traz só os dois programas de exemplo: o `meu_programa.py` (luz, som e "Funcionou!") e o
