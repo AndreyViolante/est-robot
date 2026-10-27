@@ -614,6 +614,35 @@ def verificar_atalhos():
     return ok
 
 
+def verificar_offline():
+    """O sw.js da página de programar (modo sem internet) guarda as mesmas versões de bibliotecas que a página
+    usa, e a lista de arquivos dela (projeto/arquivos.json) tem todos os arquivos da página."""
+    import json
+    pasta = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs', 'programar')
+    ler = lambda nome: open(os.path.join(pasta, nome), encoding='utf-8').read()
+    sw, falhas = ler('sw.js'), []
+    usadas = {'compilador.js': re.findall(r"https://cdn\.jsdelivr\.net/pyodide/[^'\"]+", ler('compilador.js')),
+              'modo_blocos.js': [f'https://cdn.jsdelivr.net/npm/blockly@{v}/'
+                                 for v in re.findall(r"const VERSAO = '([^']+)'", ler('modo_blocos.js'))],
+              'index.html': re.findall(r'https://cdnjs\.cloudflare\.com/ajax/libs/codemirror/[\d.]+/', ler('index.html'))}
+    for arquivo, urls in usadas.items():
+        if not urls:
+            falhas.append(f'não achei a biblioteca do {arquivo}')
+        falhas += [f'o sw.js não guarda {u} (usado no {arquivo})' for u in set(urls) if u not in sw]
+    lista = json.loads(ler(os.path.join('projeto', 'arquivos.json'))).get('offline', [])
+    na_pasta = sorted(os.path.relpath(os.path.join(r, a), pasta).replace(os.sep, '/')
+                      for r, subpastas, arquivos in os.walk(pasta) if '__pycache__' not in r for a in arquivos)
+    faltam = [a for a in na_pasta if a not in lista and a != 'sw.js']
+    sobram = [a for a in lista if a not in na_pasta]
+    if faltam or sobram:
+        falhas.append(f'a lista do modo sem internet está velha (faltam {faltam}, sobram {sobram}): '
+                      'rode python ferramentas/publicar_programar.py')
+    for f in falhas:
+        print(f'  FALHA {f}')
+    print(f'  {"OK   " if not falhas else "FALHA"} página de programar sem internet (sw.js)')
+    return not falhas
+
+
 def main():
     blocos.MOTORS = 'B+C'
     ok = 0
@@ -631,6 +660,7 @@ def main():
     robo_ok &= verificar_novidades()
     robo_ok &= verificar_sintaxe()
     robo_ok &= verificar_atalhos()
+    robo_ok &= verificar_offline()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

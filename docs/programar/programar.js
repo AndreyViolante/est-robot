@@ -483,6 +483,80 @@ function trocarPrograma(texto, nome) {
   editor.focar();
 }
 
+// ---------------------------------------------------------------- compartilhar por link
+// O programa vai comprimido dentro do próprio link, depois do # (essa parte nunca vai para o servidor):
+// #programa=<z ou t><base64url>&nome=<nome>. z = comprimido (deflate), t = texto puro (navegador sem compressão).
+
+function paraBase64url(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+const deBase64url = t => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+const passarPor = async (bytes, fluxo) =>
+  new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(fluxo)).arrayBuffer());
+
+async function linkDoPrograma(fonte, nome) {
+  let dados = new TextEncoder().encode(fonte), tipo = 't';
+  if (globalThis.CompressionStream) { dados = await passarPor(dados, new CompressionStream('deflate-raw')); tipo = 'z'; }
+  const url = new URL(location.href);
+  url.hash = `programa=${tipo}${paraBase64url(dados)}&nome=${encodeURIComponent(nome)}`;
+  return url.href;
+}
+
+async function programaDoLink(hash) {
+  const p = new URLSearchParams(hash.replace(/^#/, ''));
+  const valor = p.get('programa') || '';
+  let dados = deBase64url(valor.slice(1));
+  if (valor[0] === 'z') dados = await passarPor(dados, new DecompressionStream('deflate-raw'));
+  else if (valor[0] !== 't') throw new Error('link sem programa');
+  return {fonte: new TextDecoder('utf-8', {fatal: true}).decode(dados), nome: p.get('nome') || 'meu_programa'};
+}
+
+$('btLink').addEventListener('click', async () => {
+  limparMensagens();
+  let link;
+  try {
+    link = await linkDoPrograma(fonteAtual(), limparNome($('nome').value));
+  } catch (e) {
+    mensagem('erro', 'Não consegui criar o link', '<p>Use <b>Baixar .py</b> e mande o arquivo.</p>');
+    return;
+  }
+  let copiou = false;
+  try { await navigator.clipboard.writeText(link); copiou = true; } catch (e) { /* sem permissão: o link fica na caixa */ }
+  const div = mensagem('ok', copiou ? 'Link copiado!' : 'Link do programa',
+    `<p>${copiou ? 'Cole no WhatsApp ou no e-mail.' : 'Copie o link abaixo.'} Quem abrir vê este programa e o simulador.
+     O programa vai dentro do próprio link: não fica guardado em nenhum servidor.</p>
+     <input class="link" type="text" readonly aria-label="Link do programa" value="${escapar(link)}">` +
+    (link.length > 8000 ? '<p>O programa é grande: se o link não abrir do outro lado, use <b>Baixar .py</b>.</p>' : ''));
+  const caixa = div.querySelector('input');
+  caixa.addEventListener('focus', () => caixa.select());
+});
+
+async function abrirDoLink() {
+  if (!location.hash.startsWith('#programa=')) return;
+  let veio;
+  try {
+    veio = await programaDoLink(location.hash);
+  } catch (e) {
+    limparMensagens();
+    mensagem('erro', 'O link do programa veio cortado', '<p>Peça para mandarem de novo (o link inteiro) ou o arquivo .py.</p>');
+    return;
+  } finally {
+    history.replaceState(null, '', location.pathname + location.search);     // recarregar não abre de novo
+  }
+  const atual = editor.valor().trim();
+  if (atual && atual !== INICIAL.trim() && atual !== veio.fonte.trim() &&
+      !confirm(`Abrir o programa "${limparNome(veio.nome)}" que veio no link? O que está no editor agora some ` +
+               '(clique em Cancelar e use Baixar .py antes, se quiser guardar).')) return;
+  trocarPrograma(veio.fonte, veio.nome);
+  salvar();
+  limparMensagens();
+  mensagem('info', `Programa "${escapar(limparNome(veio.nome))}" aberto do link`, '<p>Abrindo o simulador…</p>');
+  simular();
+}
+window.addEventListener('hashchange', abrirDoLink);       // link colado com a página já aberta
+
 // exemplos (lista gravada por ferramentas/publicar_programar.py)
 const exemplos = [{arquivo: '', titulo: 'Primeiro programa (luz, som e Funcionou!)', nome: 'meu_programa'}];
 fetch('projeto/arquivos.json', {cache: 'no-cache'}).then(r => r.json()).then(lista => {
@@ -564,4 +638,14 @@ for (const a of document.querySelectorAll('a[href="#ajuda"]')) a.addEventListene
 if (location.hash === '#ajuda') $('ajuda').open = true;
 
 iniciarCompilador();
+abrirDoLink();
+
+// sem internet: o sw.js guarda a página e o Python do navegador depois da primeira visita
+if ('serviceWorker' in navigator && isSecureContext) {
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('sem modo offline:', e));
+  if (!navigator.onLine && navigator.serviceWorker.controller) {
+    mensagem('info', 'Sem internet', '<p>Usando a cópia desta página guardada no navegador: dá para escrever, ' +
+             'simular e enviar ao robô normalmente.</p>');
+  }
+}
 })();

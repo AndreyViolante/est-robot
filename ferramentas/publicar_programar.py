@@ -74,6 +74,13 @@ def modulos_do_projeto():
     return sorted(achados)
 
 
+def arquivos_offline():
+    """Os arquivos da página que o sw.js guarda para ela funcionar sem internet (tudo de docs/programar/)."""
+    achados = {a.relative_to(DESTINO).as_posix() for a in DESTINO.rglob('*')
+               if a.is_file() and '__pycache__' not in a.parts and a.name != 'sw.js'}
+    return sorted(achados | {'projeto/arquivos.json'})          # esta lista, que é escrita logo depois
+
+
 def espelhar(origem, destino, arquivos):
     """Copia os arquivos para destino e apaga de lá os que não estão mais na lista."""
     destino.mkdir(parents=True, exist_ok=True)
@@ -120,18 +127,19 @@ def main():
     titulos = {arq: titulo for arq, titulo, _ in publicar_simulador.EXEMPLOS}
     exemplos = sorted((RAIZ / 'exemplos').glob('*.py'))
     espelhar(RAIZ / 'exemplos', DESTINO / 'exemplos', exemplos)
-    lista = {
-        'arquivos': [f'{m}.py' for m in modulos] + extras,
-        'exemplos': [{'arquivo': a.name, 'titulo': titulos.get(a.name, a.stem.replace('_', ' '))} for a in exemplos],
-    }
-    with open(DESTINO / 'projeto' / 'arquivos.json', 'w', encoding='utf-8', newline='\n') as f:
-        json.dump(lista, f, ensure_ascii=False, indent=1)
-        f.write('\n')
-
     origem = RAIZ / 'simulador'
     espelhar(origem, DESTINO / 'simulador', [a for a in origem.iterdir() if a.is_file() and a.name != 'programa.js'])
     with open(DESTINO / 'simulador' / 'programa.js', 'w', encoding='utf-8', newline='\n') as f:
         f.write(PROGRAMA_JS)
+
+    lista = {
+        'arquivos': [f'{m}.py' for m in modulos] + extras,
+        'exemplos': [{'arquivo': a.name, 'titulo': titulos.get(a.name, a.stem.replace('_', ' '))} for a in exemplos],
+        'offline': arquivos_offline(),
+    }
+    with open(DESTINO / 'projeto' / 'arquivos.json', 'w', encoding='utf-8', newline='\n') as f:
+        json.dump(lista, f, ensure_ascii=False, indent=1)
+        f.write('\n')
 
     print(f'[OK] docs/programar/projeto/: {", ".join(lista["arquivos"])}')
     print(f'[OK] docs/programar/simulador/: cópia de simulador/')

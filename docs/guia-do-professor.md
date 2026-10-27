@@ -17,6 +17,11 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
 - A tarefa **Programas no robô** mostra a bateria e apaga os programas antigos da pasta vscode do robô.
 - Em cada computador, com o robô no USB, abra o `meu_programa.py` e aperte **`Ctrl+Shift+B`**: luz,
   som e "Funcionou!" na tela mostram que conectou (a tarefa **Testar conexão com o robô** faz o mesmo).
+- Uma vez, com um robô de cada modelo da escola, rode a tarefa **Teste geral no robô**. Ela confere um
+  por um os comandos que ainda não foram vistos funcionando em todos os robôs (botões da controladora,
+  duas coisas ao mesmo tempo, sensor de toque, envio pelo navegador...) e grava o resultado em
+  `resultado_teste_geral.txt`.
+- Imprima a [cola de comandos](cola-do-aluno.pdf) (uma folha frente e verso) e deixe uma em cada bancada.
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
   programas deste guia usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
 - Rode o quadrado da aula 2. Os valores do `calibracao.py` foram medidos num robô EST e fazem o
@@ -32,13 +37,24 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
 2. Escreve os comandos e aperta **`Ctrl+Shift+B`**: o programa vai para o robô e já começa a rodar.
    Para o robô esperar na posição de largada, use a tarefa **Gravar no robô sem executar** e inicie
    pelo menu do robô (pasta **vscode**).
-3. Se houver erro, aparece no terminal **em português, com o número da linha**, e nada é enviado.
+3. Se houver erro, aparece no terminal **em português, com o número da linha**, e nada é enviado. A
+   mensagem cobre os erros mais comuns de quem começa: `=` no lugar de `==`, `else` sem `if`, vírgula
+   no número (`0,5`), texto somado com número, porta de sensor ou de motor errada, nome de comando
+   escrito errado (ela sugere o certo).
 
 **Segurança:** o robô se mexe logo depois do envio. Combine com a turma: robô no chão (nunca na
 mesa) e ninguém na frente dele. Para parar um programa, use o botão do robô.
 
 **Dica:** passar o mouse sobre um comando no VS Code mostra a explicação dele, e começar a digitar
-mostra a lista de comandos (autocompletar).
+mostra a lista de comandos (autocompletar), inclusive as opções de cada um: as portas, as comparações
+(`'<'`, `'>'`) e as cores da luz.
+
+**Atalhos:** digitar o nome de um modelo e apertar **Tab** escreve o comando inteiro, pronto para trocar
+os números (Tab pula para o próximo número). Os principais: `para_sempre`, `repetir`, `enquanto`,
+`se_senao`, `quadrado`, `desviar`, `parar_na_linha`, `seguidor_1_sensor`, `seguidor_2_sensores`,
+`seguidor_proporcional` e `mostrar_sensor`; a lista completa está na cola de comandos. Use para ganhar
+tempo depois que a turma já entendeu o comando digitando à mão: o atalho não substitui escrever e
+entender o programa.
 
 ## Quando não há robô para todos: o simulador
 
@@ -66,6 +82,14 @@ navegador onde foi desenhada.
 **Sem instalar nada:** a página [programar](https://andreyviolante.github.io/est-robot/programar/)
 roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou monta com blocos
 (vendo o Python ao lado), simula e envia pelo cabo USB.
+
+- **Sem internet:** depois da primeira visita, a página funciona sem internet naquele navegador
+  (editor, blocos, simulador e envio). Num laboratório com internet ruim, abra a página uma vez em cada
+  computador antes da aula.
+- **Compartilhar link:** o botão copia um link com o programa dentro. O aluno manda pelo WhatsApp e o
+  professor abre e já vê o programa rodando no simulador, sem baixar arquivo. Serve também para o
+  professor mandar o programa da aula para a turma. O programa vai no próprio link e não fica guardado
+  em nenhum servidor.
 
 ---
 
@@ -265,6 +289,9 @@ with para_sempre():
 **Roteiro**
 - Os alunos anotam numa tabela o valor da luz refletida em cima do preto e em cima do branco.
 - O limite para decidir é a média dos dois. Usem esse número num `se_luz`.
+- Depois mostre o `limite(1)`: ele faz a mesma conta com o preto e o branco anotados no `calibracao.py`
+  (`if luz_refletida(1) < limite(1):`). Medindo de novo e mudando só o `calibracao.py`, todos os
+  programas da turma se ajustam.
 
 **Dica:** `painel(s1=luz_refletida(1), s2=luz_refletida(2))` mostra os dois sensores ao mesmo tempo,
 um em cada linha.
@@ -308,9 +335,10 @@ Já testados no robô: movimento (`andar`, `re`, rotações, graus e segundos, c
 `andar_cm` e `virar_*` (o quadrado fecha certo), seguidor de linha, parar na linha (`esperar_luz`,
 `repetir_ate_luz`, `repetir_ate_cor`), tela (3 linhas), som, luz (azul, roxo, vermelho), esperar,
 ultrassom (inclusive desviando de obstáculo com o robô andando), `se(...)`, `repetir_ate(...)`,
-variáveis e `cor_vista`. Ainda não visto funcionando: o sensor de toque (o
-compilador gera para ele os mesmos bytes que a IDE oficial).
-Teste antes de levar para a turma.
+variáveis e `cor_vista`. Ainda não vistos funcionando: o sensor de toque (o compilador gera para ele os
+mesmos bytes que a IDE oficial), os botões da controladora, `ao_mesmo_tempo`, `ajustando` e o envio pelo
+navegador. A tarefa **Teste geral no robô** confere todos eles de uma vez: rode antes de levar para a
+turma.
 
 **Movimentos seguidos:** depois de cada movimento que freia (`andar`, `re`, `andar_cm`, `girar_*`,
 `virar_*`), o robô fica parado meio segundo antes do próximo comando. Sem essa pausa ele emenda um
@@ -324,3 +352,17 @@ e errar leituras; o programa mostra um aviso quando isso acontece. No modo cor, 
 **Bateria:** com a bateria fraca o robô mostra um aviso na tela, se desconecta do USB e deixa de
 executar partes do programa. Se algo estranho acontecer, carregue o robô antes de procurar erro no
 programa.
+
+## Quando algo não funciona
+
+1. Confira o básico: robô ligado e carregado, cabo bem encaixado, IDE EST fechada.
+2. Rode **Testar conexão com o robô**: se o robô não acender a luz e apitar, o problema é a conexão,
+   não o programa.
+3. Ainda não resolveu? A tarefa **Diagnóstico (para pedir ajuda)** junta num texto curto a versão do
+   projeto, o Python, o robô (firmware, bateria, portas, programas gravados) e o `calibracao.py`, e já
+   copia. Cole no WhatsApp junto com o que aconteceu e a mensagem de erro. Não vai nenhum dado
+   pessoal nem dos alunos.
+
+**Relato de experiência ou artigo?** O EST-ROBOT tem DOI para citar:
+[10.5281/zenodo.23692767](https://doi.org/10.5281/zenodo.23692767) (a referência pronta, no formato da
+ABNT, está nas perguntas do [site](https://andreyviolante.github.io/est-robot/#perguntas)).

@@ -166,6 +166,10 @@ html.travado { overflow: hidden; }
 .msg > b:first-child { display: block; }
 .msg p { margin: 4px 0 0; }
 .msg pre { margin: 6px 0 0; white-space: pre-wrap; font: 0.88rem/1.5 var(--mono); }
+.msg input.link { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 6px 8px;
+                  font: 0.8rem var(--mono); color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+                  border-radius: 6px; }
+.arquivos { flex-wrap: wrap; }
 .msg.ok { border-color: var(--ok); }
 .msg.ok > b:first-child { color: var(--ok); }
 .msg.aviso { border-color: var(--alerta); }

@@ -12,5 +12,30 @@
    "arquivo": "11_seguidor_dois_sensores.py",
    "titulo": "Seguidor básico com dois sensores"
   }
+ ],
+ "offline": [
+  "compilador.js",
+  "exemplos/11_seguidor_dois_sensores.py",
+  "index.html",
+  "modo_blocos.js",
+  "ponte.py",
+  "programar.css",
+  "programar.js",
+  "projeto/arquivos.json",
+  "projeto/blocos.py",
+  "projeto/calibracao.py",
+  "projeto/enviar.py",
+  "projeto/estc.py",
+  "projeto/robo.py",
+  "projeto/simular.py",
+  "protocolo.js",
+  "simulador/app.js",
+  "simulador/desafios.js",
+  "simulador/estilo.css",
+  "simulador/index.html",
+  "simulador/mundo.js",
+  "simulador/programa.js",
+  "simulador/robo.js",
+  "simulador/vm.js"
  ]
 }

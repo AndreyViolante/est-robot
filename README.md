@@ -1,6 +1,9 @@
 # est-robot
 
+[![Versão](https://img.shields.io/github/v/release/AndreyViolante/est-robot?label=vers%C3%A3o)](https://github.com/AndreyViolante/est-robot/releases/latest)
+[![Testes](https://github.com/AndreyViolante/est-robot/actions/workflows/testes.yml/badge.svg)](https://github.com/AndreyViolante/est-robot/actions/workflows/testes.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23692767.svg)](https://doi.org/10.5281/zenodo.23692767)
+[![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
 
 Programe o robô educacional **Dr. Luck EST** em Python, direto do **VS Code**, sem a IDE
 proprietária. Pensado para aulas de robótica: os comandos são em português.
@@ -15,7 +18,9 @@ no Chrome ou no Edge (Windows, Mac, Linux ou Chromebook). Dá para escrever em P
 programa com blocos, vendo ao lado o Python que os blocos geram. A página compila no próprio
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
 portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). No
-celular dá para programar e simular. O mesmo arquivo `.py` funciona no VS Code.
+celular dá para programar e simular. O mesmo arquivo `.py` funciona no VS Code. Depois da primeira
+visita, a página funciona sem internet naquele navegador, e o botão **Compartilhar link** copia um link
+com o programa dentro (quem abre já vê o programa no simulador; nada fica guardado em servidor).
 
 ```python
 from robo import *

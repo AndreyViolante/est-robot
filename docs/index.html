@@ -177,6 +177,11 @@ h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: upp
 .faq div { padding-block: 20px; border-top: 1px solid var(--line); }
 .faq h3 { font: 700 1.1rem var(--body); margin: 0 0 6px; }
 .faq p { margin: 0; color: var(--muted); max-width: 60ch; }
+.faq .citacao { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--led-azul); color: var(--fg);
+                background: color-mix(in srgb, var(--fg) 5%, transparent); font-size: 0.9rem; overflow-wrap: anywhere; }
+.faq .copiar { margin-top: 10px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
+               background: transparent; color: var(--fg); font: 600 0.85rem var(--body); cursor: pointer; }
+.faq .copiar:hover { border-color: var(--led-azul); color: var(--led-azul); }
 
 footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 8px; }
 
@@ -309,6 +314,10 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
       <div><h3>Isso é legal?</h3><p>É um projeto independente, feito para o robô conversar com outro programa (interoperabilidade). Não usa código do fabricante e não distribui nada da IDE. Também não tem relação com o fabricante.</p></div>
       <div><h3>Usa nas suas aulas?</h3><p>Conte para o autor <a href="https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml" target="_blank" rel="noopener">registrando a sua escola</a> (opcional e público, sem dados de alunos).</p></div>
       <div><h3>O EST-ROBOT coleta dados?</h3><p>Só números anônimos: quantas instalações perguntam pela versão nova por dia (no máximo uma vez cada) e quantas visitas estas páginas recebem. Nada de nomes, e-mails ou dados de alunos, e sem cookies. Para desligar no VS Code, ponha <code>AVISO_DE_VERSAO = False</code> no <code>calibracao.py</code>.</p></div>
+      <div><h3>Como citar num trabalho?</h3><p>O EST-ROBOT tem DOI permanente, que vale para todas as versões: <a href="https://doi.org/10.5281/zenodo.23692767" target="_blank" rel="noopener">10.5281/zenodo.23692767</a>. No formato da ABNT:</p>
+        <p class="citacao" id="citacao">VIOLANTE, Andrey. <b>EST-ROBOT</b>: programação da controladora EST em Python pelo VS Code. [<i>S. l.</i>]: Zenodo, 2026. DOI: 10.5281/zenodo.23692767. Disponível em: https://doi.org/10.5281/zenodo.23692767. Acesso em: <span id="acesso">dia mês ano</span>.</p>
+        <button class="copiar" type="button" id="copiar-citacao">Copiar a referência</button>
+        <p style="margin-top:10px">Outros formatos (APA, BibTeX): botão <i>Cite this repository</i> na <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">página do projeto no GitHub</a>.</p></div>
       <div><h3>Encontrou um problema?</h3><p><a href="https://github.com/AndreyViolante/est-robot/issues/new" target="_blank" rel="noopener">Abra uma issue no GitHub</a> contando o que aconteceu e a mensagem de erro.</p></div>
     </div>
   </section>
@@ -368,6 +377,24 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
     setTimeout(ciclo, 600);
   }
 
+})();
+</script>
+<script>
+/* referência ABNT: a data de acesso é a de hoje, e o botão copia o texto pronto */
+(function () {
+  var MESES = ['jan.', 'fev.', 'mar.', 'abr.', 'maio', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+  var hoje = new Date();
+  document.getElementById('acesso').textContent = hoje.getDate() + ' ' + MESES[hoje.getMonth()] + ' ' + hoje.getFullYear();
+  var botao = document.getElementById('copiar-citacao');
+  botao.addEventListener('click', function () {
+    var texto = document.getElementById('citacao').innerText.trim();
+    var pronto = function () { botao.textContent = 'Copiado!'; setTimeout(function () { botao.textContent = 'Copiar a referência'; }, 2000); };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(texto).then(pronto, function () { botao.textContent = 'Selecione e copie o texto acima'; });
+    } else {
+      botao.textContent = 'Selecione e copie o texto acima';
+    }
+  });
 })();
 </script>
 <script>
