@@ -299,10 +299,13 @@ acontecer, pergunta se aconteceu e no fim grava o resumo em `resultado_teste_ger
 A versão instalada fica no arquivo [VERSAO](VERSAO) e o que mudou em cada uma, no
 [NOVIDADES.md](NOVIDADES.md). A cada envio para o GitHub, os testes rodam sozinhos
 ([.github/workflows/testes.yml](.github/workflows/testes.yml)): conferência com a IDE, testes da
-linguagem e erros de escrita nos arquivos Python e JavaScript.
+linguagem e erros de escrita nos arquivos Python e JavaScript. Uma vez por mês o Dependabot do GitHub
+confere se saíram versões novas das peças desses workflows e abre um Pull Request para aprovar
+([.github/dependabot.yml](.github/dependabot.yml)).
 
-Para publicar uma versão nova: mude o número no `VERSAO`, escreva as novidades no `NOVIDADES.md`, faça
-o commit e o push, e envie a tag com o mesmo número:
+Para publicar uma versão nova: mude o número no `VERSAO` e no `CITATION.cff` (`version` e
+`date-released`), escreva as novidades no `NOVIDADES.md`, faça o commit e o push, e envie a tag com o
+mesmo número:
 
 ```bash
 git tag v0.2.0

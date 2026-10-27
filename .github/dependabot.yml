@@ -1,0 +1,13 @@
+# Uma vez por mês, o GitHub confere se saíram versões novas das peças usadas nos workflows
+# (actions/checkout, actions/setup-python...) e abre um pedido de mudança (Pull Request) para aprovar.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      workflows:
+        patterns: ['*']
+    commit-message:
+      prefix: Workflows

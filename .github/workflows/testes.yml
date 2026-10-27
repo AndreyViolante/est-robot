@@ -17,7 +17,8 @@ jobs:
       - name: Nenhum commit com e-mail pessoal (só o noreply do GitHub)
         shell: bash
         run: |
-          ruins=$(git log --format='%h %ae %ce' | awk '$2 !~ /@users\.noreply\.github\.com$/ || $3 !~ /@users\.noreply\.github\.com$/')
+          # noreply@github.com: o próprio GitHub, nos merges de Pull Request (ex.: os do Dependabot)
+          ruins=$(git log --format='%h %ae %ce' | awk 'function ok(e) { return e ~ /@users\.noreply\.github\.com$/ || e == "noreply@github.com" } !ok($2) || !ok($3)')
           if [ -n "$ruins" ]; then echo "Commits com e-mail que não é o noreply do GitHub:"; echo "$ruins"; exit 1; fi
       - uses: actions/setup-python@v7
         with:
