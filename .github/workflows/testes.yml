@@ -26,6 +26,8 @@ jobs:
         run: python -m compileall -q .
       - name: Conferência com os programas da IDE e testes da linguagem
         run: python verificar_gabaritos.py
+      - name: Os programas do teste geral compilam
+        run: python ferramentas/teste_geral.py --sem-robo
       - name: Os arquivos JavaScript não têm erro de escrita
         shell: bash
         run: for f in simulador/*.js docs/simulador/*.js docs/programar/*.js docs/programar/simulador/*.js; do node --check "$f"; done

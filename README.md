@@ -284,6 +284,8 @@ O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: O
 **Ainda não visto funcionando no robô:** o sensor de toque (os bytes batem com a IDE), `ao_mesmo_tempo`,
 os botões da controladora, `ajustando`, o envio pelo navegador e as tarefas "Programas no robô" e
 "Bateria do robô". Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+A tarefa **Teste geral no robô** passa por todos esses, um de cada vez: manda um programa, diz o que deve
+acontecer, pergunta se aconteceu e no fim grava o resumo em `resultado_teste_geral.txt`.
 
 ### Versões e testes automáticos
 
