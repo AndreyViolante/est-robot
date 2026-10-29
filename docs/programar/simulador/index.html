@@ -55,6 +55,18 @@
       </div>
     </section>
 
+    <section class="desafio obr" id="cartaoOBR" hidden aria-labelledby="obrTitulo">
+      <div class="desafio-topo"><span>Rodada da OBR · percurso com linha (manual 2026)</span><span id="obrTempo">5:00</span></div>
+      <h2 id="obrTitulo"><span id="obrPontos">0</span> pontos</h2>
+      <p class="obr-conta" id="obrConta"></p>
+      <p class="desafio-status" id="obrStatus"></p>
+      <div class="desafio-acoes">
+        <button id="btFalhaOBR" class="bt pequeno" type="button"
+                title="Como o capitão da equipe: o robô volta ao último checkpoint e o programa recomeça">Falha de progresso</button>
+        <span class="nota">Não simulados: rampa, gangorra, lombada, passagem e sala de resgate.</span>
+      </div>
+    </section>
+
     <div class="quadro" id="quadro">
       <canvas id="cena" aria-label="Pista vista de cima com o robô"></canvas>
     </div>
@@ -84,6 +96,34 @@
           <input type="number" id="larguraMinha" min="60" max="400" step="10" aria-label="Largura da mesa em centímetros"> ×
           <input type="number" id="alturaMinha" min="60" max="300" step="10" aria-label="Altura da mesa em centímetros"> cm</label>
       </div>
+    </div>
+    <div class="editor" id="editorOBR" hidden>
+      <button id="btMontarOBR" class="bt pequeno" type="button" aria-pressed="false">✎ Montar o percurso</button>
+      <div class="itens" id="itensOBR" hidden>
+        <button id="btTirarOBR" class="bt pequeno" type="button">↶ Tirar o último ladrilho</button>
+        <button id="btBecoOBR" class="bt pequeno" type="button" title="O robô volta para o ladrilho de antes: o último vira um beco sem saída (dois verdes)">↩ Meia-volta (beco)</button>
+        <button id="btApagarOBR" class="bt pequeno" type="button">Apagar tudo</button>
+        <label class="campo">Arena
+          <input type="number" id="colunasOBR" min="2" max="12" aria-label="Ladrilhos na largura"> ×
+          <input type="number" id="linhasOBR" min="2" max="9" aria-label="Ladrilhos na altura"> ladrilhos</label>
+        <label class="campo">Nível <select id="nivelOBR"><option value="1">1 (gap até 10 cm)</option><option value="2">2 (gap até 15 cm)</option></select></label>
+        <span class="escolhido-obr" id="escolhidoOBR" hidden>
+          <b id="numeroOBR"></b>
+          <label class="campo">Perigo <select id="elementoOBR">
+            <option value="">nenhum</option>
+            <option value="gap5">gap de 5 cm</option><option value="gap10">gap de 10 cm</option><option value="gap15">gap de 15 cm</option>
+            <option value="obstaculo">obstáculo</option>
+            <option value="cruz">interseção em cruz</option><option value="T">interseção em T</option>
+            <option value="Tdireita">T com o ramo à direita (na reta)</option><option value="Treto">T chegando pela barra (na curva)</option>
+          </select></label>
+          <label class="marcar"><input type="checkbox" id="checkpointOBR"> Checkpoint</label>
+          <label class="marcar"><input type="checkbox" id="suaveOBR"> Curva suave</label>
+          <label class="campo">Verde depois <select id="verdeDepoisOBR">
+            <option value="">não</option><option value="esquerda">à esquerda</option><option value="direita">à direita</option>
+          </select></label>
+        </span>
+      </div>
+      <p class="erros-obr" id="errosOBR" hidden></p>
     </div>
     <p class="dica" id="dica"></p>
     <div class="avisos" id="avisos" hidden></div>
@@ -155,6 +195,7 @@
 <script src="mundo.js"></script>
 <script src="robo.js"></script>
 <script src="desafios.js"></script>
+<script src="obr.js"></script>
 <script src="programa.js"></script>
 <script src="app.js"></script>
 <script>

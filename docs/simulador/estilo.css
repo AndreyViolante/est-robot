@@ -123,6 +123,14 @@ button, select, input { font: inherit; color: inherit; }
 .etiqueta { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--alerta); color: var(--panel);
             letter-spacing: 0.04em; text-transform: none; }
 
+/* arena da OBR: cartão da rodada e editor do percurso */
+.desafio.obr { border-left-color: #e8792b; }
+.desafio.obr h2 { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.obr-conta { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.escolhido-obr { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 4px 10px;
+                 border-radius: 10px; background: color-mix(in srgb, #e8792b 12%, transparent); }
+.erros-obr { flex-basis: 100%; margin: 0; font-size: 0.86rem; color: var(--erro); }
+
 .dica { margin: 0; font-size: 0.88rem; color: var(--muted); }
 .avisos { border-left: 4px solid var(--alerta); background: var(--panel); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
 .avisos p { margin: 4px 0; }

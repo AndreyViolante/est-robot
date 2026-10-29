@@ -32,5 +32,7 @@ jobs:
       - name: Os arquivos JavaScript não têm erro de escrita
         shell: bash
         run: for f in simulador/*.js docs/simulador/*.js docs/programar/*.js docs/programar/simulador/*.js; do node --check "$f"; done
+      - name: Arena da OBR do simulador (pontuação como no manual)
+        run: node ferramentas/teste_obr.js
       - name: O tasks.json do VS Code é válido
         run: python -c "import json; json.load(open('.vscode/tasks.json', encoding='utf-8'))"

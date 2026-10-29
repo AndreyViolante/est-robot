@@ -34,6 +34,7 @@
   "simulador/estilo.css",
   "simulador/index.html",
   "simulador/mundo.js",
+  "simulador/obr.js",
   "simulador/programa.js",
   "simulador/robo.js",
   "simulador/vm.js"

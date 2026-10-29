@@ -14,6 +14,7 @@ const CHAVE = 'est-simulador-v1';
 const CORES_SENSOR = {1: '#2f8cff', 2: '#ff8a1f', 3: '#18b07a', 4: '#b27cff'};
 const NOMES_LUZ = ['azul', 'roxo', 'vermelho'];
 const MINHA = 'minha';            // id da pista que o aluno desenha (fica guardada no navegador)
+const MINHA_OBR = 'obr-minha';    // id da arena da OBR que o aluno monta com ladrilhos (também fica guardada)
 const GRADE = 5;                  // cm: as pontas das linhas desenhadas grudam nesta grade
 const CAIXA = 10;                 // cm: lado da caixa que o editor coloca
 const MAX_ITENS = 500;            // linhas, quadrados ou caixas guardados na "Minha pista", no máximo
@@ -169,8 +170,25 @@ function pistaMinha() {
   return p;
 }
 
+// arena da OBR (obr.js): uma das prontas ou a "Minha arena OBR" guardada no navegador
+function pistaOBR(id) {
+  if (id === MINHA_OBR) {
+    const arena = EST.OBR.arenaGuardada(salvo.arenaOBR);
+    const p = EST.OBR.montar(arena, MINHA_OBR, 'Minha arena OBR (ladrilhos)');
+    p.obr.erros = arena.percurso.length ? EST.OBR.conferir(arena) : [];
+    return p;
+  }
+  const a = EST.OBR.ARENAS.find(q => q.id === id);
+  const p = EST.OBR.montar(a.arena, a.id, a.nome);
+  p.dica = a.dica;
+  p.obr.erros = [];
+  return p;
+}
+const ehOBR = id => id === MINHA_OBR || EST.OBR.ARENAS.some(a => a.id === id);
+
 function montarPista(id) {
   if (id === MINHA) return pistaMinha();
+  if (ehOBR(id)) return pistaOBR(id);
   const base = EST.PISTAS.find(p => p.id === id) || EST.PISTAS[0];
   const pista = EST.copiaPista(base);
   const caixas = salvo.caixas[pista.id];
@@ -181,12 +199,15 @@ function montarPista(id) {
 }
 
 let desafio = null, prova = null;     // desafio escolhido e a tentativa em andamento (ver "trilha de desafios")
+let placar = null;                    // rodada da OBR em andamento (ver "arena da OBR")
+let editandoOBR = false, escolhidoOBR = -1;     // montando a "Minha arena OBR" e o ladrilho escolhido nela
 let pista = montarPista((P && P.pista) || salvo.pista);     // o exemplo da demonstração já diz a pista
 const robo = new EST.Robo(mesclar(copia(EST.ROBO_PADRAO), salvo.robo), pista);
 let vm = novaVM();
 
 function largada() {
   if (desafio) return desafio.largada;              // no desafio o robô sempre sai da largada dele
+  if (pista.obr) return pista.largada;              // na arena da OBR, do ladrilho de partida
   const l = salvo.largadas[pista.id];
   return l && Number.isFinite(l.x) && Number.isFinite(l.y) && Number.isFinite(l.ang) ? l : pista.largada;
 }
@@ -250,6 +271,8 @@ function reiniciar() {
   passoAPasso = false; motivoParada = null;
   estado = vm ? 'pronto' : 'sem';
   novaProva();
+  placar = pista.obr && !editandoOBR && pista.obr.arena.percurso.length >= 2 && !pista.obr.erros.length
+    ? new EST.OBR.Placar(pista) : null;
   desenharLcd(true);
   atualizarTudo();
 }
@@ -300,7 +323,18 @@ function passo() {
   robo.avancar(DT, tSim + DT, arraste !== null && (arraste.tipo === 'mover' || arraste.tipo === 'girar'));
   tSim += DT;
   if (soltarPendente && tSim >= soltarPendente.t) { const f = soltarPendente.soltar; soltarPendente = null; f(); }
-  if (prova && !prova.resultado && (estado === 'rodando' || estado === 'terminou')) verificarDesafio();
+  if (estado !== 'rodando' && estado !== 'terminou') return;
+  if ((prova && !prova.resultado) || (placar && !placar.fim)) contarParado();
+  if (prova && !prova.resultado) verificarDesafio();
+  if (placar && !placar.fim) verificarOBR();
+}
+
+// há quanto tempo o robô está parado (desafios e rodada da OBR)
+function contarParado() {
+  if (Math.hypot(robo.x - posAnterior[0], robo.y - posAnterior[1]) > 1e-4 || Math.abs(robo.ang - posAnterior[2]) > 1e-5) {
+    ultimoMovimento = tSim;
+  }
+  posAnterior = [robo.x, robo.y, robo.ang];
 }
 
 // ---------------------------------------------------------------- desenho da pista
@@ -371,6 +405,7 @@ function desenharPista(c) {
     for (let x = 10; x < W; x += 10) linha(c, x, 0, x, H, x % 50 ? '#e6eaf1' : '#cfd6e2', 0.2);
     for (let y = 10; y < H; y += 10) linha(c, 0, y, W, y, y % 50 ? '#e6eaf1' : '#cfd6e2', 0.2);
   }
+  if (pista.obr) desenharLadrilhos(c);
   // quadrados verdes (por baixo da linha preta, como no chão)
   c.fillStyle = COR_VERDE;
   for (const q of pista.verdes || []) c.fillRect(q.x, q.y, q.w, q.h);
@@ -388,6 +423,10 @@ function desenharPista(c) {
     }
     c.stroke();
   }
+  // faixa vermelha de chegada da arena da OBR (por cima da linha)
+  c.fillStyle = '#d71f1f';
+  for (const q of pista.vermelhos || []) c.fillRect(q.x, q.y, q.w, q.h);
+  if (pista.obr) desenharMarcasOBR(c);
   // paredes: a face é o segmento; a espessura fica do lado de fora da mesa
   for (const [x1, y1, x2, y2] of pista.paredes) {
     const L = Math.hypot(x2 - x1, y2 - y1);
@@ -745,6 +784,7 @@ function atualizarDica() {
   let texto;
   if (desafio) texto = 'No desafio o robô sempre sai da largada marcada (o contorno tracejado). Executar tenta; ' +
                        'Reiniciar volta para a largada. Para treinar com o robô e a caixa soltos, saia do desafio.';
+  else if (pista.obr) texto = dicaOBR();
   else if (pista.id !== MINHA) texto = pista.dica + arrastar;
   else if (editando) texto = DICAS_EDITOR[ferramenta] + ' Ctrl+Z desfaz.';
   else if (!pista.linhas.length) texto = 'Pista em branco: aperte "✎ Desenhar a pista" para fazer a sua.';
@@ -765,6 +805,7 @@ function atualizarEditor() {
   $('larguraMinha').value = pista.largura;
   $('alturaMinha').value = pista.altura;
   if (!editando) mira = marcado = null;
+  atualizarEditorOBR();
   atualizarDica();
 }
 
@@ -806,6 +847,7 @@ function oQueTemAqui(x, y) {
   const [ax, ay] = posicaoAlca();
   if (Math.hypot(x - ax, y - ay) < Math.max(2.5, 10 / vista.escala * (window.devicePixelRatio || 1))) return {tipo: 'girar'};
   if (dentroDoRobo(x, y)) return {tipo: 'mover'};
+  if (pista.obr) return null;               // na OBR os obstáculos são fixos no ladrilho
   const cx = pista.caixas.find(c => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h);
   return cx ? {tipo: 'caixa', caixa: cx} : null;
 }
@@ -813,6 +855,7 @@ function oQueTemAqui(x, y) {
 cena.addEventListener('pointerdown', ev => {
   if (desafio) return;                      // no desafio o robô e a caixa ficam onde o desafio manda
   const [x, y] = paraMundo(ev);
+  if (pista.obr && editandoOBR) { cliqueOBR(x, y, ev.shiftKey); ev.preventDefault(); return; }
   let alvo = oQueTemAqui(x, y);
   // editando: a alça de girar vale sempre; o robô e as caixas se arrastam, menos quando o "Apagar" pega algo
   if (editando && !(alvo && alvo.tipo === 'girar')) {
@@ -839,6 +882,7 @@ cena.addEventListener('pointermove', ev => {
   const [x, y] = paraMundo(ev);
   if (!arraste) {
     if (desafio) { cena.className = ''; return; }
+    if (pista.obr && editandoOBR) { cena.className = 'desenhar'; return; }
     const alvo = oQueTemAqui(x, y), girar = alvo && alvo.tipo === 'girar';
     marcado = editando && ferramenta === 'apagar' && !girar ? itemEm(x, y) : null;
     mira = editando && ferramenta !== 'apagar' && !alvo ? {x, y, livre: ev.shiftKey} : null;
@@ -1060,6 +1104,7 @@ function atualizarPainel() {
   atualizarRelogio();
   marcarLinhas();
   atualizarStatusDesafio();
+  atualizarOBR();
   if (atualizarPainel.avisos !== robo.avisos.size) { atualizarPainel.avisos = robo.avisos.size; atualizarAvisos(); }
 }
 
@@ -1145,6 +1190,7 @@ function trocarPista(id) {
   }
   $('pista').value = pista.id;
   if (pista.id === MINHA && !pista.linhas.length) editando = true;      // pista em branco: já abre desenhando
+  if (pista.id === MINHA_OBR && !pista.obr.arena.percurso.length) editandoOBR = true;
   atualizarEditor();
   dimensionar();
   reiniciar();
@@ -1176,6 +1222,272 @@ function trocarExemplo(i) {
   else reiniciar();
   mostrarPrograma();
 }
+
+// ---------------------------------------------------------------- arena da OBR (obr.js)
+
+// as marcas de lápis entre os ladrilhos (montando: a grade inteira, para escolher onde vai cada um)
+function desenharLadrilhos(c) {
+  const {LADO, BORDA} = EST.OBR, a = pista.obr.arena;
+  c.save();
+  c.lineWidth = 0.3;
+  if (editandoOBR) {
+    c.setLineDash([1, 1]);
+    c.strokeStyle = '#c6cedb';
+    for (let col = 0; col < a.colunas; col++) {
+      for (let lin = 0; lin < a.linhas; lin++) c.strokeRect(BORDA + col * LADO, BORDA + lin * LADO, LADO, LADO);
+    }
+    c.setLineDash([]);
+  }
+  c.strokeStyle = '#d2d8e2';
+  for (const t of a.percurso) c.strokeRect(BORDA + t.c * LADO, BORDA + t.r * LADO, LADO, LADO);
+  c.restore();
+}
+
+// checkpoints (marcador laranja), partida, números do percurso (montando) e o ladrilho onde o robô está (rodada)
+function desenharMarcasOBR(c) {
+  const {LADO, BORDA} = EST.OBR, perc = pista.obr.arena.percurso;
+  const canto = t => [BORDA + t.c * LADO, BORDA + t.r * LADO];
+  c.save();
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  for (const t of perc) {
+    if (!t.checkpoint) continue;
+    const [x0, y0] = canto(t);
+    c.fillStyle = '#f08a24';
+    c.strokeStyle = '#a4520c';
+    c.lineWidth = 0.3;
+    c.beginPath(); c.arc(x0 + 4, y0 + 4, 2, 0, 2 * Math.PI); c.fill(); c.stroke();
+  }
+  if (perc.length) {
+    const [x0, y0] = canto(perc[0]);
+    c.fillStyle = '#586079';
+    c.font = 'bold 2.6px "Segoe UI", system-ui, sans-serif';
+    c.fillText('PARTIDA', x0 + LADO / 2, y0 + 3);
+  }
+  c.font = 'bold 2.8px "Segoe UI", system-ui, sans-serif';
+  if (editandoOBR) {
+    perc.forEach((t, i) => {
+      const [x0, y0] = canto(t);
+      const vez = perc.slice(0, i).filter(q => q.c === t.c && q.r === t.r).length;    // passa de novo: ao lado
+      const x = x0 + LADO - 4 - vez * 5.5, y = y0 + LADO - 4;
+      c.fillStyle = i === escolhidoOBR ? '#e8792b' : 'rgba(34, 80, 255, 0.85)';
+      c.beginPath(); c.arc(x, y, 2.4, 0, 2 * Math.PI); c.fill();
+      c.fillStyle = '#ffffff';
+      c.fillText(String(i + 1), x, y + 0.1);
+    });
+    const t = perc[escolhidoOBR];
+    if (t) {
+      const [x0, y0] = canto(t);
+      c.strokeStyle = '#e8792b';
+      c.lineWidth = 0.8;
+      c.strokeRect(x0 + 0.4, y0 + 0.4, LADO - 0.8, LADO - 0.8);
+    }
+  } else if (placar && !placar.fim && estado !== 'pronto' && perc[placar.k]) {
+    const [x0, y0] = canto(perc[placar.k]);
+    c.setLineDash([1.2, 0.8]);
+    c.strokeStyle = 'rgba(34, 80, 255, 0.7)';
+    c.lineWidth = 0.5;
+    c.strokeRect(x0 + 0.5, y0 + 0.5, LADO - 1, LADO - 1);
+  }
+  c.restore();
+}
+
+function dicaOBR() {
+  const rodada = ' Executar começa a rodada de 5 minutos; Reiniciar recomeça. O robô sai sempre do ladrilho de partida.';
+  if (pista.id !== MINHA_OBR) return pista.dica + rodada;
+  if (editandoOBR) {
+    return 'Clique nos quadrados da grade, um depois do outro, para fazer o caminho do robô: o primeiro é a partida e o ' +
+           'último é a chegada (faixa vermelha). "Meia-volta" faz um beco sem saída; Shift + clique passa de novo por um ' +
+           'ladrilho (cruzamento). Clique num ladrilho já colocado para escolher o perigo dele ou pôr um checkpoint.';
+  }
+  if (!pista.obr.arena.percurso.length) return 'Arena em branco: aperte "✎ Montar o percurso" para fazer a sua com ladrilhos de 30 cm.';
+  return 'A arena que você montou, guardada neste navegador.' + rodada;
+}
+
+function atualizarEditorOBR() {
+  const minha = pista.id === MINHA_OBR;
+  if (!minha) { editandoOBR = false; escolhidoOBR = -1; }
+  $('editorOBR').hidden = !minha;
+  $('itensOBR').hidden = !editandoOBR;
+  $('btMontarOBR').setAttribute('aria-pressed', String(editandoOBR));
+  $('btMontarOBR').textContent = editandoOBR ? '✓ Pronto' : '✎ Montar o percurso';
+  if (!minha) return;
+  const a = pista.obr.arena, t = a.percurso[escolhidoOBR];
+  $('btTirarOBR').disabled = !a.percurso.length;
+  $('btBecoOBR').disabled = a.percurso.length < 2;
+  $('btApagarOBR').disabled = !a.percurso.length;
+  $('colunasOBR').value = a.colunas;
+  $('linhasOBR').value = a.linhas;
+  $('nivelOBR').value = String(a.nivel);
+  $('escolhidoOBR').hidden = !t;
+  if (t) {
+    const n = escolhidoOBR + 1, papel = n === 1 ? ' (partida)' : n === a.percurso.length ? ' (chegada)' : '';
+    $('numeroOBR').textContent = `Ladrilho ${n}${papel}`;
+    $('elementoOBR').value = t.elemento === 'gap' ? `gap${t.gap}` : t.elemento === 'T' && t.ramo ? `T${t.ramo}` : t.elemento;
+    $('checkpointOBR').checked = !!t.checkpoint;
+    $('suaveOBR').checked = t.curva === 'suave';
+    $('verdeDepoisOBR').value = t.verdeDepois || '';
+  }
+  const erros = pista.obr.erros;
+  $('errosOBR').hidden = !erros.length;
+  $('errosOBR').textContent = erros.length ? `Para valer a rodada, corrija: ${erros.join('; ')}.` : '';
+}
+
+// montando a arena: clique num quadrado da grade encostado no último ladrilho para pôr o próximo; num ladrilho já
+// colocado, escolhe ele (se o percurso passa mais de uma vez, cada clique escolhe uma das vezes); Shift: passa de novo
+function cliqueOBR(x, y, shift) {
+  const {LADO, BORDA} = EST.OBR, a = pista.obr.arena, perc = a.percurso;
+  const c = Math.floor((x - BORDA) / LADO), r = Math.floor((y - BORDA) / LADO);
+  if (c < 0 || r < 0 || c >= a.colunas || r >= a.linhas) return;
+  const ultimo = perc[perc.length - 1], encosta = !ultimo || EST.OBR.vizinhos(ultimo, {c, r});
+  const vezes = perc.map((t, i) => (t.c === c && t.r === r ? i : -1)).filter(i => i >= 0);
+  if (vezes.length && !(shift && encosta)) {
+    const k = vezes.indexOf(escolhidoOBR);
+    escolhidoOBR = k < 0 ? vezes[vezes.length - 1] : vezes[(k + vezes.length - 1) % vezes.length];
+    atualizarEditor();
+    return;
+  }
+  if (!encosta) return;
+  perc.push({c, r, elemento: ''});
+  escolhidoOBR = -1;
+  mudouArenaOBR();
+}
+
+function mudouArenaOBR() {
+  salvo.arenaOBR = copia(pista.obr.arena);
+  salvar();
+  const antes = [pista.largura, pista.altura];
+  pista = montarPista(MINHA_OBR);
+  robo.pista = pista;
+  robo.cache.clear();
+  if (antes[0] !== pista.largura || antes[1] !== pista.altura) dimensionar();
+  reiniciar();
+  atualizarEditor();
+}
+
+const ladrilhoEscolhido = () => pista.obr && pista.obr.arena.percurso[escolhidoOBR];
+
+// a faixa vermelha está embaixo do robô (de trás até a frente, pela linha do meio)?
+function sobreVermelho() {
+  const corpo = robo.config.corpo;
+  for (let f = -corpo.tras; f <= corpo.frente; f += 1) {
+    const [px, py] = robo.ponto(f, 0);
+    if (pista.vermelhos.some(q => px >= q.x && px <= q.x + q.w && py >= q.y && py <= q.y + q.h)) return true;
+  }
+  return false;
+}
+
+function verificarOBR() {
+  const r = placar.passo({t: tSim, x: robo.x, y: robo.y, parado: tSim - ultimoMovimento, sobreVermelho: sobreVermelho()});
+  if (!r) return;
+  if (r.falha) {
+    falhaDeProgresso(r);
+  } else if (r.fim) {
+    if (estado === 'rodando') { estado = 'pausado'; if (audio) audio.suspend(); }     // o robô para onde acabou
+    silenciar();
+    atualizarTudo();
+  }
+}
+
+// falha de progresso: o robô volta ao último checkpoint e o programa recomeça do início (como na OBR)
+function falhaDeProgresso(r) {
+  silenciar();
+  robo.reiniciar();
+  robo.colocar(r.largada.x, r.largada.y, r.largada.ang);
+  robo.rastro = [[robo.x, robo.y]];
+  if (vm) vm.reiniciar();
+  if (estado === 'terminou') estado = 'rodando';
+  ultimoMovimento = tSim;
+  posAnterior = [robo.x, robo.y, robo.ang];
+  desenharLcd(true);
+  atualizarTudo();
+}
+
+function atualizarOBR() {
+  const mostra = !!pista.obr && !desafio;
+  $('cartaoOBR').hidden = !mostra;
+  if (!mostra) return;
+  let pontos = '0', tempo = '5:00', conta = '', texto, classe = 'desafio-status';
+  if (!placar) {
+    texto = editandoOBR ? 'Montando a arena: aperte "✓ Pronto" para correr.'
+      : pista.obr.erros.length ? 'A arena tem problemas: veja a lista embaixo da pista.' : 'Monte o percurso para correr.';
+  } else {
+    const p = placar.pontos, resta = Math.max(0, EST.OBR.RODADA - tSim);
+    pontos = String(placar.total);
+    tempo = `${Math.floor(resta / 60)}:${String(Math.floor(resta % 60)).padStart(2, '0')}`;
+    conta = `ladrilhos ${p.ladrilhos} · perigos ${p.perigos} · chegada ${p.chegada} · falhas de progresso ${placar.falhas} · ` +
+            `ladrilho ${placar.k + 1} de ${placar.percurso.length} · ${placar.tentativa}ª tentativa`;
+    texto = estado === 'pronto' ? 'Aperte Executar para começar a rodada.' : placar.ultimo;
+    if (placar.fim) classe += placar.pontos.chegada ? ' ok' : ' falhou';
+  }
+  $('obrPontos').textContent = pontos;
+  $('obrTempo').textContent = tempo;
+  $('obrConta').textContent = conta;
+  if ($('obrStatus').textContent !== texto) $('obrStatus').textContent = texto;
+  $('obrStatus').className = classe;
+  $('btFalhaOBR').disabled = !placar || !!placar.fim || estado === 'pronto';
+}
+
+$('btFalhaOBR').addEventListener('click', () => {
+  if (placar && !placar.fim && estado !== 'pronto') falhaDeProgresso(placar.falha('declarada pelo capitão'));
+});
+$('btMontarOBR').addEventListener('click', () => {
+  editandoOBR = !editandoOBR;
+  escolhidoOBR = -1;
+  reiniciar();
+  atualizarEditor();
+});
+$('btTirarOBR').addEventListener('click', () => { pista.obr.arena.percurso.pop(); escolhidoOBR = -1; mudouArenaOBR(); });
+$('btBecoOBR').addEventListener('click', () => {
+  const perc = pista.obr.arena.percurso;
+  if (perc.length < 2) return;
+  const antes = perc[perc.length - 2];
+  perc.push({c: antes.c, r: antes.r, elemento: ''});
+  mudouArenaOBR();
+});
+$('btApagarOBR').addEventListener('click', () => {
+  if (!window.confirm('Apagar o percurso inteiro desta arena?')) return;
+  pista.obr.arena.percurso = [];
+  escolhidoOBR = -1;
+  mudouArenaOBR();
+});
+for (const [id, campo, min, max] of [['colunasOBR', 'colunas', 2, 12], ['linhasOBR', 'linhas', 2, 9]]) {
+  $(id).addEventListener('change', ev => {
+    const v = parseInt(ev.target.value, 10);
+    if (Number.isFinite(v)) pista.obr.arena[campo] = Math.max(min, Math.min(max, v));
+    escolhidoOBR = -1;
+    mudouArenaOBR();
+  });
+}
+$('nivelOBR').addEventListener('change', ev => { pista.obr.arena.nivel = ev.target.value === '2' ? 2 : 1; mudouArenaOBR(); });
+$('elementoOBR').addEventListener('change', ev => {
+  const t = ladrilhoEscolhido(), v = ev.target.value;
+  if (!t) return;
+  delete t.gap;
+  delete t.ramo;
+  if (v.startsWith('gap')) { t.elemento = 'gap'; t.gap = Number(v.slice(3)); }
+  else if (v === 'Tdireita' || v === 'Treto') { t.elemento = 'T'; t.ramo = v === 'Tdireita' ? 'direita' : 'reto'; }
+  else t.elemento = v;
+  mudouArenaOBR();
+});
+$('checkpointOBR').addEventListener('change', ev => {
+  const t = ladrilhoEscolhido();
+  if (!t) return;
+  if (ev.target.checked) t.checkpoint = true; else delete t.checkpoint;
+  mudouArenaOBR();
+});
+$('suaveOBR').addEventListener('change', ev => {
+  const t = ladrilhoEscolhido();
+  if (!t) return;
+  if (ev.target.checked) t.curva = 'suave'; else delete t.curva;
+  mudouArenaOBR();
+});
+$('verdeDepoisOBR').addEventListener('change', ev => {
+  const t = ladrilhoEscolhido();
+  if (!t) return;
+  if (ev.target.value) t.verdeDepois = ev.target.value; else delete t.verdeDepois;
+  mudouArenaOBR();
+});
 
 // ---------------------------------------------------------------- trilha de desafios
 
@@ -1231,10 +1543,6 @@ function sairDesafio() {
 }
 
 function verificarDesafio() {
-  if (Math.hypot(robo.x - posAnterior[0], robo.y - posAnterior[1]) > 1e-4 || Math.abs(robo.ang - posAnterior[2]) > 1e-5) {
-    ultimoMovimento = tSim;
-  }
-  posAnterior = [robo.x, robo.y, robo.ang];
   const r = desafio.verificar(prova, {
     t: tSim, x: robo.x, y: robo.y, frente: robo.ponto(robo.config.corpo.frente, 0), parado: tSim - ultimoMovimento,
     terminou: estado === 'terminou', batidas: robo.batidas, pista,
@@ -1258,7 +1566,7 @@ function verificarDesafio() {
 function mostrarDesafio() {
   $('cartaoDesafio').hidden = !desafio;
   $('pista').disabled = !!desafio;
-  $('btLargada').hidden = !!desafio;
+  $('btLargada').hidden = !!desafio || !!pista.obr;
   if (!desafio) return;
   const i = EST.DESAFIOS.indexOf(desafio), total = EST.DESAFIOS.length;
   $('desafioNum').textContent = `Desafio ${i + 1} de ${total}`;
@@ -1355,7 +1663,8 @@ $('btZerar').addEventListener('click', () => {
   else { montarSeletorDesafio(); mostrarDesafio(); }
 });
 
-$('pista').innerHTML = [...EST.PISTAS, {id: MINHA, nome: 'Minha pista'}]
+$('pista').innerHTML = [...EST.PISTAS, {id: MINHA, nome: 'Minha pista'}, ...EST.OBR.ARENAS,
+                        {id: MINHA_OBR, nome: 'Minha arena OBR (ladrilhos)'}]
   .map(p => `<option value="${p.id}">${escapar(p.nome)}</option>`).join('') +
   '<option value="desafio" hidden>Pista do desafio</option>';
 $('pista').value = pista.id;

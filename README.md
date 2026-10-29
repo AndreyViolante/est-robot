@@ -145,6 +145,16 @@ traz 8 desafios, do "andar 30 cm" ao "desviar do obstáculo", com verificação 
 cumprido destrava o próximo. Os botões da controladora aparecem na tela do robô simulado quando o
 programa usa `botao_apertado()`.
 
+**Arena da OBR.** Duas arenas prontas e a "Minha arena OBR" montam o percurso com linha da prova prática
+com ladrilhos de 30 cm, como no manual da OBR 2026: curvas, gap, obstáculo, interseções com e sem verde,
+beco sem saída, checkpoints e a faixa vermelha de chegada. O cartão **Rodada da OBR** conta os pontos
+como a súmula (ladrilhos por tentativa, perigos, chegada menos 5 por falha), marca a falha de progresso
+(perdeu a linha, ficou 10 s sem sair do lugar, pegou o caminho errado), devolve o robô ao último
+checkpoint e recomeça o programa, com a rodada de 5 minutos. Para montar a sua: escolha "Minha arena
+OBR", aperte **✎ Montar o percurso** e clique nos quadrados um depois do outro; a página confere se os
+verdes de cada interseção batem com o caminho. Rampa, gangorra, lombada, passagem e sala de resgate não
+dá para simular visto de cima.
+
 O robô de verdade escorrega, a bateria muda a velocidade e a luz da sala muda os sensores: o
 simulador serve para testar a lógica, mas confira no robô.
 

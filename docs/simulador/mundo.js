@@ -132,9 +132,13 @@ function distArco(px, py, cx, cy, r, inicio, varredura) {
    pouco (fica perto do preto, como no robô). As outras cores refletem a sua luminosidade. */
 const BRANCO = [1, 1, 1], PRETO = [0, 0, 0], FORA = [0.05, 0.05, 0.05], VERDE = [0.1, 0.6, 0.3, 0.06];
 
-/* Cor do chão no ponto (x, y). Fora da mesa é quase preto (nada reflete). A linha preta fica por cima do verde. */
+/* Cor do chão no ponto (x, y). Fora da mesa é quase preto (nada reflete). A linha preta fica por cima do verde;
+   a faixa vermelha de chegada da arena da OBR (pista.vermelhos) fica por cima de tudo. */
 function corDoChao(pista, x, y) {
   if (x < 0 || y < 0 || x > pista.largura || y > pista.altura) return FORA;
+  for (const q of pista.vermelhos || []) {
+    if (x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h) return EST.OBR.VERMELHO;
+  }
   const meia = LINHA / 2;
   for (const t of pista.linhas) {
     const d = t.seg ? distSegmento(x, y, ...t.seg) : distArco(x, y, ...t.arco);
@@ -189,6 +193,7 @@ EST.PAREDE = PAREDE;
 EST.QUADRADO_VERDE = QUADRADO_VERDE;
 EST.VERDE = VERDE;
 EST.PISTAS = PISTAS;
+EST.quadradoVerde = verde;
 EST.corDoChao = corDoChao;
 EST.FORA = FORA;
 EST.solidos = solidos;
