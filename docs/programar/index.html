@@ -34,11 +34,11 @@
       </label>
       <label class="campo">Exemplo <select id="exemplo"><option value="">Escolha…</option></select></label>
       <span class="arquivos">
-        <button id="btAbrir" class="bt pequeno" type="button" title="Abrir um arquivo .py do computador">Abrir .py</button>
+        <button id="btAbrir" class="bt pequeno" type="button" title="Abrir um arquivo .py do computador, ou um projeto .est da IDE EST (vira Python)">Abrir .py / .est</button>
         <button id="btBaixar" class="bt pequeno" type="button" title="Baixar o programa como arquivo .py">Baixar .py</button>
         <button id="btLink" class="bt pequeno" type="button" title="Copia um link com o programa dentro, para mandar a outra pessoa">Compartilhar link</button>
       </span>
-      <input id="arquivo" type="file" accept=".py,text/x-python,text/plain" hidden>
+      <input id="arquivo" type="file" accept=".py,.est,text/x-python,text/plain" hidden>
     </div>
     <div class="area-codigo" id="areaPython" role="tabpanel" aria-labelledby="abaPython">
       <textarea id="codigo" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Código do programa"></textarea>
@@ -95,6 +95,8 @@
         <b>Levar para o Python</b> copia esse código para a aba Python, para continuar escrevendo.</p>
       <p>O programa fica guardado neste navegador. Para levar a outro computador, use <b>Baixar .py</b>; o mesmo
         arquivo funciona no <a href="https://github.com/AndreyViolante/est-robot">EST-ROBOT do VS Code</a>.</p>
+      <p><b>Abrir .py / .est</b> também abre um projeto da IDE EST (.est): o programa vira Python, com os
+        Meus Blocos como funções, e a página diz se a tradução é exata (os mesmos bytes que a IDE manda).</p>
       <p>Depois da primeira visita, esta página funciona <b>sem internet</b> neste navegador: o editor, os blocos,
         o simulador e o envio ao robô.</p>
       <p><b>Compartilhar link</b> copia um link com o programa dentro: quem abrir vê o programa e o simulador

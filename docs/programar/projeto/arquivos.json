@@ -3,6 +3,7 @@
   "blocos.py",
   "enviar.py",
   "estc.py",
+  "importar_est.py",
   "robo.py",
   "simular.py",
   "calibracao.py"
@@ -26,6 +27,7 @@
   "projeto/calibracao.py",
   "projeto/enviar.py",
   "projeto/estc.py",
+  "projeto/importar_est.py",
   "projeto/robo.py",
   "projeto/simular.py",
   "protocolo.js",

@@ -636,6 +636,38 @@ def verificar_atalhos():
     return ok
 
 
+# traduções da IDE que não dão os mesmos bytes (o programa faz o mesmo): Mover com Direção com curva (l2),
+# conta só com números (l5) e o fio duplicado que a IDE descarta (t9)
+IMPORTAR_APROXIMADOS = {'l2_motores', 'l5_variaveis_logica', 't9_proporcional'}
+
+
+def verificar_importar():
+    """Os projetos da IDE (gabaritos/*.est): importados, compilam para os mesmos bytes que a IDE gerou
+    (gabaritos/*.hex), e a tradução para Python também dá esses bytes (menos as aproximadas)."""
+    import importar_est
+    ok = True
+    for arq in sorted(os.listdir(PASTA)):
+        if not arq.endswith('.est'):
+            continue
+        nome = arq[:-4]
+        with open(os.path.join(PASTA, arq), 'rb') as f:
+            dados = f.read()
+        try:
+            programas, meus = importar_est.ler(dados)
+            p = programas[0]
+            ide = bytes.fromhex(open(os.path.join(PASTA, nome + '.hex')).read().strip())
+            blocos_ok = compilar(p.blocos) == ide
+            codigo, _ = importar_est.para_python(p, meus, arq)
+            exata = importar_est.conferir(p, codigo, meus)
+            certo = blocos_ok and (exata or nome in IMPORTAR_APROXIMADOS)
+            detalhe = f'blocos iguais à IDE: {blocos_ok}; tradução exata: {exata}'
+        except Exception as e:
+            certo, detalhe = False, f'{type(e).__name__}: {e}'
+        ok &= certo
+        print(f'  {"OK   " if certo else "FALHA"} importar {arq} ({detalhe})')
+    return ok
+
+
 def verificar_guias():
     """Os programas dos guias (blocos ```python) compilam: um exemplo errado no guia confunde a turma."""
     import tempfile
@@ -709,6 +741,7 @@ def main():
     robo_ok &= verificar_atalhos()
     robo_ok &= verificar_offline()
     robo_ok &= verificar_guias()
+    robo_ok &= verificar_importar()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

@@ -110,6 +110,17 @@ e o programa parece estar com defeito sem estar. Pelo terminal: `python ferramen
 Os comandos de listar, apagar e ler a bateria são os mesmos que a IDE manda, mas **ainda não foram
 testados no robô**.
 
+### Programas da IDE EST (.est) em Python
+
+**Terminal → Executar Tarefa → Abrir programa da IDE (.est)** abre a janela para escolher um projeto
+feito na IDE EST e escreve o mesmo programa em Python, com os comandos do EST-ROBOT, na pasta `da_ide`. Os
+Meus Blocos viram funções do Python. Depois é só simular ou mandar para o robô como qualquer programa. Na
+página de programar, o botão **Abrir .py / .est** faz o mesmo no navegador.
+
+O EST-ROBOT confere a tradução: se o Python compila para os mesmos bytes que a IDE manda para o robô, ela
+é **exata**; quando algum bloco ficou diferente (uma conta só com números, um bloco ainda sem comando), ele
+avisa o que mudou e deixa um comentário no programa. Pelo terminal: `python importar_est.py projeto.est`.
+
 ### Pedir ajuda
 
 **Terminal → Executar Tarefa → Diagnóstico (para pedir ajuda)** junta num texto curto a versão do
@@ -192,6 +203,7 @@ Antes de enviar, o programa confere o robô e avisa:
 | `virar_direita(90)`, `virar_esquerda(90)` | vira o robô no lugar, em graus |
 | `girar_direita(rotacoes=0.5)`, `girar_esquerda(...)` | gira as rodas em sentidos opostos |
 | `motores(esq, dir)` | liga os dois motores e deixa ligados (aceita valores de sensor) |
+| `mover(30, 10, rotacoes=1)` | cada roda com uma potência, por rotações, graus ou segundos (o "Mover Tanque" da IDE) |
 | `parar()` | desliga os motores |
 | `motor('A', 50, graus=180)`, `ligar_motor('A', 50)`, `desligar_motor('A')` | um motor sozinho (garra, braço) |
 

@@ -473,8 +473,50 @@ $('arquivo').addEventListener('change', async () => {
   const arq = $('arquivo').files[0];
   $('arquivo').value = '';
   if (!arq) return;
+  if (/\.est$/i.test(arq.name)) { abrirEst(arq); return; }
   trocarPrograma(await arq.text(), arq.name);
 });
+
+/** Traduz um projeto da IDE EST (.est) para Python, com o Python do navegador (importar_est.py). */
+async function importarEst(texto, nome) {
+  if (!worker) iniciarCompilador();
+  if (!pythonPronto) mensagem('info', 'Preparando o Python do navegador…', '<p>Na primeira vez demora alguns segundos.</p>');
+  await workerPronto;
+  return new Promise((ok, falha) => {
+    const id = proximoId++;
+    const relogio = setTimeout(() => { pedidos.delete(id); falha(new Error('o Python do navegador demorou demais')); }, LIMITE_MS);
+    pedidos.set(id, {ok, falha, relogio});
+    worker.postMessage({id, est: texto, nome});
+  });
+}
+
+async function abrirEst(arq) {
+  limparMensagens();
+  let r;
+  try {
+    r = await importarEst(await arq.text(), arq.name);
+  } catch (e) {
+    r = {erro: e.message};
+  }
+  if (r.erro) {
+    mensagem('erro', 'Não consegui abrir o projeto da IDE', `<p>${escapar(r.erro)}</p>`);
+    return;
+  }
+  const p = r.programas[0], atual = editor.valor().trim();
+  if (atual && atual !== INICIAL.trim() &&
+      !confirm(`Trocar o programa do editor pelo "${p.nome}" do projeto da IDE? O que está escrito agora some ` +
+               '(clique em Cancelar e use Baixar .py antes, se quiser guardar).')) return;
+  trocarPrograma(p.codigo, p.nome);
+  salvar();
+  limparMensagens();
+  const estado = p.exata ? 'Tradução exata: o Python gera os mesmos bytes que a IDE manda para o robô.'
+    : p.exata === null ? 'Traduzido, mas algum bloco deste programa ainda não tem comando no EST-ROBOT (veja os comentários no código).'
+      : 'Tradução aproximada: faz o mesmo, com alguns blocos diferentes.';
+  mensagem(p.exata ? 'ok' : 'aviso', `Programa "${escapar(p.nome)}" da IDE, agora em Python`,
+    `<p>${estado}</p>` + (p.avisos.length ? `<ul>${p.avisos.map(a => `<li>${escapar(a)}</li>`).join('')}</ul>` : '') +
+    (r.programas.length > 1 ? `<p>O projeto tem mais ${r.programas.length - 1} programa(s): abri o primeiro.</p>` : '') +
+    '<p>Aperte <b>Simular</b> para ver rodando.</p>');
+}
 
 function trocarPrograma(texto, nome) {
   editor.trocar(texto.replace(/\r\n?/g, '\n'));

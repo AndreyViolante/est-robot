@@ -28,7 +28,7 @@ from blocos import PRETO, AZUL, VERDE, AMARELO, VERMELHO, BRANCO, MARROM
 
 __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'configurar', 'andar', 're', 'andar_cm', 'girar_direita', 'girar_esquerda', 'virar_direita',
-           'virar_esquerda', 'motores', 'parar', 'motor', 'ligar_motor', 'desligar_motor', 'esperar',
+           'virar_esquerda', 'mover', 'motores', 'parar', 'motor', 'ligar_motor', 'desligar_motor', 'esperar',
            'luz_refletida', 'cor_vista', 'distancia', 'tocado', 'ler', 'guardar',
            'esperar_toque', 'esperar_distancia', 'esperar_luz', 'esperar_cor',
            'mostrar', 'tocar', 'bip', 'luz', 'apagar_luz',
@@ -266,6 +266,13 @@ def virar_direita(angulo: float = 90, potencia: float = 30):
 def virar_esquerda(angulo: float = 90, potencia: float = 30):
     """Vira o robô angulo graus para a esquerda, no lugar."""
     return _mover(-potencia, potencia, None, _graus_da_roda(angulo), None, True)
+
+
+def mover(esquerdo: float, direito: float, rotacoes: float | None = None, graus: float | None = None,
+          segundos: float | None = None, frear: bool = True):
+    """Cada roda com uma potência, por um tanto de rotações, graus ou segundos (o "Mover Tanque" da IDE).
+    Ex.: mover(30, 10, rotacoes=1) faz uma curva aberta para a direita."""
+    return _mover(esquerdo, direito, rotacoes, graus, segundos, frear)
 
 
 def motores(esquerdo: float | Valor, direito: float | Valor):

@@ -69,6 +69,13 @@ def compilar_json(fonte, nome='meu_programa.py'):
     return json.dumps(compilar(fonte, nome), ensure_ascii=False)
 
 
+def importar_est_json(texto, arquivo=''):
+    """Um projeto da IDE EST (.est) traduzido para Python, como o importar_est.py do computador."""
+    _esquecer_projeto()
+    import importar_est
+    return importar_est.traduzir_json(texto, arquivo)
+
+
 def avisos_de_portas_json(ligadas_json):
     """Os avisos do enviar.py para as portas que o último programa usa e em que o robô não tem nada ligado."""
     if _ultimo is None or not hasattr(_ultimo[0], 'avisos_de_portas'):

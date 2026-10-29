@@ -21,7 +21,7 @@ sys.path.insert(0, str(RAIZ / 'ferramentas'))
 import publicar_simulador
 
 DESTINO = RAIZ / 'docs' / 'programar'
-ENTRADAS = ['enviar', 'simular', 'robo']        # o que a ponte.py da página importa
+ENTRADAS = ['enviar', 'simular', 'robo', 'importar_est']        # o que a ponte.py da página importa
 NAO_COPIAR = {'est_protocol'}                   # no navegador o envio é o protocolo.js (WebHID)
 EXTRAS = ['calibracao.py']                      # o robo.py lê da pasta dele (não é import)
 

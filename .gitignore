@@ -22,6 +22,8 @@ simulador/programa.js
 /copias_de_seguranca/
 # o envio guarda aqui quando perguntou ao GitHub pela versão nova
 /.ultima_verificacao
+# programas da IDE traduzidos pela tarefa "Abrir programa da IDE (.est)" (são de cada escola/equipe)
+/da_ide/
 # relatório da tarefa "Teste geral no robô"
 /resultado_teste_geral.txt
 # programas pessoais de quem desenvolve o projeto (não vão para o GitHub)

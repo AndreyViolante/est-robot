@@ -353,6 +353,14 @@ e errar leituras; o programa mostra um aviso quando isso acontece. No modo cor, 
 executar partes do programa. Se algo estranho acontecer, carregue o robô antes de procurar erro no
 programa.
 
+## Da IDE para o Python
+
+A tarefa **Abrir programa da IDE (.est)** (ou o botão **Abrir .py / .est** da página de programar)
+transforma um projeto feito em blocos na IDE EST no mesmo programa em Python, com os Meus Blocos como
+funções. É uma boa ponte para a turma que já programa em blocos: abra um programa que eles mesmos fizeram e
+mostre, lado a lado, que bloco virou qual linha. O EST-ROBOT diz se a tradução é exata (os mesmos bytes que
+a IDE manda para o robô) ou o que ficou diferente.
+
 ## Equipes de competição (OBR)
 
 O [guia de OBR](guia-obr.md) mostra como a equipe pode organizar o programa da prova prática em funções,

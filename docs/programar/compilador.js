@@ -2,7 +2,8 @@
 /* Web Worker que compila os programas com o Python do navegador (Pyodide), fora da página: um laço sem
    fim no programa do aluno não trava a tela, e a página pode parar este worker e criar outro.
    Mensagens: {id, fonte, nome} -> {id, resultado} (o dicionário de ponte.compilar) ou {id, falha};
-   {id, ligadas} -> {id, resultado} (os avisos de portas do último programa compilado). */
+   {id, ligadas} -> {id, resultado} (os avisos de portas do último programa compilado);
+   {id, est, nome} -> {id, resultado} (o projeto da IDE traduzido para Python, importar_est.py). */
 const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.29.5/full/';
 const PASTA = '/home/pyodide/est';
 
@@ -39,7 +40,8 @@ onmessage = async ({data}) => {
   }
   try {
     const json = data.ligadas ? ponte.avisos_de_portas_json(JSON.stringify(data.ligadas))
-                              : ponte.compilar_json(data.fonte, data.nome);
+               : data.est ? ponte.importar_est_json(data.est, data.nome)
+               : ponte.compilar_json(data.fonte, data.nome);
     postMessage({id: data.id, resultado: JSON.parse(json)});
   } catch (e) {
     // erro que não é do programa do aluno (ou um exit() dentro dele): mostra a última linha do Python
