@@ -15,6 +15,14 @@ PAUSA = 0.5                # segundos parado depois de cada movimento que freia 
 PRETO = {1: 18, 2: 21, 3: 10}
 BRANCO = {1: 100, 2: 100, 3: 100}
 
+# Número de cada botão da controladora (usados pelo ajustando e pelo ajustes). Se a tarefa
+# Teste geral no robô mostrar outros números, troque aqui.
+BOTAO_ESQUERDA = 1
+BOTAO_CENTRO = 2
+BOTAO_DIREITA = 3
+BOTAO_CIMA = 4
+BOTAO_BAIXO = 5
+
 # Uma vez por dia, ao enviar, o programa pergunta ao GitHub se saiu versão nova. O GitHub só conta
 # quantas vezes isso acontece (um número, sem nada de quem perguntou). False desliga as duas coisas.
 AVISO_DE_VERSAO = True

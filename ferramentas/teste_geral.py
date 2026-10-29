@@ -122,6 +122,14 @@ def passo_botoes():
     validos = [v for v in numeros.values() if v.isdigit() and v != '0']
     ok = 's' if solto == 's' and validos and len(set(validos)) == len(validos) else ('p' if SEM_ROBO else 'n')
     anotar('2. Botões (números)', ok, ', '.join(f'{k}={v}' for k, v in numeros.items()) + f'; solto=0: {solto}')
+    campos = {'esquerda': 'BOTAO_ESQUERDA', 'centro / ok': 'BOTAO_CENTRO', 'direita': 'BOTAO_DIREITA',
+              'cima': 'BOTAO_CIMA', 'baixo': 'BOTAO_BAIXO'}
+    diferentes = [f'{campos[k]} = {v}' for k, v in numeros.items()
+                  if v.isdigit() and int(v) != getattr(robo, campos[k])]
+    if diferentes:
+        print('\nOs números deste robô são outros: escreva no calibracao.py (o ajustando e o ajustes usam):')
+        print('\n'.join('    ' + linha for linha in diferentes))
+        anotar('Para o calibracao.py', '; '.join(diferentes))
     return numeros
 
 
@@ -167,9 +175,10 @@ def passo_ao_mesmo_tempo():
 
 def passo_ajustando(numeros):
     titulo('5. ajustando(): mudar um número com os botões')
-    cima, baixo = numeros.get('cima', ''), numeros.get('baixo', '')
-    if cima.isdigit() and baixo.isdigit() and cima != baixo:
-        robo.BOTAO_CIMA, robo.BOTAO_BAIXO = int(cima), int(baixo)
+    for nome, campo in (('cima', 'BOTAO_CIMA'), ('baixo', 'BOTAO_BAIXO'), ('esquerda', 'BOTAO_ESQUERDA'),
+                        ('direita', 'BOTAO_DIREITA'), ('centro / ok', 'BOTAO_CENTRO')):
+        if numeros.get(nome, '').isdigit():
+            setattr(robo, campo, int(numeros[nome]))
     print(f'Usando botão de cima = {robo.BOTAO_CIMA} e de baixo = {robo.BOTAO_BAIXO}.')
     def escrever():
         robo.mostrar('Ajuste o kp:')
@@ -184,6 +193,50 @@ def passo_ajustando(numeros):
     r = perguntar('O número sobe com o de cima e desce com o de baixo, um por aperto, e a linha 2 acompanha?')
     anotar('5. ajustando', r, f'cima={robo.BOTAO_CIMA}, baixo={robo.BOTAO_BAIXO}')
     print('(Para parar esse programa, use o botão do robô; o próximo passo também o substitui.)')
+
+
+def passo_ajustes():
+    titulo('5b. ajustes(): vários números pelos botões')
+    def escrever():
+        robo.mostrar('Ajustes')
+        with robo.ajustes(kp=(10, 1), vel=(20, 5)):
+            with robo.para_sempre():
+                robo.mostrar(robo.ler('vel'), linha=2)
+                robo.esperar(0.3)
+    if not enviar('teste_ajustes', escrever):
+        return anotar('5b. ajustes', 'p', 'não enviou')
+    print('A linha 3 mostra "kp: 10". O botão da direita troca para "vel: 20" (e a linha 2 mostra o vel).')
+    print('Com "vel" escolhido, aperte cima e baixo; depois o da esquerda volta para o "kp".')
+    anotar('5b. ajustes', perguntar('Direita/esquerda trocam o número, e cima/baixo mudam só o escolhido?'))
+
+
+def passo_medir_laco():
+    titulo('5c. medir_laco(): voltas por segundo do seguidor')
+    if not SEM_ROBO:
+        input('Ponha o robô no chão com espaço (ele anda devagar por 5 segundos) e aperte Enter...')
+    def escrever():
+        with robo.medir_laco(5):
+            erro = robo.luz_refletida(1) - robo.luz_refletida(2)
+            robo.motores(15 + erro * 0.1, 15 - erro * 0.1)
+    if not enviar('teste_medir_laco', escrever):
+        return anotar('5c. medir_laco', 'p', 'não enviou')
+    v = 'p' if SEM_ROBO else input('Depois de 5 s ele para e mostra "Voltas/s:". Que número apareceu? (p se nada) ').strip()
+    anotar('5c. medir_laco', 'p' if v in ('', 'p') else 's', f'voltas por segundo: {v}')
+
+
+def passo_calibrar():
+    titulo('5d. calibrar_na_largada(): medir o preto e o branco na pista')
+    if not SEM_ROBO:
+        input('Ponha o robô parado em cima de uma linha preta, com S1 de um lado e S2 do outro, e aperte Enter...')
+    def escrever():
+        robo.calibrar_na_largada(1, 2)
+        robo.esperar(8)
+    if not enviar('teste_calibrar', escrever):
+        return anotar('5d. calibrar_na_largada', 'p', 'não enviou')
+    print('O robô gira um pouco para um lado, para o outro, volta ao meio, apita e mostra lim1 e lim2.')
+    v = 'p' if SEM_ROBO else input('Que números apareceram? (ex.: 55 60, ou p) ').strip()
+    r = perguntar('Ele voltou mais ou menos ao meio, e os limites ficaram entre o preto e o branco do calibracao.py?')
+    anotar('5d. calibrar_na_largada', r, f'limites na tela: {v}')
 
 
 def passo_toque():
@@ -257,6 +310,9 @@ def main():
     passo_esperar_botao()
     passo_ao_mesmo_tempo()
     passo_ajustando(numeros)
+    passo_ajustes()
+    passo_medir_laco()
+    passo_calibrar()
     passo_toque()
     passo_programas()
     passo_navegador()

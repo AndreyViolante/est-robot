@@ -142,6 +142,42 @@
         ],
         "description": "Guarda um número no robô e soma 1 a cada vez"
     },
+    "Medir a velocidade do laço": {
+        "scope": "python",
+        "prefix": "medir_laco",
+        "body": [
+            "# repete o corpo do laço por 5 segundos e mostra na tela quantas voltas por segundo deu",
+            "with medir_laco(5):",
+            "\t${1:erro = luz_refletida(1) - luz_refletida(2)}",
+            "\t${2:motores(20 + erro * 0.3, 20 - erro * 0.3)}"
+        ],
+        "description": "Mostra quantas voltas por segundo o laço do seguidor faz"
+    },
+    "Calibrar na largada": {
+        "scope": "python",
+        "prefix": "calibrar_na_largada",
+        "body": [
+            "calibrar_na_largada(${1:1}, ${2:2})    # robô parado em cima da linha, um sensor de cada lado",
+            "with para_sempre():",
+            "\tif luz_refletida(${1:1}) < limite_medido(${1:1}):",
+            "\t\t${3:motores(10, 30)}",
+            "\telse:",
+            "\t\t${4:motores(30, 10)}"
+        ],
+        "description": "Mede o preto e o branco na própria pista antes de sair"
+    },
+    "Ajustar números pelos botões": {
+        "scope": "python",
+        "prefix": "ajustes",
+        "body": [
+            "# esquerda/direita escolhem o número, cima/baixo mudam; a linha 3 da tela mostra",
+            "with ajustes(${1:kp}=(${2:0.4}, ${3:0.05}), ${4:vel}=(${5:25}, ${6:5})):",
+            "\twith para_sempre():",
+            "\t\terro = luz_refletida(1) - luz_refletida(2)",
+            "\t\tmotores(ler('${4:vel}') + erro * ler('${1:kp}'), ler('${4:vel}') - erro * ler('${1:kp}'))"
+        ],
+        "description": "Ajusta números do programa pelos botões da controladora, sem cabo"
+    },
     "Função": {
         "scope": "python",
         "prefix": "funcao",

@@ -508,8 +508,30 @@ if botao_apertado() == 2:
     motores(30, 30)
 parar()""",
          lambda d: len(d) > 0),
+        ('ajustes: vários números, botões em paralelo',
+         """with ajustes(kp=(0.4, 0.05), vel=(25, 5)):
+    while True:
+        motores(ler('vel') + ler('kp'), ler('vel') - ler('kp'))""",
+         lambda d: b'kp:' in d and b'vel:' in d
+         and re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00', d, re.S) is not None),
+        ('medir_laco: laço em paralelo com o relógio e mostra as voltas',
+         """with medir_laco(5):
+    erro = luz_refletida(1) - luz_refletida(2)
+    motores(20 + erro * 0.3, 20 - erro * 0.3)""",
+         lambda d: b'Voltas/s:' in d
+         and re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00', d, re.S) is not None),
+        ('calibrar_na_largada: mede e mostra o limite de cada sensor',
+         """calibrar_na_largada(1, 2)
+while True:
+    if luz_refletida(1) < limite_medido(1):
+        motores(10, 30)
+    else:
+        motores(30, 10)""",
+         lambda d: b'lim1:' in d and b'lim2:' in d),
     ]
     erros = [
+        ('ajustes sem o passo', 'with ajustes(kp=0.4):\n    bip()', '(valor inicial, passo)'),
+        ('calibrar porta de motor', "calibrar_na_largada('B')", 'não é de sensor'),
         ('comando solto no ao_mesmo_tempo', 'with ao_mesmo_tempo():\n    bip()', 'cada parte num "with tarefa():"'),
         ('tarefa fora do ao_mesmo_tempo', 'with tarefa():\n    bip()', 'logo dentro de um "with ao_mesmo_tempo():"'),
         ('nota que não existe', "tocar('dó maior')", 'não conheço a nota'),

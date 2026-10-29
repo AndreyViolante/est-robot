@@ -35,7 +35,8 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'para_sempre', 'repetir', 'repetir_ate', 'repetir_ate_luz', 'repetir_ate_cor',
            'se', 'se_ver_cor', 'se_tocado', 'se_distancia', 'se_luz', 'senao', 'limite',
            'melodia', 'botao_apertado', 'esperar_botao', 'ao_mesmo_tempo', 'tarefa', 'painel', 'ajustando',
-           'BOTAO_CIMA', 'BOTAO_BAIXO',
+           'ajustes', 'medir_laco', 'calibrar_na_largada', 'limite_medido',
+           'BOTAO_CIMA', 'BOTAO_BAIXO', 'BOTAO_ESQUERDA', 'BOTAO_DIREITA', 'BOTAO_CENTRO',
            'novo_programa', 'programa']
 
 # Tipos das opções: o VS Code mostra estes valores no autocompletar enquanto o aluno escreve
@@ -131,6 +132,10 @@ def configurar(esquerdo: PortaMotor | None = None, direito: PortaMotor | None = 
 # luz refletida de cada sensor no preto e no branco, do calibracao.py (para limite())
 _PRETO, _BRANCO = {}, {}
 AVISO_DE_VERSAO = True        # calibracao.py: False desliga o aviso diário de versão nova (enviar.py)
+# números dos botões no bloco "Botões da controladora" da IDE (como no EV3: 1 esquerda, 2 centro, 3 direita,
+# 4 cima, 5 baixo). Ainda não conferidos no robô: a tarefa Teste geral descobre, e o calibracao.py pode trocar.
+BOTAO_ESQUERDA, BOTAO_CENTRO, BOTAO_DIREITA, BOTAO_CIMA, BOTAO_BAIXO = 1, 2, 3, 4, 5
+_BOTOES = ('BOTAO_ESQUERDA', 'BOTAO_CENTRO', 'BOTAO_DIREITA', 'BOTAO_CIMA', 'BOTAO_BAIXO')
 
 
 def _carregar_calibracao():
@@ -151,6 +156,9 @@ def _carregar_calibracao():
     AVISO_DE_VERSAO = bool(getattr(cal, 'AVISO_DE_VERSAO', True))
     _PRETO.update(getattr(cal, 'PRETO', {}))
     _BRANCO.update(getattr(cal, 'BRANCO', {}))
+    for nome in _BOTOES:
+        if isinstance(getattr(cal, nome, None), int):
+            globals()[nome] = getattr(cal, nome)
 
 
 _carregar_calibracao()
@@ -884,8 +892,7 @@ def _vezes(n):
 
 
 # ---------------------------------------------------------------- ajustar um número pelos botões
-# números dos botões no bloco "Botões da controladora" da IDE; ainda não conferidos no robô
-BOTAO_CIMA, BOTAO_BAIXO = 4, 5
+# (os números dos botões ficam lá em cima, junto com a leitura do calibracao.py)
 
 
 class _Ajustando:
@@ -924,3 +931,154 @@ def ajustando(nome: str, inicial: float, passo: float):
                 ... motores(20 + erro * ler('kp'), 20 - erro * ler('kp'))
     Use ler('kp') no programa. Ainda não conferido no robô (os números dos botões podem ser outros)."""
     return _Ajustando(nome, inicial, passo)
+
+
+class _Ajustes:
+    def __init__(self, valores):
+        if not 1 <= len(valores) <= 9:
+            raise ValueError('ajustes(...) aceita de 1 a 9 números, ex.: ajustes(kp=(0.4, 0.05), vel=(25, 5))')
+        self.valores = []
+        for nome, par in valores.items():
+            if not (isinstance(par, (tuple, list)) and len(par) == 2):
+                raise ValueError(f'em ajustes(...), {nome} precisa de (valor inicial, passo), ex.: {nome}=(0.4, 0.05)')
+            self.valores.append((nome, par[0], par[1]))
+
+    def __enter__(self):
+        n = len(self.valores)
+        for nome, inicial, _ in self.valores:
+            guardar(nome, inicial)
+        guardar('ajsel', 0)                                 # qual número os botões de cima e de baixo mudam
+        self.paralelo = ao_mesmo_tempo()
+        self.paralelo.__enter__()
+        with tarefa():
+            with para_sempre():
+                for botao, conta in ((BOTAO_DIREITA, 1), (BOTAO_ESQUERDA, n - 1)):     # n - 1: anda para trás
+                    with se(botao_apertado() == botao):
+                        guardar('ajsel', ler('ajsel') + conta)
+                        with se(ler('ajsel') >= n):
+                            guardar('ajsel', ler('ajsel') - n)
+                        with repetir_ate(lambda: botao_apertado() == 0):
+                            pass
+                for i, (nome, _, passo) in enumerate(self.valores):
+                    with se(ler('ajsel') == i):
+                        for botao, conta in ((BOTAO_CIMA, passo), (BOTAO_BAIXO, -passo)):
+                            with se(botao_apertado() == botao):
+                                guardar(nome, ler(nome) + conta)
+                                with repetir_ate(lambda: botao_apertado() == 0):
+                                    pass
+                        mostrar(f'{nome[:5]}:', linha=3)
+                        mostrar(ler(nome), linha=3, x=_X_DO_VALOR, limpar=False)
+                esperar(0.1)
+        self.corpo = tarefa()
+        self.corpo.__enter__()
+        return self
+
+    def __exit__(self, tipo_erro, *erro):
+        self.corpo.__exit__(tipo_erro, *erro)
+        return self.paralelo.__exit__(tipo_erro, *erro)
+
+
+def ajustes(**valores: tuple):
+    """Como o ajustando, mas para vários números: os botões da esquerda e da direita escolhem qual número
+    mudar, e os de cima e de baixo mudam o escolhido. A linha 3 da tela mostra o nome e o valor. Ex.:
+        with ajustes(kp=(0.4, 0.05), vel=(25, 5)):
+            while True:
+                erro = luz_refletida(1) - luz_refletida(2)
+                motores(ler('vel') + erro * ler('kp'), ler('vel') - erro * ler('kp'))
+    Bom para acertar o seguidor na arena entre uma rodada e outra, sem cabo. Os valores voltam ao inicial
+    quando o programa recomeça: anote o que funcionou e passe para o programa.
+    Ainda não conferido no robô (os números dos botões podem ser outros: veja a tarefa Teste geral)."""
+    return _Ajustes(valores)
+
+
+# ---------------------------------------------------------------- velocidade do laço
+
+class _MedirLaco:
+    def __init__(self, segundos):
+        if not 1 <= segundos <= 60:
+            raise ValueError('medir_laco(segundos) mede de 1 a 60 segundos, ex.: medir_laco(5)')
+        self.segundos = segundos
+
+    def __enter__(self):
+        guardar('mvoltas', 0)
+        guardar('mfim', 0)
+        self.paralelo = ao_mesmo_tempo()
+        self.paralelo.__enter__()
+        with tarefa():                                      # o relógio: avisa o laço quando o tempo acaba
+            esperar(self.segundos)
+            guardar('mfim', 1)
+        self.tarefa = tarefa()
+        self.tarefa.__enter__()
+        self.laco = repetir_ate(lambda: ler('mfim') == 1)
+        self.laco.__enter__()
+        return self
+
+    def __exit__(self, tipo_erro, *erro):
+        if tipo_erro is None:
+            guardar('mvoltas', ler('mvoltas') + 1)
+        self.laco.__exit__(tipo_erro, *erro)
+        self.tarefa.__exit__(tipo_erro, *erro)
+        resultado = self.paralelo.__exit__(tipo_erro, *erro)
+        if tipo_erro is None:
+            parar()
+            mostrar('Voltas/s:')
+            mostrar(ler('mvoltas') / self.segundos, linha=2)
+            esperar(20)
+        return resultado
+
+
+def medir_laco(segundos: float = 5):
+    """Repete o que estiver dentro durante alguns segundos e depois mostra na tela quantas voltas por segundo
+    deu. Ponha dentro o corpo do seu laço (sem o while True) para saber se ele está rápido:
+        with medir_laco():
+            erro = luz_refletida(1) - luz_refletida(2)
+            motores(25 + erro * 0.4, 25 - erro * 0.4)
+    Mais voltas por segundo = o robô corrige mais vezes e pode andar mais rápido sem perder a linha.
+    Compare: tire ou ponha uma leitura, um mostrar(...), um painel(...), e veja quanto cada coisa custa.
+    A conta das voltas também gasta um pouquinho: o laço de verdade é um pouco mais rápido que o número.
+    Usa o ao_mesmo_tempo (ainda não conferido no robô; funciona no simulador)."""
+    return _MedirLaco(segundos)
+
+
+# ---------------------------------------------------------------- calibração na largada
+
+def calibrar_na_largada(*portas: PortaSensor, giro: float = 0.5, potencia: float = 20):
+    """Mede o preto e o branco na própria pista, antes de sair: o robô gira devagar para um lado e para o
+    outro sobre a linha, guarda a menor e a maior luz de cada sensor e calcula o limite (o meio entre as
+    duas). A luz do lugar da prova nunca é a do laboratório: assim o robô se acerta sozinho. Ex.:
+        calibrar_na_largada(1, 2)          # robô parado em cima da linha, sensores dos dois lados dela
+        while True:
+            if luz_refletida(1) < limite_medido(1): ...
+    giro: quanto tempo gira para cada lado (aumente se os sensores não passarem pela linha).
+    Se um sensor não viu diferença (não passou pela linha), fica o limite do calibracao.py.
+    No fim mostra os limites na tela. Guarda nas variáveis min1, max1, lim1 (e min2...) do robô."""
+    portas = portas or (1, 2)
+    for p in portas:
+        _sensor(p)
+        guardar(f'min{p}', 100)
+        guardar(f'max{p}', 0)
+    voltas = max(1, round(giro / 0.02))
+    for esq, dir_, vezes in ((-potencia, potencia, 1), (potencia, -potencia, 2), (-potencia, potencia, 1)):
+        motores(esq, dir_)
+        with repetir(voltas * vezes):
+            for p in portas:
+                luz = luz_refletida(p)
+                with se(luz < ler(f'min{p}')):
+                    guardar(f'min{p}', luz)
+                with se(luz > ler(f'max{p}')):
+                    guardar(f'max{p}', luz)
+            esperar(0.02)
+    parar()
+    for p in portas:
+        guardar(f'lim{p}', (ler(f'min{p}') + ler(f'max{p}')) / 2)
+        if p in _PRETO and p in _BRANCO:
+            with se(ler(f'max{p}') - ler(f'min{p}') < 20):         # não passou pela linha
+                guardar(f'lim{p}', limite(p))
+    painel(**{f'lim{p}': ler(f'lim{p}') for p in portas[:3]})
+    bip()
+
+
+def limite_medido(porta: PortaSensor) -> Valor:
+    """O limite entre o preto e o branco que o calibrar_na_largada mediu para o sensor (variável lim1...)."""
+    _sensor(porta)
+    return ler(f'lim{porta}')

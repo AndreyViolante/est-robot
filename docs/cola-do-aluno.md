@@ -85,6 +85,14 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 | `luz('azul')` / `apagar_luz()` | luz do robô (`'azul'`, `'roxo'`, `'vermelho'`) |
 | `guardar('pontos', 0)` / `ler('pontos')` | guarda e lê um número |
 
+## Para competição
+
+| Comando | O que faz |
+|---|---|
+| `calibrar_na_largada(1, 2)` e `limite_medido(1)` | mede o preto e o branco na própria pista antes de sair |
+| `with ajustes(kp=(0.4, 0.05), vel=(25, 5)):` | muda números pelos botões do robô, sem cabo (use `ler('kp')`) |
+| `with medir_laco(5):` | mostra quantas voltas por segundo o laço faz |
+
 ## Atalhos no VS Code
 
 Digite o nome e aperte **Tab**: o modelo aparece pronto, é só trocar os números (Tab pula para o próximo).
@@ -96,6 +104,7 @@ Digite o nome e aperte **Tab**: o modelo aparece pronto, é só trocar os númer
 | `quadrado`, `desviar`, `parar_na_linha` | um movimento pronto |
 | `seguidor_1_sensor`, `seguidor_2_sensores`, `seguidor_proporcional` | um seguidor de linha para ajustar |
 | `mostrar_sensor`, `painel`, `contar`, `ao_mesmo_tempo`, `esperar_botao` | tela, variáveis e outros |
+| `calibrar_na_largada`, `ajustes`, `medir_laco` | para competição: calibrar na pista, ajustar sem cabo, medir o laço |
 
 ## Regras que evitam erro
 

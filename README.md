@@ -225,6 +225,12 @@ Antes de enviar, o programa confere o robô e avisa:
 | `with ao_mesmo_tempo():` com um `with tarefa():` para cada parte | faz várias coisas ao mesmo tempo (ex.: andar e tocar uma música) e continua quando todas acabam |
 | `esperar_botao()`, `botao_apertado()` | os botões da própria controladora: esperar apertar e soltar, ou o número do botão apertado (0 = nenhum) |
 | `with ajustando('kp', 0.4, 0.05):` | ajusta um número com os botões de cima e de baixo enquanto o programa roda, sem reenviar (use `ler('kp')`) |
+| `with ajustes(kp=(0.4, 0.05), vel=(25, 5)):` | vários números: esquerda e direita escolhem qual, cima e baixo mudam (para acertar o seguidor na arena, sem cabo) |
+| `calibrar_na_largada(1, 2)`, `limite_medido(1)` | o robô gira sobre a linha, mede o preto e o branco da própria pista e calcula o limite de cada sensor |
+| `with medir_laco(5):` | repete o corpo do laço por 5 s e mostra quantas voltas por segundo ele faz |
+
+Os números dos botões da controladora (`BOTAO_CIMA`, `BOTAO_ESQUERDA`...) ficam no `calibracao.py`: se a
+tarefa **Teste geral no robô** mostrar outros números, troque lá.
 
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
 no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura
