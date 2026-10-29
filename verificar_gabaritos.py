@@ -636,6 +636,31 @@ def verificar_atalhos():
     return ok
 
 
+def verificar_guias():
+    """Os programas dos guias (blocos ```python) compilam: um exemplo errado no guia confunde a turma."""
+    import tempfile
+    from enviar import carregar
+    raiz = os.path.dirname(os.path.abspath(__file__))
+    ok = True
+    with tempfile.TemporaryDirectory() as pasta:
+        for guia in ('guia-obr.md',):
+            texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
+            for n, codigo in enumerate(re.findall(r'```python\n(.*?)```', texto, re.S), 1):
+                if 'from robo import' not in codigo:
+                    continue
+                arq = os.path.join(pasta, f'guia{n}.py')
+                with open(arq, 'w', encoding='utf-8') as f:
+                    f.write(codigo)
+                try:
+                    compilar(carregar(arq))
+                    erro = ''
+                except Exception as e:
+                    erro = f' -> {type(e).__name__}: {e}'
+                ok &= not erro
+                print(f'  {"OK   " if not erro else "FALHA"} programa {n} do docs/{guia}{erro}')
+    return ok
+
+
 def verificar_offline():
     """O sw.js da página de programar (modo sem internet) guarda as mesmas versões de bibliotecas que a página
     usa, e a lista de arquivos dela (projeto/arquivos.json) tem todos os arquivos da página."""
@@ -683,6 +708,7 @@ def main():
     robo_ok &= verificar_sintaxe()
     robo_ok &= verificar_atalhos()
     robo_ok &= verificar_offline()
+    robo_ok &= verificar_guias()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

@@ -353,6 +353,14 @@ e errar leituras; o programa mostra um aviso quando isso acontece. No modo cor, 
 executar partes do programa. Se algo estranho acontecer, carregue o robô antes de procurar erro no
 programa.
 
+## Equipes de competição (OBR)
+
+O [guia de OBR](guia-obr.md) mostra como a equipe pode organizar o programa da prova prática em funções,
+confirmar as leituras antes de agir, medir a velocidade do laço (`medir_laco`), calibrar na própria pista
+(`calibrar_na_largada`) e ajustar os números na arena sem cabo (`ajustes`). No simulador, a **Arena da
+OBR** monta o percurso com ladrilhos de 30 cm e conta os pontos como a súmula do manual. O guia não traz a
+solução da prova: na OBR, quem programa são os estudantes.
+
 ## Quando algo não funciona
 
 1. Confira o básico: robô ligado e carregado, cabo bem encaixado, IDE EST fechada.

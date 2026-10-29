@@ -49,6 +49,7 @@ reversa e é testado comparando, byte a byte, a saída dele com programas compil
 |---|---|
 | [INSTALAR.md](INSTALAR.md) | instalação passo a passo (Python, VS Code, `instalar.bat`, teste do robô) |
 | [docs/guia-do-professor.md](docs/guia-do-professor.md) | roteiro de 8 aulas, com objetivos, desafios e erros comuns |
+| [docs/guia-obr.md](docs/guia-obr.md) | para equipes da OBR: como organizar, testar e ajustar o programa da prova prática |
 | [docs/cola-do-aluno.pdf](docs/cola-do-aluno.pdf) | todos os comandos numa folha frente e verso, para imprimir ([texto](docs/cola-do-aluno.md)) |
 
 ## Uso
