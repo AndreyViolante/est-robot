@@ -38,7 +38,7 @@ li { margin: 0.5mm 0; }
 .autor { margin: -0.5mm 0 1.5mm; font-size: 8pt; color: #555; }
 """
 
-AUTOR = ('EST-ROBOT, criado por Andrey Violante, para uso pedagógico · '
+AUTOR = ('EST-LAB, criado por Andrey Violante, para uso pedagógico · '
           'andreyviolante.github.io/est-robot · mais exemplos no simulador e no guia do professor')
 
 

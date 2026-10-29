@@ -38,10 +38,10 @@ jobs:
           # o GitHub conta os downloads (só números, sem saber quem baixou)
           mkdir -p contadores
           echo "$GITHUB_REF_NAME" > contadores/versao.txt
-          for p in site programar simulador; do echo EST-ROBOT > "contadores/visita-$p.txt"; done
+          for p in site programar simulador; do echo EST-LAB > "contadores/visita-$p.txt"; done
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --clobber
             gh release edit "$GITHUB_REF_NAME" --notes-file notas.md      # o SHA-256 do zip novo
           else
-            gh release create "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --title "EST-ROBOT ${GITHUB_REF_NAME#v}" --notes-file notas.md
+            gh release create "$GITHUB_REF_NAME" dist/est-robot-windows.zip contadores/* --title "EST-LAB ${GITHUB_REF_NAME#v}" --notes-file notas.md
           fi

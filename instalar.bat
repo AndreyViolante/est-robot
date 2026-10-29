@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
 echo ============================================
-echo   est-robot: preparando este computador
+echo   EST-LAB: preparando este computador
 echo ============================================
 echo.
 

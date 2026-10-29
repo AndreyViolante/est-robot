@@ -2,7 +2,7 @@
 
 O .est é o arquivo que a IDE grava: um XML (em base64) em que cada bloco tem o tipo, o modo, os parâmetros
 e a porta, e a ordem dos blocos e os fios de dados ficam em listas à parte. Este arquivo remonta os mesmos
-blocos que o compilador do EST-ROBOT usa (blocos.py) e escreve o Python que gera esses blocos. Depois
+blocos que o compilador do EST-LAB usa (blocos.py) e escreve o Python que gera esses blocos. Depois
 confere: se o Python compila para os mesmos bytes que os blocos da IDE, a tradução é exata.
 
 Uso:  python importar_est.py projeto.est                um .py por programa do projeto, na pasta da_ide/
@@ -234,8 +234,8 @@ class _Tradutor:
 
     def sem_comando(self, b, nivel, explicacao=''):
         nome = NOMES_DE_BLOCO.get(b.t, f'tipo {b.t}')
-        self.emitir(f'# bloco {nome} (modo {b.mode}) da IDE: {explicacao or "ainda sem comando no EST-ROBOT"}', nivel)
-        self.aviso(f'bloco {nome} (modo {b.mode}) sem comando no EST-ROBOT')
+        self.emitir(f'# bloco {nome} (modo {b.mode}) da IDE: {explicacao or "ainda sem comando no EST-LAB"}', nivel)
+        self.aviso(f'bloco {nome} (modo {b.mode}) sem comando no EST-LAB')
 
     def cadeia(self, lista, nivel):
         antes = sum(1 for linha in self.linhas if not linha.lstrip().startswith('#'))
@@ -261,7 +261,7 @@ class _Tradutor:
             funcao = self.funcoes.get(int(t))
             if funcao:
                 self.emitir(f'{funcao}()', nivel)
-                self.aviso('os Meus Blocos viram funções do Python (o mesmo movimento; no EST-ROBOT os blocos '
+                self.aviso('os Meus Blocos viram funções do Python (o mesmo movimento; no EST-LAB os blocos '
                            'da função entram no lugar de cada chamada)')
             else:
                 self.emitir(f'# Meu Bloco {t} da IDE: não está neste projeto', nivel)
@@ -431,14 +431,14 @@ class _Tradutor:
         if not quanto:
             return False
         if b.wires:
-            return self.sem_comando(b, nivel, 'com valor ligado por fio, ainda sem comando no EST-ROBOT')
+            return self.sem_comando(b, nivel, 'com valor ligado por fio, ainda sem comando no EST-LAB')
         self.emitir(f'mover({_numero(b.param(1))}, {_numero(b.param(2))}, {quanto[0]}={_numero(b.param(quanto[1]))}{frear})', nivel)
 
     def _b1002(self, b, m, nivel):                    # Motor Grande
         p = repr(str(b.port).strip().upper())
         frear = '' if b.param(2).strip() == '0' else ', frear=False'
         if b.wires:
-            return self.sem_comando(b, nivel, 'com valor ligado por fio, ainda sem comando no EST-ROBOT')
+            return self.sem_comando(b, nivel, 'com valor ligado por fio, ainda sem comando no EST-LAB')
         if m == '1':
             return self.emitir(f'desligar_motor({p}{frear})', nivel)
         if m == '2':
@@ -455,7 +455,7 @@ class _Tradutor:
             self.aviso('o "Mover com Direção" virou o "Mover Tanque" (mesmo movimento)')
             return self.emitir('parar()' if b.param(3).strip() == '0' else 'parar(frear=False)', nivel)
         if direcao != '0' or b.wires:
-            return self.sem_comando(b, nivel, 'com curva, ainda sem comando no EST-ROBOT')
+            return self.sem_comando(b, nivel, 'com curva, ainda sem comando no EST-LAB')
         self.aviso('o "Mover com Direção" virou o "Mover Tanque" (mesmo movimento)')
         if m == '2':
             pot = _numero(b.param(1))
@@ -558,7 +558,7 @@ def para_python(programa, meus=None, arquivo=''):
     tr.cadeia(programa.blocos[1:], 0)
     cabeca = ['from robo import *', '']
     origem = f' do projeto "{os.path.basename(arquivo)}"' if arquivo else ''
-    cabeca.append(f'# Programa "{programa.nome}"{origem} da IDE EST, traduzido pelo EST-ROBOT.')
+    cabeca.append(f'# Programa "{programa.nome}"{origem} da IDE EST, traduzido pelo EST-LAB.')
     portas = sorted(set(tr.portas_tanque))
     if portas:
         p = portas[0] if len(portas[0]) == 3 and portas[0][1] == '+' else 'B+C'
@@ -587,7 +587,7 @@ def _meus_usados(lista, meus, achados=None):
 
 
 def _expandir(lista, meus, fundo=0):
-    """Os blocos com uma cópia de cada Meu Bloco no lugar de cada chamada (como as funções no EST-ROBOT)."""
+    """Os blocos com uma cópia de cada Meu Bloco no lugar de cada chamada (como as funções no EST-LAB)."""
     import copy
     if fundo > 20:
         raise RecursionError('Meu Bloco chamando a si mesmo')
@@ -607,7 +607,7 @@ def _expandir(lista, meus, fundo=0):
 
 def conferir(programa, codigo, meus=None):
     """True se o Python compila para os mesmos bytes que os blocos da IDE (com os Meus Blocos no lugar de cada
-    chamada); None se o compilador do EST-ROBOT ainda não sabe compilar algum bloco do programa da IDE."""
+    chamada); None se o compilador do EST-LAB ainda não sabe compilar algum bloco do programa da IDE."""
     import copy, estc, enviar, robo
     try:
         esperado = estc.compilar(_expandir(copy.deepcopy(programa.blocos), meus or {}))
@@ -696,7 +696,7 @@ def main():
         if p['exata']:
             estado = 'tradução exata: o Python gera os mesmos bytes que a IDE manda para o robô'
         elif p['exata'] is None:
-            estado = 'traduzido, mas o EST-ROBOT ainda não compila algum bloco deste programa da IDE'
+            estado = 'traduzido, mas o EST-LAB ainda não compila algum bloco deste programa da IDE'
         else:
             estado = 'tradução aproximada: faz o mesmo, com alguns blocos diferentes'
         print(f'  "{p["nome"]}" -> {os.path.normpath(destino)}\n    {estado}')

@@ -434,7 +434,7 @@ def aviso_versao_nova():
             pass
     ultima = visto.get('ultima')
     if ultima and atualizar.numeros(ultima) > atualizar.numeros(instalada):
-        return (f'saiu uma versão nova do EST-ROBOT ({ultima.lstrip("vV")}; você tem a {instalada}). '
+        return (f'saiu uma versão nova do EST-LAB ({ultima.lstrip("vV")}; você tem a {instalada}). '
                 f'Para atualizar: Terminal > Executar Tarefa > Atualizar o projeto.')
     return None
 

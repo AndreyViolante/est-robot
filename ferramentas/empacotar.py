@@ -47,7 +47,7 @@ LEIA_ME = f"""Python {PYTHON_VERSAO} para Windows 64 bits (pacote "embeddable" o
 com o pywinusb {PYWINUSB_VERSAO} em Lib/site-packages.
 
 Não precisa instalar: as tarefas do VS Code usam este Python pelo ferramentas/rodar.cmd.
-Para um Python mais novo, baixe o pacote do est-robot de novo.
+Para um Python mais novo, baixe o pacote do EST-LAB de novo.
 """
 
 

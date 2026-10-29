@@ -510,7 +510,7 @@ async function abrirEst(arq) {
   salvar();
   limparMensagens();
   const estado = p.exata ? 'Tradução exata: o Python gera os mesmos bytes que a IDE manda para o robô.'
-    : p.exata === null ? 'Traduzido, mas algum bloco deste programa ainda não tem comando no EST-ROBOT (veja os comentários no código).'
+    : p.exata === null ? 'Traduzido, mas algum bloco deste programa ainda não tem comando no EST-LAB (veja os comentários no código).'
       : 'Tradução aproximada: faz o mesmo, com alguns blocos diferentes.';
   mensagem(p.exata ? 'ok' : 'aviso', `Programa "${escapar(p.nome)}" da IDE, agora em Python`,
     `<p>${estado}</p>` + (p.avisos.length ? `<ul>${p.avisos.map(a => `<li>${escapar(a)}</li>`).join('')}</ul>` : '') +

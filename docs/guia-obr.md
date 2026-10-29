@@ -87,7 +87,7 @@ while True:
 - **O laço principal só decide**: ele olha os sensores e chama a função certa. Cada função faz uma coisa.
 - **A ordem dos `if` é a prioridade**: o que vem primeiro ganha. Pense no que é mais urgente (bater na
   caixa? perder o verde?).
-- **Cuidado com o tamanho**: no EST-ROBOT, cada vez que uma função é chamada, os blocos dela entram de
+- **Cuidado com o tamanho**: no EST-LAB, cada vez que uma função é chamada, os blocos dela entram de
   novo no programa (é como copiar e colar). Chame cada função em um lugar só, de preferência dentro do
   laço principal.
 
@@ -135,5 +135,5 @@ simulador não tem escorregão, bateria fraca nem a luz do ginásio: o teste fin
 - [ ] Os números do `ajustes` anotados na folha da equipe.
 - [ ] Cada membro sabe o que cada função faz: no desafio surpresa, a equipe tem 30 minutos para mudar o programa.
 
-Encontrou um problema no EST-ROBOT? A tarefa **Diagnóstico (para pedir ajuda)** copia um resumo para
+Encontrou um problema no EST-LAB? A tarefa **Diagnóstico (para pedir ajuda)** copia um resumo para
 mandar junto com o que aconteceu.

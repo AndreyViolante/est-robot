@@ -125,7 +125,7 @@ def ler_projeto(dados):
     except zipfile.BadZipFile:
         sys.exit('O arquivo baixado veio com defeito (internet instável?). Rode a tarefa de novo. Nada foi mudado.')
     if 'robo.py' not in arquivos or 'enviar.py' not in arquivos:
-        sys.exit('O arquivo não parece ser o projeto est-robot. Nada foi mudado.')
+        sys.exit('O arquivo não parece ser o projeto EST-LAB. Nada foi mudado.')
     return arquivos, commit
 
 

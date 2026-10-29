@@ -352,7 +352,7 @@ def passo_navegador():
 
 def gravar_relatorio(bateria):
     versao = open(os.path.join(RAIZ, 'VERSAO'), encoding='utf-8').read().strip()
-    linhas = [f'Teste geral do EST-ROBOT {versao} em {datetime.datetime.now():%d/%m/%Y %H:%M}', f'Bateria: {bateria}', '']
+    linhas = [f'Teste geral do EST-LAB {versao} em {datetime.datetime.now():%d/%m/%Y %H:%M}', f'Bateria: {bateria}', '']
     linhas += [f'{p}: {r}' + (f' | {o}' if o else '') for p, r, o in RESULTADOS]
     arquivo = os.path.join(RAIZ, 'resultado_teste_geral.txt')
     with open(arquivo, 'w', encoding='utf-8') as f:

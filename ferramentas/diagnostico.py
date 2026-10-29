@@ -24,7 +24,7 @@ def projeto():
         jeito = 'pacote com o Python dentro'
     else:
         jeito = 'Python do computador'
-    return f'EST-ROBOT {versao} ({jeito})'
+    return f'EST-LAB {versao} ({jeito})'
 
 
 def python():
@@ -115,7 +115,7 @@ def copiar(texto):
 def main():
     print('Juntando as informações (com o robô no USB, leva uns segundos)...\n')
     linhas = [
-        '*Diagnóstico EST-ROBOT*',
+        '*Diagnóstico EST-LAB*',
         projeto(),
         f'{platform.system()} {platform.release()} ({platform.version()})',
         python(),

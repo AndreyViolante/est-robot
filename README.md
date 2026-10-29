@@ -1,4 +1,4 @@
-# est-robot
+# EST-LAB
 
 [![Versão](https://img.shields.io/github/v/release/AndreyViolante/est-robot?label=vers%C3%A3o)](https://github.com/AndreyViolante/est-robot/releases/latest)
 [![Testes](https://github.com/AndreyViolante/est-robot/actions/workflows/testes.yml/badge.svg)](https://github.com/AndreyViolante/est-robot/actions/workflows/testes.yml)
@@ -9,6 +9,9 @@ Programe o robô educacional **Dr. Luck EST** em Python, direto do **VS Code**, 
 proprietária. Pensado para aulas de robótica: os comandos são em português.
 
 Criado por **Andrey Violante**, para uso pedagógico. Conheça: [andreyviolante.github.io/est-robot](https://andreyviolante.github.io/est-robot/)
+
+O EST-LAB se chamava EST-ROBOT até a versão 0.1.4 (o endereço continua o mesmo). É um projeto
+independente, sem relação com o fabricante do robô.
 
 **Quer ver antes de instalar?** O exemplo roda no simulador, no navegador:
 [andreyviolante.github.io/est-robot/simulador](https://andreyviolante.github.io/est-robot/simulador/)
@@ -122,11 +125,11 @@ Apagar, rodar e copiar usam os mesmos comandos que a IDE manda, mas **ainda não
 ### Programas da IDE EST (.est) em Python
 
 **Terminal → Executar Tarefa → Abrir programa da IDE (.est)** abre a janela para escolher um projeto
-feito na IDE EST e escreve o mesmo programa em Python, com os comandos do EST-ROBOT, na pasta `da_ide`. Os
+feito na IDE EST e escreve o mesmo programa em Python, com os comandos do EST-LAB, na pasta `da_ide`. Os
 Meus Blocos viram funções do Python. Depois é só simular ou mandar para o robô como qualquer programa. Na
 página de programar, o botão **Abrir .py / .est** faz o mesmo no navegador.
 
-O EST-ROBOT confere a tradução: se o Python compila para os mesmos bytes que a IDE manda para o robô, ela
+O EST-LAB confere a tradução: se o Python compila para os mesmos bytes que a IDE manda para o robô, ela
 é **exata**; quando algum bloco ficou diferente (uma conta só com números, um bloco ainda sem comando), ele
 avisa o que mudou e deixa um comentário no programa. Pelo terminal: `python importar_est.py projeto.est`.
 
@@ -286,12 +289,12 @@ conferido no simulador.
 
 ## Escolas que usam
 
-Usa o EST-ROBOT nas suas aulas? [Registre a sua escola](https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml) (opcional e público, sem dados de
+Usa o EST-LAB nas suas aulas? [Registre a sua escola](https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml) (opcional e público, sem dados de
 alunos). Ajuda o autor a saber onde a ferramenta está chegando.
 
 ## Privacidade
 
-O EST-ROBOT não coleta nomes, e-mails nem dados de alunos, e as páginas não usam cookies. Ele só gera
+O EST-LAB não coleta nomes, e-mails nem dados de alunos, e as páginas não usam cookies. Ele só gera
 números anônimos, contados pelo próprio GitHub:
 
 - uma vez por dia, ao enviar um programa, ele baixa o arquivo `versao.txt` da última versão para saber

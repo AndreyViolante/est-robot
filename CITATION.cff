@@ -1,7 +1,7 @@
 cff-version: 1.2.0
-message: "Se usar o EST-ROBOT num trabalho acadêmico, artigo ou relato de aula, cite assim."
+message: "Se usar o EST-LAB num trabalho acadêmico, artigo ou relato de aula, cite assim."
 type: software
-title: "EST-ROBOT: programação da controladora EST em Python pelo VS Code"
+title: "EST-LAB: programação da controladora EST em Python pelo VS Code"
 abstract: >-
   Ferramenta para uso pedagógico que permite programar a controladora do robô educacional EST em
   Python, pelo VS Code ou pelo navegador, sem a IDE do fabricante. Os comandos são em português, o

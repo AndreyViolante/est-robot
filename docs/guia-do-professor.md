@@ -361,7 +361,7 @@ programa.
 A tarefa **Abrir programa da IDE (.est)** (ou o botão **Abrir .py / .est** da página de programar)
 transforma um projeto feito em blocos na IDE EST no mesmo programa em Python, com os Meus Blocos como
 funções. É uma boa ponte para a turma que já programa em blocos: abra um programa que eles mesmos fizeram e
-mostre, lado a lado, que bloco virou qual linha. O EST-ROBOT diz se a tradução é exata (os mesmos bytes que
+mostre, lado a lado, que bloco virou qual linha. O EST-LAB diz se a tradução é exata (os mesmos bytes que
 a IDE manda para o robô) ou o que ficou diferente.
 
 ## Equipes de competição (OBR)
@@ -382,6 +382,6 @@ solução da prova: na OBR, quem programa são os estudantes.
    copia. Cole no WhatsApp junto com o que aconteceu e a mensagem de erro. Não vai nenhum dado
    pessoal nem dos alunos.
 
-**Relato de experiência ou artigo?** O EST-ROBOT tem DOI para citar:
+**Relato de experiência ou artigo?** O EST-LAB tem DOI para citar:
 [10.5281/zenodo.23692767](https://doi.org/10.5281/zenodo.23692767) (a referência pronta, no formato da
 ABNT, está nas perguntas do [site](https://andreyviolante.github.io/est-robot/#perguntas)).
