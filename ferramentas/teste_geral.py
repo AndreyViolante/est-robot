@@ -280,6 +280,69 @@ def passo_programas():
     anotar('7. Listar e apagar', 's' if apareceu and apagou and sumiu else 'n', obs)
 
 
+def passo_rodar_baixar_copiar():
+    titulo('7b. Rodar, baixar e copiar um programa gravado')
+    def escrever():
+        robo.bip()
+        robo.mostrar('Rodou!')
+        robo.esperar(3)
+    if SEM_ROBO:
+        programa(escrever)
+        return anotar('7b. Rodar, baixar e copiar', 'p', 'sem robô')
+    from est_protocol import apagar_arquivo, baixar_arquivo, listar_arquivos, rodar_programa, upload
+    alvo, copia = '/vscode/teste_rodar.dbf', '/vscode/teste_copia.dbf'
+    dados = programa(escrever)
+    if not enviar('teste_rodar', escrever, executar=False):
+        return anotar('7b. Rodar programa gravado', 'p', 'não enviou')
+    print('O programa foi gravado sem rodar. Agora o computador pede ao robô para rodar o que está gravado.')
+    try:
+        rodar_programa(alvo)
+        anotar('7b. Rodar programa gravado', perguntar('O robô apitou e mostrou "Rodou!"?'))
+        baixado = baixar_arquivo(alvo)
+        igual = baixado == dados
+        anotar('7c. Baixar programa', 's' if igual else 'n', f'{len(baixado)} bytes, igual ao enviado: {igual}')
+        upload(baixado, prog_path=copia[:-4], verbose=False, executar=False)          # o que a cópia faz
+        apareceu = copia in [n for n, _ in listar_arquivos()]
+        anotar('7d. Copiar programa', 's' if apareceu else 'n', f'a cópia apareceu na lista: {apareceu}')
+        for caminho in (alvo, copia):
+            apagar_arquivo(caminho)
+    except RuntimeError as e:
+        anotar('7b. Rodar, baixar e copiar', 'n', str(e))
+
+
+def passo_blocos_novos():
+    titulo('9. Rotação do motor, cronômetro e giroscópio')
+    esquerdo = robo._config['esquerdo']
+    def escrever():
+        robo.zerar_motor(esquerdo)
+        robo.zerar_cronometro()
+        with robo.para_sempre():
+            robo.painel(graus=robo.graus_do_motor(esquerdo), tempo=robo.cronometro(),
+                        sorteio=robo.aleatorio(1, 6))
+            robo.esperar(0.2)
+    if not enviar('teste_motor_tempo', escrever):
+        return anotar('9. Rotação do motor e cronômetro', 'p', 'não enviou')
+    print(f'Na tela: "graus" (motor {esquerdo}), "tempo" (segundos) e "sorteio" (1 a 6).')
+    print(f'Levante o robô e gire a roda do motor {esquerdo} uma volta para frente, com a mão.')
+    anotar('9. Rotação do motor', perguntar('O "graus" foi para perto de 360 (ou -360) com uma volta da roda?'))
+    anotar('9. Cronômetro', perguntar('O "tempo" sobe um por segundo?'))
+    anotar('9. Aleatório', perguntar('O "sorteio" muda entre 1 e 6?'))
+    porta = 'p' if SEM_ROBO else input('Em que porta está o giroscópio? (1 a 4, ou p se não tem) ').strip().lower()
+    if porta not in ('1', '2', '3', '4'):
+        if not SEM_ROBO:
+            return anotar('9. Giroscópio', 'p', 'sem giroscópio')
+        porta = '2'
+    def escrever_giro():
+        robo.zerar_giroscopio(int(porta))
+        with robo.para_sempre():
+            robo.painel(giro=robo.giroscopio(int(porta)), vel=robo.velocidade_do_giro(int(porta)))
+            robo.esperar(0.2)
+    if not enviar('teste_giroscopio', escrever_giro):
+        return anotar('9. Giroscópio', 'p', 'não enviou')
+    print('Gire o robô um quarto de volta para a direita, com a mão, em cima da mesa.')
+    anotar('9. Giroscópio', perguntar('O "giro" foi para perto de 90 (ou -90)?'), f'porta {porta}')
+
+
 def passo_navegador():
     titulo('8. Enviar pelo navegador')
     print(f'Abra {PAGINA} no Chrome ou no Edge, espere aparecer "Python pronto"')
@@ -315,7 +378,9 @@ def main():
     passo_calibrar()
     passo_toque()
     passo_programas()
+    passo_rodar_baixar_copiar()
     passo_navegador()
+    passo_blocos_novos()
     if not SEM_ROBO:
         gravar_relatorio(bateria)
 
