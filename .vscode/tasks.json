@@ -96,6 +96,36 @@
             "problemMatcher": []
         },
         {
+            "label": "Rodar programa do robô",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/ferramentas/programas_no_robo.py", "--rodar"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true, "focus": true},
+            "problemMatcher": []
+        },
+        {
+            "label": "Baixar programa do robô",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/ferramentas/programas_no_robo.py", "--baixar"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true, "focus": true},
+            "problemMatcher": []
+        },
+        {
+            "label": "Copiar programa para outro robô",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/ferramentas/programas_no_robo.py", "--copiar"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true, "focus": true},
+            "problemMatcher": []
+        },
+        {
             "label": "Programas no robô",
             "type": "shell",
             "command": "python",

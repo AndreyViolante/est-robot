@@ -23,8 +23,9 @@ CORES_LUZ = {'0': 'azul', '1': 'roxo', '2': 'vermelho'}
 SAIDA_DE_1_BYTE = {('3002', '1'), ('3008', '1'), ('3001', '1')}       # a tela mostra com uma conta a mais
 NOMES_DE_BLOCO = {'1002': 'Motor Grande', '1003': 'Mover com Direção', '1004': 'Mover Tanque', '1005': 'Tela',
                   '1006': 'Som', '1007': 'Luz', '2002': 'Esperar', '2003': 'Repetir', '2004': 'Decisão (Switch)',
-                  '3002': 'Sensor de Cor', '4001': 'Variável', '4004': 'Lógica', '4005': 'Matemática',
-                  '4007': 'Comparar', '5005': 'Inverter Motor'}
+                  '3002': 'Sensor de Cor', '3003': 'Giroscópio', '3005': 'Rotação do Motor', '3007': 'Cronômetro',
+                  '4001': 'Variável', '4004': 'Lógica', '4005': 'Matemática', '4006': 'Arredondar',
+                  '4007': 'Comparar', '4010': 'Aleatório', '5005': 'Inverter Motor'}
 
 COMO_USAR = ('Para ver rodando: abra o .py no VS Code e use Terminal > Executar Tarefa > Simular no computador '
              '(ou Ctrl+Shift+B para mandar ao robô).')
@@ -290,6 +291,44 @@ class _Tradutor:
         if m != '1':
             return False
         self.dado(b, 'botao', 'botao_apertado()', nivel)
+
+    def _b3005(self, b, m, nivel):                    # rotação do motor
+        leitura = {'1': ('graus', 'graus_do_motor'), '2': ('voltas', 'rotacoes_do_motor'),
+                   '3': ('pot', 'potencia_do_motor')}
+        if m == '7':
+            return self.emitir(f'zerar_motor({_porta(b)})', nivel)
+        if m not in leitura:
+            return False
+        base, funcao = leitura[m]
+        self.dado(b, f'{base}{b.port}'.strip(), f'{funcao}({_porta(b)})', nivel)
+
+    def _b3003(self, b, m, nivel):                    # giroscópio
+        if m == '6':
+            return self.emitir(f'zerar_giroscopio({_porta(b)})', nivel)
+        if m not in ('1', '2'):
+            return False
+        funcao = 'giroscopio' if m == '1' else 'velocidade_do_giro'
+        self.dado(b, f'giro{b.port}'.strip(), f'{funcao}({_porta(b)})', nivel)
+
+    def _b3007(self, b, m, nivel):                    # cronômetro
+        n = _numero(b.param(1))
+        if m == '3':
+            return self.emitir(f'zerar_cronometro({n})', nivel)
+        if m != '1':
+            return False
+        self.dado(b, f'tempo{n}', f'cronometro({n})', nivel)
+
+    def _b4006(self, b, m, nivel):                    # arredondar (só o "mais perto" tem comando)
+        if m != '1':
+            return False
+        if self.fio(b, 1) is None:
+            self.aviso('um arredondar só com número: o Python já arredonda (não precisa do bloco)')
+        self.dado(b, 'arredondado', f'arredondar({self.valor(b, 1, 1)})', nivel)
+
+    def _b4010(self, b, m, nivel):                    # aleatório (com os limites escritos no bloco)
+        if m != '1' or self.fio(b, 1) is not None or self.fio(b, 2) is not None:
+            return False
+        self.dado(b, 'sorteio', f'aleatorio({_numero(b.param(1))}, {_numero(b.param(2))})', nivel)
 
     def _b4001(self, b, m, nivel):                    # variável numérica
         if m == '2':

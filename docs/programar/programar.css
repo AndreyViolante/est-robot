@@ -90,8 +90,9 @@ html.travado { overflow: hidden; }
 /* área de blocos: blocos à esquerda, o Python que eles geram à direita */
 .area-blocos { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 10px;
                height: clamp(380px, calc(100vh - 210px), 1000px); }
+/* isolation: a caixa de categorias do Blockly tem z-index alto e passava por cima do simulador (.sim, z-index 10) */
 .blockly { position: relative; min-height: 0; min-width: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
-           background: var(--bg); }
+           background: var(--bg); isolation: isolate; }
 .blockly .carregando { margin: 0; padding: 16px; color: var(--muted); }
 .blockly .blocklyToolboxCategoryLabel { font: 600 0.88rem var(--body); }
 @media (max-width: 600px) {

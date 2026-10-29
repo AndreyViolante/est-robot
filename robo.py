@@ -36,6 +36,8 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'se', 'se_ver_cor', 'se_tocado', 'se_distancia', 'se_luz', 'senao', 'limite',
            'melodia', 'botao_apertado', 'esperar_botao', 'ao_mesmo_tempo', 'tarefa', 'painel', 'ajustando',
            'ajustes', 'medir_laco', 'calibrar_na_largada', 'limite_medido',
+           'graus_do_motor', 'rotacoes_do_motor', 'potencia_do_motor', 'zerar_motor', 'giroscopio',
+           'velocidade_do_giro', 'zerar_giroscopio', 'cronometro', 'zerar_cronometro', 'aleatorio', 'arredondar',
            'BOTAO_CIMA', 'BOTAO_BAIXO', 'BOTAO_ESQUERDA', 'BOTAO_DIREITA', 'BOTAO_CENTRO',
            'novo_programa', 'programa']
 
@@ -428,6 +430,77 @@ def tocado(porta: PortaSensor) -> Valor:
 def botao_apertado() -> Valor:
     """Número do botão da controladora que está apertado (0 = nenhum). Ainda não conferido no robô."""
     return Valor(_adiciona(_b.Blk(3001, 1, '2|1|0|0', ' ')), 3, byte=True)
+
+
+# Os comandos abaixo (rotação do motor, giroscópio, cronômetro, aleatório, arredondar) seguem a tabela de
+# compilação da própria IDE, mas ainda não foram conferidos no robô.
+
+def graus_do_motor(porta: PortaMotor) -> Valor:
+    """Quantos graus o motor girou desde o começo (ou desde zerar_motor). Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.motor_rotation(_motor(porta), 1)), 3)
+
+
+def rotacoes_do_motor(porta: PortaMotor) -> Valor:
+    """Quantas voltas o motor deu desde o começo (ou desde zerar_motor). Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.motor_rotation(_motor(porta), 2)), 4)
+
+
+def potencia_do_motor(porta: PortaMotor) -> Valor:
+    """A potência com que o motor está girando agora. Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.motor_rotation(_motor(porta), 3)), 5)
+
+
+def zerar_motor(porta: PortaMotor):
+    """Volta a contagem de graus do motor para 0. Ainda não conferido no robô."""
+    return _adiciona(_b.motor_rotation(_motor(porta), 7))
+
+
+def giroscopio(porta: PortaSensor) -> Valor:
+    """Ângulo do robô em graus, lido pelo giroscópio, desde o começo (ou desde zerar_giroscopio).
+    Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.gyro(_sensor(porta), 1)), 3)
+
+
+def velocidade_do_giro(porta: PortaSensor) -> Valor:
+    """Quantos graus por segundo o robô está girando, lido pelo giroscópio. Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.gyro(_sensor(porta), 2)), 4)
+
+
+def zerar_giroscopio(porta: PortaSensor):
+    """Volta o ângulo do giroscópio para 0 (deixe o robô parado). Ainda não conferido no robô."""
+    return _adiciona(_b.gyro(_sensor(porta), 6))
+
+
+def _cronometro(numero):
+    if isinstance(numero, bool) or not isinstance(numero, int) or numero not in range(1, 9):
+        raise ValueError(f'cronômetro {numero!r} não existe: o robô tem os cronômetros 1 a 8')
+    return numero
+
+
+def cronometro(numero: int = 1) -> Valor:
+    """Segundos passados desde o começo do programa (ou desde zerar_cronometro). O robô tem 8 cronômetros.
+    Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.timer(_cronometro(numero), 1)), 4)
+
+
+def zerar_cronometro(numero: int = 1):
+    """Volta o cronômetro para 0 e ele recomeça a contar. Ainda não conferido no robô."""
+    return _adiciona(_b.timer(_cronometro(numero), 3))
+
+
+def aleatorio(minimo: int, maximo: int) -> Valor:
+    """Um número inteiro sorteado entre minimo e maximo (os dois podem sair). Ainda não conferido no robô."""
+    if _const(minimo) > _const(maximo):
+        raise ValueError(f'aleatorio({minimo}, {maximo}): o primeiro número tem que ser o menor')
+    return Valor(_adiciona(_b.random_num(minimo, maximo)), 5)
+
+
+def arredondar(valor: float | Valor) -> float | Valor:
+    """Arredonda para o inteiro mais perto. Ex.: mostrar(arredondar(luz_refletida(1) / 10))
+    Ainda não conferido no robô."""
+    if isinstance(valor, Valor):
+        return Valor(_adiciona(_b.round_num(1, src=valor.bloco, out=valor.saida)), 3)
+    return round(_const(valor))
 
 
 def ler(nome: str) -> Valor:

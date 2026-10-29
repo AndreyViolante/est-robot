@@ -11,7 +11,6 @@ import ast, os, platform, subprocess, sys
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 sys.path.insert(0, RAIZ)
 
-TIPOS = {1: 'sensor de cor', 4: 'motor'}          # tipos vistos na consulta de portas (est_protocol.ler_portas)
 
 
 def projeto():
@@ -86,6 +85,7 @@ def robo_no_usb():
         ligadas = p.portas_ligadas()
         if ligadas is None:
             return None
+        from enviar import TIPOS
         return ', '.join(f'{porta} {TIPOS.get(tipo, f"tipo {tipo}")}' for porta, tipo in ligadas.items()) or 'nada ligado'
     pergunta('Portas', portas)
 

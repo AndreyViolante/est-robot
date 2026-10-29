@@ -83,9 +83,18 @@ def gravar(dados, destino=PASTA / 'programa.js'):
         f.write(f'window.{"PROGRAMAS" if lista else "PROGRAMA"} = ' + json.dumps(dados, indent=1) + ';\n')
 
 
+def montar_dbf(arquivo):
+    """Um programa baixado do robô (.dbf, os bytes que estão gravados nele) no formato do simulador: roda igual,
+    só sem o código Python ao lado (vale também para programa feito na IDE EST)."""
+    with open(arquivo, 'rb') as f:
+        codigo = f.read()
+    return {'nome': os.path.basename(arquivo), 'gerado': time.strftime('%d/%m/%Y %H:%M:%S'), 'bytes': codigo.hex(),
+            'fonte': '', 'linhas': [], 'variaveis': {}, 'avisos': []}
+
+
 def preparar(arquivo):
-    """Compila o arquivo e grava simulador/programa.js. Devolve os bytes compilados."""
-    dados = montar(arquivo)
+    """Compila o arquivo (ou lê o .dbf baixado do robô) e grava simulador/programa.js. Devolve os bytes."""
+    dados = montar_dbf(arquivo) if arquivo.lower().endswith('.dbf') else montar(arquivo)
     gravar(dados)
     return bytes.fromhex(dados['bytes'])
 
@@ -94,8 +103,8 @@ def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     arquivo = sys.argv[1]
-    if not arquivo.endswith('.py'):
-        sys.exit('ERRO: abra um arquivo de programa (.py) antes de simular.')
+    if not arquivo.lower().endswith(('.py', '.dbf')):
+        sys.exit('ERRO: abra um arquivo de programa (.py, ou um .dbf baixado do robô) antes de simular.')
     codigo = preparar(arquivo)
     print(f'[OK] {os.path.basename(arquivo)}: {len(codigo)} bytes')
     if '--sem-abrir' in sys.argv:

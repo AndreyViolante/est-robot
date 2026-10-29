@@ -78,6 +78,15 @@ def light_off(): return Blk(1007, 1, '1|1', ' ')                       # Luz do 
 def sensor_refl(port): return Blk(3002, 2, '5|4|0|50|0|0|0', str(port))          # saida 7 = luz refletida
 def sensor_color_id(port): return Blk(3002, 1, '5|4|0|50|0|0|0', str(port))      # saida 5 = numero da cor
 def touch_state(port): return Blk(3008, 1, '1|0|0|0', str(port))                  # saida 2 = estado (1 = apertado)
+# da tabela de compilação da IDE (compileconfig_file/compile_xml), ainda não conferidos no robô nem contra captura
+def motor_rotation(port, mode): return Blk(3005, mode, '2|90|0|1|0|0', str(port))  # 1 graus (saida 3), 2 rotacoes (4), 3 potencia (5), 7 zera
+def gyro(port, mode): return Blk(3003, mode, '4|90|0|0|0', str(port))             # 1 angulo (saida 3), 2 graus/s (4), 6 zera
+def timer(n, mode): return Blk(3007, mode, f'{n}|2|5|0|0', ' ')                   # 1 segundos (saida 4), 3 zera; n = cronometro 1..8
+def round_num(mode=1, src=None, out=None):                             # Arredondar: 1 mais perto, 2 para cima, 3 para baixo
+    b = Blk(4006, mode, '0|1|0', ' ')
+    if src: b.wires.append((1, src, out))
+    return b                                                            # saida 3
+def random_num(lo, hi): return Blk(4010, 1, f'{lo}|{hi}|50|0|0', ' ')            # Aleatorio entre lo e hi, saida 5
 def ultrasonic_cm(port): return Blk(3009, 3, '4|50|0|0|0|0|0', str(port))         # saida 4 = distancia em cm
 
 # ---- variaveis e contas ----

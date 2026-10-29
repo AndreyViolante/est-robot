@@ -180,6 +180,7 @@ def read_response(handle, timeout_ms: int = 400) -> bytes | None:
 
 CONSULTA_ESTADO = frame(0x02, b'\x01\x00\x00')      # a IDE manda isto sem parar
 NOMES_PORTAS = ['1', '2', '3', '4', 'A', 'B', 'C', 'D']
+# o nome de cada tipo (1 = sensor de cor, 4 = motor...) fica em enviar.TIPOS, que também roda no navegador
 
 
 def ler_portas(resposta: bytes) -> dict | None:
@@ -395,6 +396,55 @@ def apagar_arquivo(caminho: str, timeout_ms: int = 10000) -> bool:
     finally:
         k32.CloseHandle(handle)
     raise RuntimeError('o robô não respondeu ao pedido de apagar')
+
+
+def pkt_ler(caminho: str) -> bytes:
+    """Pede um arquivo ao robô: 09 sub 04 + '/pasta/arquivo' (o send_attain_file_cmd da IDE)."""
+    pasta, arquivo = _partes(caminho)
+    path_b = f'/{pasta}/{arquivo}'.encode('ascii')
+    return frame(0x09, (1 + len(path_b)).to_bytes(2, 'little') + b'\x04' + path_b)
+
+
+def baixar_arquivo(caminho: str, timeout_ms: int = 3000) -> bytes:
+    """O conteúdo de um arquivo gravado no robô ('/vscode/meu_programa.dbf'): para um programa, os mesmos bytes
+    que o envio mandou (conferido no robô em 29/10 com o exemplo 11). A resposta vem em pedaços
+    09 sub 04 [total] [número] [dados]. RuntimeError se o robô não responder ou mandar pela metade."""
+    pacote = pkt_ler(caminho)
+    handle = _abrir()
+    pedacos, total = {}, None
+    try:
+        send_report(handle, pacote)
+        limite = time.monotonic() + timeout_ms / 1000
+        while time.monotonic() < limite and (total is None or len(pedacos) < total):
+            for p in pacotes_resposta(read_response(handle, 400) or b'', 0x09):
+                if len(p) >= 3 and p[0] == 0x04:
+                    total = p[1]
+                    pedacos[p[2]] = p[3:]
+                    limite = time.monotonic() + timeout_ms / 1000
+    finally:
+        k32.CloseHandle(handle)
+    if total is None:
+        raise RuntimeError(f'o robô não mandou o arquivo {caminho}')
+    if total == 0:
+        return b''
+    if len(pedacos) < total:
+        raise RuntimeError(f'o arquivo {caminho} veio pela metade ({len(pedacos)} de {total} pedaços): tente de novo')
+    return b''.join(pedacos[i] for i in sorted(pedacos))
+
+
+def rodar_programa(caminho: str, timeout_ms: int = 450) -> None:
+    """Executa um programa que já está gravado no robô ('/vscode/meu_programa.dbf', como vem em
+    listar_arquivos), sem enviar de novo: os mesmos pacotes do fim do envio (selecionar e executar).
+    Ainda não conferido no robô. RuntimeError se o robô não estiver no USB."""
+    pasta, arquivo = _partes(caminho)
+    sem_extensao = f'/{pasta}/{arquivo[:-4] if arquivo.endswith(".dbf") else arquivo}'
+    handle = _abrir()
+    try:
+        for pacote in (pkt_select(sem_extensao), HEARTBEAT, pkt_run(sem_extensao + '.dbf')):
+            send_report(handle, pacote)
+            read_response(handle, timeout_ms)
+    finally:
+        k32.CloseHandle(handle)
 
 
 # ── Firmware e memória ───────────────────────────────────────────────────────

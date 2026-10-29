@@ -15,7 +15,7 @@ const FATIA = 50;                 // instruções seguidas de uma thread antes d
 
 // tamanho de cada instrução (o 2F tem tamanho variável: 6 + n)
 const TAM = {0x01: 6, 0x02: 9, 0x03: 9, 0x04: 9, 0x07: 9, 0x08: 9, 0x09: 13, 0x0A: 13, 0x0B: 13, 0x0C: 13,
-             0x0D: 10, 0x10: 14, 0x11: 13, 0x1A: 9, 0x1B: 9, 0x1D: 7, 0x1E: 11, 0x1F: 11, 0x20: 3, 0x21: 3,
+             0x0D: 10, 0x0E: 13, 0x10: 14, 0x11: 13, 0x12: 13, 0x14: 13, 0x1A: 9, 0x1B: 9, 0x1D: 7, 0x1E: 11, 0x1F: 11, 0x20: 3, 0x21: 3,
              0x23: 5, 0x24: 1, 0x29: 14, 0x2B: 17, 0x2D: 7, 0x30: 13, 0x31: 13, 0x32: 8, 0x33: 8, 0x37: 14, 0x47: 9,
              0x48: 1};
 
@@ -210,16 +210,29 @@ class VM {
       case 0x0A: setF(A(1), F(A(5)) - F(A(9))); break;
       case 0x0B: setF(A(1), F(A(5)) * F(A(9))); break;
       case 0x0C: setF(A(1), F(A(5)) / F(A(9))); break;
-      case 0x0D:                                                          // conversão
-        if (c[pc + 1] !== 0x15) throw new ErroVM(`conversão ${hex(c[pc + 1])} ainda não simulada`, pc);
-        setB(A(2), B(A(6)));        // cor lida -> número da cor: o sensor simulado já entrega o número
+      case 0x0D: {                                                        // conversão
+        const arredonda = {5: Math.round, 4: Math.ceil, 3: Math.floor}[c[pc + 1]];
+        if (arredonda) setF(A(2), arredonda(F(A(6))));                    // arredondar (tabela da IDE, não conferido)
+        else if (c[pc + 1] === 0x15) setB(A(2), B(A(6)));   // cor lida -> número da cor: o sensor simulado já entrega o número
+        else throw new ErroVM(`conversão ${hex(c[pc + 1])} ainda não simulada`, pc);
         break;
+      }
+      case 0x0E: {                                                        // aleatório inteiro entre dois números
+        const lo = Math.ceil(F(A(5))), hi = Math.floor(F(A(9)));
+        setF(A(1), hi >= lo ? lo + Math.floor(Math.random() * (hi - lo + 1)) : lo);
+        break;
+      }
+      case 0x12: setB(A(1), B(A(5)) || B(A(9)) ? 1 : 0); break;           // ou (lógico)
+      case 0x14: setB(A(1), (B(A(5)) ^ B(A(9))) & 0xFF); break;           // ou exclusivo (o "não" é xor com 1)
       case 0x10: case 0x37:                                               // compara floats, tipo 1..6
         setB(A(2), compara(c[pc + 1], F(A(6)), F(A(10)), pc) ? 1 : 0); break;
       case 0x11: {                                                        // a cor está na máscara?
         const cor = B(A(5)), r = this.confere(A(9), 2, pc);
         const mascara = m[r] | (m[r + 1] << 8);
-        setB(A(1), cor < 16 ? (mascara >> cor) & 1 : 0);
+        // o bloco Lógica "e" da IDE usa a mesma instrução com dois lógicos (0 ou 1); máscara de cor nunca tem
+        // o primeiro byte 0 ou 1 (a cor 0 sozinha não aparece nos blocos)
+        if (cor <= 1 && m[r] <= 1) setB(A(1), cor & m[r]);
+        else setB(A(1), cor < 16 ? (mascara >> cor) & 1 : 0);
         break;
       }
       case 0x1A: if (B(A(5)) !== 0) { th.pc = A(1); return; } break;      // salta se r != 0
@@ -265,7 +278,8 @@ class VM {
       case 0x30: {                                                        // lê dispositivo
         const porta = B(A(2)), tipo = c[pc + 6], modo = c[pc + 7], tam = c[pc + 8], r = A(9);
         const v = this.disp.ler(porta, tipo, modo, t);
-        this.confere(r, Math.max(tam, 1), pc);
+        if (!tam) break;                                                  // zerar (motor, giroscópio): não devolve nada
+        this.confere(r, tam, pc);
         m.fill(0, r, r + tam);
         if ('float' in v) dv.setFloat32(r, v.float, true);
         else m[r] = v.byte & 0xFF;
@@ -280,6 +294,11 @@ class VM {
       }
       case 0x32: {                                                        // lê interno (3 = botões)
         const tipo = c[pc + 1], modo = c[pc + 2], tam = c[pc + 3], r = A(4);
+        if (tipo === 9) {           // cronômetro: o número dele em r e o tempo logo depois (r + 1); modo 1 = zerar
+          if (modo === 1) this.disp.zerarCronometro(B(r), t);
+          else setF(r + 1, this.disp.cronometro(B(r), t));
+          break;
+        }
         const v = this.disp.lerInterno(tipo, modo, t);
         this.confere(r, Math.max(tam, 1), pc);
         m.fill(0, r, r + tam);

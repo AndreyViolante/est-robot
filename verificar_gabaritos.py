@@ -528,6 +528,29 @@ while True:
     else:
         motores(30, 10)""",
          lambda d: b'lim1:' in d and b'lim2:' in d),
+        # os de baixo seguem a tabela de compilação da IDE (compile_xml): leitura 0x30 tipo 4 (motor) e 2 (giro),
+        # interna 0x32 tipo 9 (cronômetro), 0x0E aleatório, 0x0D modo 5 arredondar
+        ('rotação do motor: graus e zerar',
+         """mostrar(graus_do_motor('B'))
+zerar_motor('B')""",
+         lambda d: re.search(rb'\x30\x00.{4}\x04\x01\x04', d, re.S) is not None
+         and re.search(rb'\x30\x00.{4}\x04\x04\x00', d, re.S) is not None),
+        ('giroscópio: ângulo e zerar',
+         """zerar_giroscopio(2)
+while giroscopio(2) < 90:
+    motores(20, -20)
+parar()""",
+         lambda d: re.search(rb'\x30\x00.{4}\x02\x01\x04', d, re.S) is not None
+         and re.search(rb'\x30\x00.{4}\x02\x04\x00', d, re.S) is not None),
+        ('cronômetro: zerar e ler',
+         """zerar_cronometro(2)
+while cronometro(2) < 3:
+    motores(30, 30)
+parar()""",
+         lambda d: b'\x32\x09\x01\x00' in d and b'\x32\x09\x00\x05' in d),
+        ('aleatório e arredondar',
+         """mostrar(arredondar(aleatorio(1, 6) / 2))""",
+         lambda d: b'\x0d\x05' in d and re.search(rb'\x0e.{12}', d, re.S) is not None),
     ]
     erros = [
         ('ajustes sem o passo', 'with ajustes(kp=0.4):\n    bip()', '(valor inicial, passo)'),
@@ -536,6 +559,9 @@ while True:
         ('tarefa fora do ao_mesmo_tempo', 'with tarefa():\n    bip()', 'logo dentro de um "with ao_mesmo_tempo():"'),
         ('nota que não existe', "tocar('dó maior')", 'não conheço a nota'),
         ('nota grave demais', "tocar('do4')", 'grave demais'),
+        ('cronômetro que não existe', 'mostrar(cronometro(9))', 'cronômetros 1 a 8'),
+        ('rotação de motor em porta de sensor', 'mostrar(graus_do_motor(1))', 'não é de motor'),
+        ('aleatório com os números trocados', 'mostrar(aleatorio(6, 1))', 'tem que ser o menor'),
     ]
     ok = True
     with tempfile.TemporaryDirectory() as pasta:
@@ -633,6 +659,29 @@ def verificar_atalhos():
                 erro = f' -> {type(e).__name__}: {e}'
             ok &= not erro
             print(f'  {"OK   " if not erro else "FALHA"} atalho {atalho["prefix"]}{erro}')
+    return ok
+
+
+def verificar_portas():
+    """O envio avisa quando o programa usa uma porta vazia ou um sensor diferente do que está ligado nela."""
+    import robo
+    from enviar import avisos_de_portas
+    robo.novo_programa()
+    robo.mostrar(robo.distancia(4))
+    with robo.se_luz(1, '<', 50):
+        robo.bip()
+    programa = robo.programa()
+    casos = [
+        ('ultrassom no lugar de um sensor de cor', {'1': 1, '4': 1, 'B': 4, 'C': 4}, ['ultrassônico na porta 4']),
+        ('tudo certo: nenhum aviso', {'1': 1, '4': 8, 'B': 4, 'C': 4}, []),
+        ('porta vazia', {'4': 8, 'B': 4, 'C': 4}, ['porta 1, mas o robô não tem nada']),
+    ]
+    ok = True
+    for nome, ligadas, esperados in casos:
+        avisos = avisos_de_portas(programa, ligadas)
+        certo = len(avisos) == len(esperados) and all(any(e in a for a in avisos) for e in esperados)
+        ok &= certo
+        print(f'  {"OK   " if certo else "FALHA"} portas: {nome}' + ('' if certo else f' -> {avisos}'))
     return ok
 
 
@@ -742,6 +791,7 @@ def main():
     robo_ok &= verificar_offline()
     robo_ok &= verificar_guias()
     robo_ok &= verificar_importar()
+    robo_ok &= verificar_portas()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

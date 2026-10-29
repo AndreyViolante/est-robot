@@ -15,6 +15,9 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
   antiga do que foi trocado fica em `copias_de_seguranca`. Peça a cada aluno que salve o programa num
   arquivo com nome próprio (ex.: `aulas\joao_aula3.py`).
 - A tarefa **Programas no robô** mostra a bateria e apaga os programas antigos da pasta vscode do robô.
+  O programa que funcionou na pista pode ser guardado no computador com **Baixar programa do robô** e
+  gravado nos outros robôs da turma com **Copiar programa para outro robô** (estas duas e o **Rodar
+  programa do robô** ainda vão ser conferidas no **Teste geral**).
 - Em cada computador, com o robô no USB, abra o `meu_programa.py` e aperte **`Ctrl+Shift+B`**: luz,
   som e "Funcionou!" na tela mostram que conectou (a tarefa **Testar conexão com o robô** faz o mesmo).
 - Uma vez, com um robô de cada modelo da escola, rode a tarefa **Teste geral no robô**. Ela confere um

@@ -1,10 +1,19 @@
-"""Programas gravados no robô: lista, apaga e mostra a bateria.
+"""Programas gravados no robô: lista, roda, apaga e mostra a bateria.
 Uso:
-  python ferramentas/programas_no_robo.py                       lista e pergunta se quer apagar algum
+  python ferramentas/programas_no_robo.py                       lista e pergunta o que fazer
   python ferramentas/programas_no_robo.py --listar              só lista
+  python ferramentas/programas_no_robo.py --rodar               lista e pergunta qual programa rodar
+  python ferramentas/programas_no_robo.py --rodar meu_programa  roda vscode/meu_programa sem enviar de novo
   python ferramentas/programas_no_robo.py --apagar meu_programa apaga vscode/meu_programa (pede confirmação)
+  python ferramentas/programas_no_robo.py --baixar              lista e pergunta qual programa baixar (pasta do_robo)
+  python ferramentas/programas_no_robo.py --copiar              grava no robô ligado um programa da pasta do_robo
   python ferramentas/programas_no_robo.py --bateria             só mostra a bateria
-No VS Code: Terminal > Executar Tarefa > "Programas no robô" ou "Bateria do robô".
+No VS Code: Terminal > Executar Tarefa > "Programas no robô", "Rodar programa do robô", "Baixar programa do robô",
+"Copiar programa para outro robô" ou "Bateria do robô".
+
+Baixar e copiar: o programa sai do robô exatamente como foi gravado (também os feitos na IDE EST). Para passar o
+programa de um robô para os outros da turma, baixe de um e use "Copiar programa para outro robô" em cada um.
+Um programa baixado (.dbf) também roda no simulador: python simular.py do_robo/nome.dbf
 
 Os programas que o VS Code grava ficam na pasta vscode do robô. Arquivo de outra pasta (gravado pela
 IDE EST) só é apagado se você digitar o caminho completo dele, como aparece na lista.
@@ -15,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 
 PASTA = '/vscode/'
 NOMES_NIVEL = ['muito fraca', 'fraca', 'média', 'boa', 'cheia']
+BAIXADOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'do_robo')
 
 
 def _nome(caminho):
@@ -96,6 +106,64 @@ def apagar(est_protocol, caminho):
     return True
 
 
+def rodar(est_protocol, caminho):
+    """Manda o robô executar um programa que já está gravado nele. True se mandou."""
+    try:
+        est_protocol.rodar_programa(caminho)
+    except (RuntimeError, ValueError) as e:
+        print(f'ERRO: {e}')
+        return False
+    nome = _nome(caminho) if caminho.startswith(PASTA) else caminho
+    print(f'Mandei o robô rodar {nome}. Se ele não começou, inicie pelo menu do robô (pasta '
+          f'{caminho.split("/")[1]}) e conte para o professor: este comando ainda não foi conferido em todos os robôs.')
+    return True
+
+
+def baixar(est_protocol, caminho):
+    """Baixa um arquivo do robô para a pasta do_robo. Devolve o caminho do arquivo gravado (ou None)."""
+    try:
+        dados = est_protocol.baixar_arquivo(caminho)
+    except (RuntimeError, ValueError) as e:
+        print(f'ERRO: {e}')
+        return None
+    os.makedirs(BAIXADOS, exist_ok=True)
+    pasta, arquivo = caminho.strip('/').split('/')
+    nome = arquivo if pasta == 'vscode' else f'{pasta}_{arquivo}'
+    destino = os.path.normpath(os.path.join(BAIXADOS, nome if nome.endswith('.dbf') else nome + '.dbf'))
+    with open(destino, 'wb') as f:
+        f.write(dados)
+    print(f'Baixado: {caminho} ({len(dados)} bytes) -> {destino}')
+    print('Para gravar em outro robô: ligue o outro robô e use "Copiar programa para outro robô".')
+    print(f'Para ver no simulador: python simular.py "{destino}"')
+    return destino
+
+
+def copiar(est_protocol):
+    """Grava no robô ligado um programa baixado (pasta do_robo), sem executar."""
+    baixados = sorted(f for f in os.listdir(BAIXADOS) if f.endswith('.dbf')) if os.path.isdir(BAIXADOS) else []
+    if not baixados:
+        sys.exit('A pasta do_robo está vazia: baixe um programa primeiro (tarefa "Baixar programa do robô").')
+    print('Programas baixados (pasta do_robo):')
+    for i, f in enumerate(baixados, 1):
+        print(f'  {i:2}. {f[:-4]}')
+    try:
+        texto = input('Digite o número do programa para gravar NESTE robô (Enter para sair): ').strip()
+    except EOFError:
+        return
+    if not texto.isdigit() or not 1 <= int(texto) <= len(baixados):
+        print('Nada foi gravado.')
+        return
+    arquivo = baixados[int(texto) - 1]
+    with open(os.path.join(BAIXADOS, arquivo), 'rb') as f:
+        dados = f.read()
+    nome = arquivo[:-4][:20]
+    try:
+        est_protocol.upload(dados, prog_path=f'{PASTA}{nome}', verbose=False, executar=False)
+    except RuntimeError as e:
+        sys.exit(f'ERRO: {e}')
+    print(f'Gravado neste robô como vscode/{nome} (sem executar): inicie pelo menu do robô.')
+
+
 def escolher(nossos, arquivos, texto):
     """O que o usuário digitou -> caminho de um arquivo da lista, ou None.
     Número ou nome = programa da pasta vscode; outra pasta só com o caminho completo."""
@@ -130,6 +198,8 @@ def main():
     mostrar_bateria(est_protocol)
     if '--bateria' in sys.argv:
         return
+    if '--copiar' in sys.argv:
+        return copiar(est_protocol)
 
     try:
         arquivos = est_protocol.listar_arquivos()
@@ -148,20 +218,44 @@ def main():
         sys.exit(0 if apagar(est_protocol, caminho) else 1)
     if '--listar' in sys.argv:
         return
+    acao = 'rodar' if '--rodar' in sys.argv else 'baixar' if '--baixar' in sys.argv else None
+    if acao:
+        i = sys.argv.index(f'--{acao}')
+        if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith('--'):
+            caminho = escolher(nossos, arquivos, sys.argv[i + 1])
+            if caminho is None:
+                sys.exit(f'ERRO: "{sys.argv[i + 1]}" não está na lista acima.')
+            feito = rodar(est_protocol, caminho) if acao == 'rodar' else baixar(est_protocol, caminho)
+            sys.exit(0 if feito else 1)
 
     while arquivos:
-        print('Para apagar um programa, digite o número dele. Arquivo de outra pasta: digite o caminho')
-        print('completo, como aparece na lista. Para sair, só aperte Enter.')
+        if acao:
+            print(f'Digite o número do programa para {"o robô rodar" if acao == "rodar" else "baixar"} '
+                  '(arquivo de outra pasta: o caminho completo).')
+        else:
+            print('Digite o número de um programa para apagar; r e o número para o robô rodar (ex.: r 2);')
+            print('b e o número para baixar. Arquivo de outra pasta: o caminho completo, como aparece na lista.')
+        print('Para sair, só aperte Enter.')
         try:
             texto = input('> ')
         except EOFError:
             return
         if not texto.strip():
             return
+        pedido = acao
+        if texto.strip().lower()[:2] in ('r ', 'b '):
+            pedido = 'rodar' if texto.strip().lower().startswith('r') else 'baixar'
+            texto = texto.strip()[2:]
         caminho = escolher(nossos, arquivos, texto)
         if caminho is None:
             print(f'"{texto.strip()}" não está na lista.\n')
             continue
+        if pedido == 'rodar':
+            rodar(est_protocol, caminho)
+            return
+        if pedido == 'baixar':
+            baixar(est_protocol, caminho)
+            return
         if apagar(est_protocol, caminho):
             try:
                 arquivos = est_protocol.listar_arquivos()

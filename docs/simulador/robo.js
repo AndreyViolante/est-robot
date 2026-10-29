@@ -183,6 +183,10 @@ class Robo {
     this.passoN = 0;
     this.rastro = [];
     this.batidas = 0;          // passos em que o robô encostou numa parede ou caixa
+    this.zeroMotor = {};       // letra -> graus do motor no último "zerar"
+    this.giro = 0;             // radianos que o robô girou desde o começo ou o último "zerar" (giroscópio perfeito)
+    this.giroVel = 0;          // graus/s no último passo
+    this.cronos = {};          // número do cronômetro -> instante do último "zerar" (sem zerar, conta desde 0)
   }
 
   colocar(x, y, angGraus) {
@@ -273,6 +277,17 @@ class Robo {
       return {float: 5};                                   // luz ambiente
     }
     if (tipo === 0x07) return {byte: this.toque ? 1 : 0};
+    if (tipo === 0x04) {                                   // rotação do motor: 1 graus, 2 rotações, 3 potência, 4 zerar
+      const m = porta >= 5 && porta <= 8 ? this.motores[LETRAS[porta - 5]] : null;
+      if (!m) { this.avisar(`Rotação do motor numa porta que não é de motor (${porta}).`); return {float: 0}; }
+      if (modo === 4) { this.zeroMotor[m.nome] = m.ang; return {byte: 0}; }
+      const graus = m.ang - (this.zeroMotor[m.nome] || 0);
+      return {float: modo === 1 ? Math.round(graus) : modo === 2 ? graus / 360 : m.pot};
+    }
+    if (tipo === 0x02) {                                   // giroscópio (em qualquer porta): 1 ângulo, 2 graus/s, 4 zerar
+      if (modo === 4) { this.giro = 0; return {byte: 0}; }
+      return {float: modo === 1 ? Math.round(this.giro * 180 / Math.PI) : Math.round(this.giroVel)};
+    }
     if (tipo === 0x08) {
       const u = this.sensorUltrassom(porta);
       if (!u) {
@@ -291,6 +306,10 @@ class Robo {
     this.avisar(`Leitura interna ${tipo} (modo ${modo}) ainda não simulada: a leitura dá 0.`);
     return {byte: 0};
   }
+
+  /* cronômetros 1..8: segundos desde o último zerar (ou desde o começo do programa) */
+  cronometro(n, t) { return t - (this.cronos[n] || 0); }
+  zerarCronometro(n, t) { this.cronos[n] = t; }
 
   portasDoByte(b) {
     if (b >= 5 && b <= 8) return [LETRAS[b - 5]];
@@ -378,6 +397,7 @@ class Robo {
     const giro = {};
     for (const m of Object.values(this.motores)) giro[m.nome] = m.atualizar(dt, t);
     this.passoN++;
+    this.giroVel = 0;
     if (segurando) return;
     const r = this.config.roda_cm / 2, W = this.config.entre_rodas_cm;
     const e = this.config.motor_esquerdo, dd = this.config.motor_direito;
@@ -385,6 +405,8 @@ class Robo {
     const sl = (giro[e] || 0) * k, sr = (giro[dd] || 0) * k;
     if (!sl && !sr) return;
     const ds = (sl + sr) / 2, dth = (sl - sr) / W;
+    this.giro += dth;
+    if (dt > 0) this.giroVel = dth / dt * 180 / Math.PI;
     const am = this.ang + dth / 2;
     this.x += ds * Math.cos(am);
     this.y += ds * Math.sin(am);

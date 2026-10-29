@@ -106,6 +106,29 @@ MODELOS = {
     # ---- botoes da controladora (leitura interna 0x32, tipo 3); compile_xml/3001.xml da IDE, ainda nao conferido
     #      contra uma captura nem no robo ----
     ('3001', '1'): Modelo([(3, SAIDA_B, 1)], [], [(0x32, [_b(3), _b(0), _b(1), _r(3)])]),
+    # ---- tirados da tabela de compilacao da IDE (compileconfig_file/compile_xml/30xx.xml, 40xx.xml), do mesmo jeito
+    #      que os de cima; ainda nao conferidos contra uma captura nem no robo ----
+    # rotacao do motor (leitura 0x30 tipo 4, na porta do motor): 1 graus, 2 rotacoes, 3 potencia, modo 4 da leitura = zera
+    ('3005', '1'): Modelo([_P, (3, SAIDA_F, 4)], [0], [_disp(0x30, 4, 1, 4, 3)]),
+    ('3005', '2'): Modelo([_P, (4, SAIDA_F, 4)], [0], [_disp(0x30, 4, 2, 4, 4)]),
+    ('3005', '3'): Modelo([_P, (5, SAIDA_F, 4)], [0], [_disp(0x30, 4, 3, 4, 5)]),
+    ('3005', '7'): Modelo([_P], [0], [_disp(0x30, 4, 4, 0, 0)]),
+    # giroscopio (leitura 0x30 tipo 2): 1 angulo, 2 graus por segundo, modo 4 da leitura = zera
+    ('3003', '1'): Modelo([_P, (3, SAIDA_F, 4)], [0], [_disp(0x30, 2, 1, 4, 3)]),
+    ('3003', '2'): Modelo([_P, (4, SAIDA_F, 4)], [0], [_disp(0x30, 2, 2, 4, 4)]),
+    ('3003', '6'): Modelo([_P], [0], [_disp(0x30, 2, 4, 0, 0)]),
+    # cronometro (leitura interna 0x32 tipo 9): o numero do cronometro (1 byte) e logo depois o tempo (float)
+    ('3007', '1'): Modelo([(1, BYTE), (4, SAIDA_F, 4)], [1], [(0x32, [_b(9), _b(0), _b(5), _r(1)])]),
+    ('3007', '3'): Modelo([(1, BYTE)], [1], [(0x32, [_b(9), _b(1), _b(0), _r(1)])]),
+    # logica: 0x11 e, 0x12 ou, 0x14 ou exclusivo; o nao e o ou exclusivo com a constante 1 (id 106)
+    **{('4004', m): Modelo([(1, _L), (2, _L), (3, SAIDA_B, 1)], [1, 2], [(op, [_r(3), _r(1), _r(2)])])
+       for m, op in (('1', 0x11), ('2', 0x12), ('3', 0x14))},
+    ('4004', '4'): Modelo([(1, _L), (3, SAIDA_B, 1)], [1], [(0x14, [_r(3), _r(1), ('c', 106)])]),
+    # arredondar (conversao 0x0D): 5 mais perto, 4 para cima, 3 para baixo
+    **{('4006', m): Modelo([(1, _F), (3, SAIDA_F, 4)], [1], [(0x0D, [_b(tipo), _r(3), _r(1)])])
+       for m, tipo in (('1', 5), ('2', 4), ('3', 3))},
+    # aleatorio entre dois numeros (0x0E)
+    ('4010', '1'): Modelo([(1, _F), (2, _F), (5, SAIDA_F, 4)], [1, 2], [(0x0E, [_r(5), _r(1), _r(2)])]),
     # ---- ao mesmo tempo (nao existe na IDE): cada tarefa e uma thread, todas iniciadas antes de esperar ----
     (PARALELO, '1'): Modelo([], [], []),
     # ---- contas e comparacoes ----

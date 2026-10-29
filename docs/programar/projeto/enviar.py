@@ -331,6 +331,33 @@ def ide_est_aberta():
 
 _SENSORES = {'3002', '3008', '3009', '2002', '2003', '2004'}      # blocos que leem um sensor numa porta
 _MOTORES = {'1001', '1002', '1003', '1004'}
+# o tipo de cada coisa ligada numa porta, como a consulta de portas responde (est_protocol.ler_portas): o mesmo
+# código que a leitura de sensor (instrução 0x30) usa nas tabelas de compilação da IDE. Conferidos no robô: 1 e 4.
+TIPOS = {1: 'sensor de cor', 2: 'giroscópio', 3: 'sensor infravermelho', 4: 'motor', 6: 'sensor de temperatura',
+         7: 'sensor de toque', 8: 'sensor ultrassônico', 9: 'medidor de energia'}
+# o tipo de sensor (código de TIPOS) que cada bloco espera encontrar na porta
+_TIPO_DO_BLOCO = {'3002': 1, '3008': 7, '3009': 8,
+                  ('2002', '3'): 1, ('2002', '4'): 1, ('2002', '33'): 7, ('2002', '35'): 8,
+                  ('2003', '2'): 1, ('2003', '3'): 1,
+                  ('2004', '4'): 1, ('2004', '5'): 1, ('2004', '20'): 7, ('2004', '21'): 8}
+_NOME_ESPERADO = {1: 'sensor de cor (luz refletida ou cor)', 7: 'sensor de toque', 8: 'sensor ultrassônico'}
+
+
+def tipos_esperados(programa):
+    """{porta: código do tipo de sensor} que os blocos do programa esperam encontrar."""
+    tipos = {}
+
+    def percorre(blocos):
+        for b in blocos:
+            porta = str(b.port).strip()
+            tipo = _TIPO_DO_BLOCO.get((b.t, b.mode), _TIPO_DO_BLOCO.get(b.t))
+            if isinstance(tipo, int) and porta in ('1', '2', '3', '4'):
+                tipos.setdefault(porta, tipo)
+            percorre(b.b1); percorre(b.b2)
+            for ramo in getattr(b, 'ramos', []):
+                percorre(ramo)
+    percorre(programa)
+    return tipos
 
 
 def portas_usadas(programa):
@@ -354,8 +381,15 @@ def portas_usadas(programa):
 
 
 def avisos_de_portas(programa, ligadas):
-    """Avisa quando o programa usa uma porta em que o robô diz não ter nada ligado."""
+    """Avisa quando o programa usa uma porta em que o robô diz não ter nada ligado, ou em que está ligado
+    outro tipo de sensor (ex.: o programa usa o ultrassom na porta 4, mas lá tem um sensor de cor)."""
     avisos = []
+    for porta, esperado in sorted(tipos_esperados(programa).items()):
+        tem = ligadas.get(porta)
+        if tem is not None and tem != esperado:
+            nome = TIPOS.get(tem, f'um aparelho de tipo {tem}')
+            avisos.append(f'o programa usa o {_NOME_ESPERADO[esperado]} na porta {porta}, mas o robô diz que lá está '
+                          f'ligado um {nome}. Confira em que porta está cada sensor.')
     for porta, coisa in sorted(portas_usadas(programa).items()):
         if porta not in ligadas:
             if coisa == 'sensor':

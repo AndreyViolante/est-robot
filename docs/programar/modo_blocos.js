@@ -42,6 +42,7 @@ function carregarBlockly() {
 // ---------------------------------------------------------------- blocos
 
 const portas = (nome = 'PORTA') => ({type: 'field_dropdown', name: nome, options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']]});
+const motores = (nome = 'MOTOR') => ({type: 'field_dropdown', name: nome, options: [['B', 'B'], ['C', 'C'], ['A', 'A'], ['D', 'D']]});
 const numero = (nome, valor, extra = {}) => ({type: 'field_number', name: nome, value: valor, ...extra});
 const NOTAS = [['dó', 'do'], ['dó#', 'do#'], ['ré', 're'], ['ré#', 're#'], ['mi', 'mi'], ['fá', 'fa'], ['fá#', 'fa#'],
                ['sol', 'sol'], ['sol#', 'sol#'], ['lá', 'la'], ['lá#', 'la#'], ['si', 'si']];
@@ -120,6 +121,19 @@ function definir() {
       'tocado(4): 1 se o toque estiver apertado, 0 se não'),
     leitura('robo_limite', CORES.sensores, 'limite porta %1', [portas()], 'Number',
       'limite(1): o meio entre o preto e o branco do sensor, medidos no calibracao.py'),
+    // rotação do motor, giroscópio e cronômetro: da tabela de compilação da IDE, ainda não conferidos no robô
+    leitura('robo_graus_motor', CORES.sensores, 'graus do motor %1', [motores()], 'Number',
+      "graus_do_motor('B'): quanto o motor girou desde o começo ou o último zerar (ainda não conferido no robô)"),
+    leitura('robo_giroscopio', CORES.sensores, 'giroscópio porta %1', [portas()], 'Number',
+      'giroscopio(2): o ângulo do robô em graus, pelo sensor giroscópio (ainda não conferido no robô)'),
+    leitura('robo_cronometro', CORES.sensores, 'cronômetro', [], 'Number',
+      'cronometro(): segundos desde o começo do programa ou o último zerar (ainda não conferido no robô)'),
+    comando('robo_zerar_motor', CORES.sensores, 'zerar graus do motor %1', [motores()],
+      "zerar_motor('B') (ainda não conferido no robô)"),
+    comando('robo_zerar_giroscopio', CORES.sensores, 'zerar giroscópio porta %1', [portas()],
+      'zerar_giroscopio(2): deixe o robô parado (ainda não conferido no robô)'),
+    comando('robo_zerar_cronometro', CORES.sensores, 'zerar cronômetro', [],
+      'zerar_cronometro() (ainda não conferido no robô)'),
 
     comando('robo_para_sempre', CORES.repetir, 'repetir para sempre %1 %2',
       [{type: 'input_dummy'}, {type: 'input_statement', name: 'FAZER'}], 'while True:', {nextStatement: undefined}),
@@ -210,6 +224,12 @@ function criarGerador() {
   f.robo_distancia = b => [`distancia(${b.getFieldValue('PORTA')})`, ORDEM.ATOMO];
   f.robo_tocado = b => [`tocado(${b.getFieldValue('PORTA')})`, ORDEM.ATOMO];
   f.robo_limite = b => [`limite(${b.getFieldValue('PORTA')})`, ORDEM.ATOMO];
+  f.robo_graus_motor = b => [`graus_do_motor(${texto(b.getFieldValue('MOTOR'))})`, ORDEM.ATOMO];
+  f.robo_giroscopio = b => [`giroscopio(${b.getFieldValue('PORTA')})`, ORDEM.ATOMO];
+  f.robo_cronometro = () => ['cronometro()', ORDEM.ATOMO];
+  f.robo_zerar_motor = b => `zerar_motor(${texto(b.getFieldValue('MOTOR'))})\n`;
+  f.robo_zerar_giroscopio = b => `zerar_giroscopio(${b.getFieldValue('PORTA')})\n`;
+  f.robo_zerar_cronometro = () => 'zerar_cronometro()\n';
   f.robo_ler = b => [`ler(${texto(b.getFieldValue('NOME'))})`, ORDEM.ATOMO];
 
   f.robo_para_sempre = b => `while True:\n${corpo(b, 'FAZER')}`;
@@ -287,6 +307,12 @@ const CAIXA = {
       {kind: 'block', type: 'robo_distancia', fields: {PORTA: '4'}},
       {kind: 'block', type: 'robo_tocado', fields: {PORTA: '4'}},
       {kind: 'block', type: 'robo_limite'},
+      {kind: 'block', type: 'robo_zerar_motor'},
+      {kind: 'block', type: 'robo_graus_motor'},
+      {kind: 'block', type: 'robo_zerar_giroscopio', fields: {PORTA: '2'}},
+      {kind: 'block', type: 'robo_giroscopio', fields: {PORTA: '2'}},
+      {kind: 'block', type: 'robo_zerar_cronometro'},
+      {kind: 'block', type: 'robo_cronometro'},
     ]},
     {kind: 'category', name: 'Decidir', colour: CORES.decidir, contents: [
       {kind: 'block', type: 'controls_if'},

@@ -30,6 +30,10 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 | `distancia(4)` | distância em centímetros (ultrassom) |
 | `tocado(4)` | 1 se o botão de toque estiver apertado, 0 se não |
 
+Novos, ainda não vistos no robô: `graus_do_motor('B')` (quanto o motor girou), `giroscopio(2)` (ângulo do
+robô), `cronometro()` (segundos), `aleatorio(1, 6)`, `arredondar(...)` e os `zerar_motor('B')`,
+`zerar_giroscopio(2)`, `zerar_cronometro()`.
+
 ## Repetir e decidir
 
 ```python

@@ -105,10 +105,19 @@ só são apagados se você digitar o caminho completo, como aparece na lista. Ap
 **Terminal → Executar Tarefa → Bateria do robô** mostra só a bateria, de 0 a 4 tracinhos, como na IDE.
 Com 0 ou 1 tracinho, carregue o robô: bateria fraca deixa os motores fracos e os sensores lendo errado,
 e o programa parece estar com defeito sem estar. Pelo terminal: `python ferramentas/programas_no_robo.py`
-(também aceita `--listar`, `--bateria` e `--apagar nome`), com a IDE EST fechada.
+(também aceita `--listar`, `--bateria`, `--apagar nome`, `--rodar nome`, `--baixar nome` e `--copiar`),
+com a IDE EST fechada.
 
-Os comandos de listar, apagar e ler a bateria são os mesmos que a IDE manda, mas **ainda não foram
-testados no robô**.
+- **Rodar programa do robô**: escolhe um programa já gravado e manda o robô rodar, sem enviar de novo (na
+  lista do "Programas no robô", `r 3` roda o número 3).
+- **Baixar programa do robô**: copia um programa gravado no robô para a pasta `do_robo` do computador (na
+  lista, `b 3`). Serve para guardar o programa que funcionou na pista, inclusive um feito na IDE EST, e o
+  simulador abre o `.dbf` baixado: `python simular.py do_robo/nome.dbf`.
+- **Copiar programa para outro robô**: grava um programa da pasta `do_robo` no robô ligado agora (para
+  passar o mesmo programa para os robôs da turma).
+
+Listar, ler a bateria e baixar já foram conferidos no robô (o programa baixado é igual ao enviado).
+Apagar, rodar e copiar usam os mesmos comandos que a IDE manda, mas **ainda não foram testados no robô**.
 
 ### Programas da IDE EST (.est) em Python
 
@@ -191,7 +200,9 @@ Um programa pode mudar algum valor só para ele com `configurar(roda_cm=5.6)`, p
 Antes de enviar, o programa confere o robô e avisa:
 - se a IDE EST estiver aberta, porque ela conversa com o robô ao mesmo tempo e pode atrapalhar;
 - se o programa usar uma porta em que o robô não tem nada ligado, por exemplo um sensor na porta 4
-  ou o motor A. O robô informa pelo USB o que está ligado em cada porta.
+  ou o motor A. O robô informa pelo USB o que está ligado em cada porta;
+- se o sensor ligado na porta for de outro tipo, por exemplo `distancia(4)` com um sensor de cor na
+  porta 4 (sensores trocados de porta).
 
 ## Comandos
 
@@ -251,9 +262,15 @@ Antes de enviar, o programa confere o robô e avisa:
 | `with ajustes(kp=(0.4, 0.05), vel=(25, 5)):` | vários números: esquerda e direita escolhem qual, cima e baixo mudam (para acertar o seguidor na arena, sem cabo) |
 | `calibrar_na_largada(1, 2)`, `limite_medido(1)` | o robô gira sobre a linha, mede o preto e o branco da própria pista e calcula o limite de cada sensor |
 | `with medir_laco(5):` | repete o corpo do laço por 5 s e mostra quantas voltas por segundo ele faz |
+| `graus_do_motor('B')`, `rotacoes_do_motor('B')`, `zerar_motor('B')` | quanto o motor girou (o "encoder"): para andar uma distância exata com `motores(...)` ligado |
+| `giroscopio(2)`, `velocidade_do_giro(2)`, `zerar_giroscopio(2)` | sensor giroscópio: o ângulo do robô em graus (para virar 90° certinho) |
+| `cronometro()`, `zerar_cronometro()` | segundos passados (8 cronômetros: `cronometro(2)`...) |
+| `aleatorio(1, 6)`, `arredondar(valor)` | número sorteado no robô; arredondar para o inteiro mais perto |
 
 Os números dos botões da controladora (`BOTAO_CIMA`, `BOTAO_ESQUERDA`...) ficam no `calibracao.py`: se a
-tarefa **Teste geral no robô** mostrar outros números, troque lá.
+tarefa **Teste geral no robô** mostrar outros números, troque lá. Rotação do motor, giroscópio, cronômetro,
+aleatório e arredondar seguem a tabela de compilação da própria IDE para esses blocos, mas ninguém viu ainda
+no robô.
 
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
 no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura
@@ -306,7 +323,7 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/decodificar.py](ferramentas/decodificar.py) | mostra o bytecode instrução por instrução |
 | [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
 | [ferramentas/ver_sensores.py](ferramentas/ver_sensores.py) | mostra a luz dos sensores S1, S2 e S3 na tela do robô (para medir o preto e o branco) |
-| [ferramentas/programas_no_robo.py](ferramentas/programas_no_robo.py) | lista e apaga os programas gravados no robô e mostra a bateria |
+| [ferramentas/programas_no_robo.py](ferramentas/programas_no_robo.py) | lista, apaga, roda, baixa e copia os programas gravados no robô e mostra a bateria |
 | [ferramentas/rodar.cmd](ferramentas/rodar.cmd) | as tarefas do VS Code usam o Python do pacote, se houver, ou o do computador |
 | [ferramentas/atualizar.py](ferramentas/atualizar.py) | tarefa "Atualizar o projeto" (baixa a versão nova sem mexer nos arquivos do professor) |
 | [ferramentas/empacotar.py](ferramentas/empacotar.py) | monta o pacote para Windows com o Python dentro |
@@ -325,8 +342,8 @@ O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: O
 (liga-desliga, proporcional e PID), parar na linha, tela, som, luz, esperar, ultrassom, `se(...)`,
 `repetir_ate(...)`, variáveis, `cor_vista`, envio em pedaços e "gravar sem executar".
 **Ainda não visto funcionando no robô:** o sensor de toque (os bytes batem com a IDE), `ao_mesmo_tempo`,
-os botões da controladora, `ajustando`, o envio pelo navegador e as tarefas "Programas no robô" e
-"Bateria do robô". Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+os botões da controladora, `ajustando`, rotação do motor, giroscópio, cronômetro, o envio pelo navegador
+e as tarefas de apagar, rodar e copiar programas. Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
 A tarefa **Teste geral no robô** passa por todos esses, um de cada vez: manda um programa, diz o que deve
 acontecer, pergunta se aconteceu e no fim grava o resumo em `resultado_teste_geral.txt`.
 
