@@ -18,7 +18,9 @@ independente, sem relação com o fabricante do robô.
 
 **Sem instalar nada:** abra [andreyviolante.github.io/est-robot/programar](https://andreyviolante.github.io/est-robot/programar/)
 no Chrome ou no Edge (Windows, Mac, Linux ou Chromebook). Dá para escrever em Python ou montar o
-programa com blocos, vendo ao lado o Python que os blocos geram. A página compila no próprio
+programa com blocos, vendo ao lado o Python que os blocos geram; **Trazer do Python** faz o caminho de
+volta e transforma o programa escrito em blocos (o que ainda não tem bloco vira um bloco cinza "Python",
+com a linha como está, e o programa continua fazendo o mesmo). A página compila no próprio
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
 portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
@@ -344,6 +346,9 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/programas_no_robo.py](ferramentas/programas_no_robo.py) | lista, apaga, roda, baixa e copia os programas gravados no robô e mostra a bateria |
 | [ferramentas/bluetooth.py](ferramentas/bluetooth.py) | conecta ao robô pelo Bluetooth (como a IDE) e só pergunta firmware, portas e bateria; `--escutar` mostra o que o robô mandar |
 | [ferramentas/teste_protocolo.js](ferramentas/teste_protocolo.js) | testa o protocolo da página de programar (USB e Bluetooth) sem o robô |
+| [ferramentas/teste_simulador.py](ferramentas/teste_simulador.py) | roda programas no simulador (pelo node) e confere giroscópio, motor, cronômetro, mensagens, o caminho do Dirigir e o seguidor |
+| [ferramentas/teste_blocos.py](ferramentas/teste_blocos.py) | ida e volta Python → blocos → Python da página: os dois têm que compilar para os mesmos bytes (precisa do Blockly do npm) |
+| [docs/programar/para_blocos.py](docs/programar/para_blocos.py) | o "Trazer do Python" da página: lê o programa com o `ast` e monta os blocos |
 | [ferramentas/icones.py](ferramentas/icones.py) | desenha os ícones da página instalável (precisa do Pillow) |
 | [ferramentas/rodar.cmd](ferramentas/rodar.cmd) | as tarefas do VS Code usam o Python do pacote, se houver, ou o do computador |
 | [ferramentas/atualizar.py](ferramentas/atualizar.py) | tarefa "Atualizar o projeto" (baixa a versão nova sem mexer nos arquivos do professor) |
@@ -357,7 +362,8 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 python verificar_gabaritos.py
 ```
 
-O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: OK`.
+O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: OK`. O GitHub roda também
+`python ferramentas/teste_simulador.py`, `python ferramentas/teste_blocos.py` e os testes em JavaScript a cada envio.
 
 **Já testado no robô:** movimento (com `andar_cm` e `virar_*` calibrados), seguidores de linha
 (liga-desliga, proporcional e PID), parar na linha, tela, som, luz, esperar, ultrassom, `se(...)`,

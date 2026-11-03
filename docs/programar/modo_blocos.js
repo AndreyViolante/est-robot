@@ -15,7 +15,7 @@ const CHAVE = 'est-programar-blocos-v1';
 const INICIO = '\u0001', FIM = '\u0002';      // marcas das linhas de cada bloco no código gerado (saem antes de mostrar)
 
 const CORES = {inicio: '#d9a400', movimento: '#4c97ff', tela: '#9966ff', sensores: '#2b9fc4', decidir: '#e6900a',
-               repetir: '#cf7c00', contas: '#40a640', variaveis: '#ff7a1a'};
+               repetir: '#cf7c00', contas: '#40a640', variaveis: '#ff7a1a', python: '#6b7590'};
 
 // ---------------------------------------------------------------- baixar o Blockly
 
@@ -43,6 +43,8 @@ function carregarBlockly() {
 
 const portas = (nome = 'PORTA') => ({type: 'field_dropdown', name: nome, options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']]});
 const motores = (nome = 'MOTOR') => ({type: 'field_dropdown', name: nome, options: [['B', 'B'], ['C', 'C'], ['A', 'A'], ['D', 'D']]});
+const comparacoes = (nome = 'OP') => ({type: 'field_dropdown', name: nome,
+  options: [['<', '<'], ['<=', '<='], ['>', '>'], ['>=', '>='], ['=', '='], ['≠', '!=']]});
 const numero = (nome, valor, extra = {}) => ({type: 'field_number', name: nome, value: valor, ...extra});
 const NOTAS = [['dó', 'do'], ['dó#', 'do#'], ['ré', 're'], ['ré#', 're#'], ['mi', 'mi'], ['fá', 'fa'], ['fá#', 'fa#'],
                ['sol', 'sol'], ['sol#', 'sol#'], ['lá', 'la'], ['lá#', 'la#'], ['si', 'si']];
@@ -56,6 +58,16 @@ const leitura = (tipo, cor, mensagem, args, saida, dica) => ({type: tipo, messag
 function nomeDeVariavel(texto) {      // as variáveis do robô: letras sem acento, números e _
   const limpo = String(texto).normalize('NFKD').replace(/[^\w]/g, '_').replace(/^(\d)/, '_$1');
   return limpo || null;
+}
+
+// variáveis do Python (as da categoria "Variáveis do Python"): o nome vira um nome que o Python aceita
+const PALAVRAS_DO_PYTHON = new Set(['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 'class',
+  'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
+  'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield']);
+function nomePython(nome) {
+  let n = String(nome);
+  if (!/^[\p{L}_][\p{L}\p{N}_]*$/u.test(n)) n = nomeDeVariavel(n) || 'valor';
+  return PALAVRAS_DO_PYTHON.has(n) ? `${n}_` : n;
 }
 
 function definir() {
@@ -135,6 +147,23 @@ function definir() {
     comando('robo_zerar_cronometro', CORES.sensores, 'zerar cronômetro', [],
       'zerar_cronometro() (ainda não conferido no robô)'),
 
+    // decidir pelo sensor (with se_ver_cor / se_luz / se_distancia / se_tocado): o bloco de sensor da IDE, com o senão
+    comando('robo_se_cor', CORES.decidir, 'se o sensor %1 vê %2 %3 faça %4 senão %5',
+      [portas(), {type: 'field_dropdown', name: 'COR', options: CORES_ROBO}, {type: 'input_dummy'},
+       {type: 'input_statement', name: 'FAZER'}, {type: 'input_statement', name: 'SENAO'}],
+      'with se_ver_cor(1, PRETO):   (o senão é opcional)'),
+    comando('robo_se_luz', CORES.decidir, 'se a luz do sensor %1 %2 %3 %4 faça %5 senão %6',
+      [portas(), comparacoes(), numero('VALOR', 50), {type: 'input_dummy'},
+       {type: 'input_statement', name: 'FAZER'}, {type: 'input_statement', name: 'SENAO'}],
+      "with se_luz(1, '<', 50):   (o senão é opcional)"),
+    comando('robo_se_distancia', CORES.decidir, 'se a distância do sensor %1 %2 %3 cm %4 faça %5 senão %6',
+      [portas(), comparacoes(), numero('VALOR', 20), {type: 'input_dummy'},
+       {type: 'input_statement', name: 'FAZER'}, {type: 'input_statement', name: 'SENAO'}],
+      "with se_distancia(4, '<', 20):   (o senão é opcional)"),
+    comando('robo_se_tocado', CORES.decidir, 'se o toque do sensor %1 está apertado %2 faça %3 senão %4',
+      [portas(), {type: 'input_dummy'}, {type: 'input_statement', name: 'FAZER'}, {type: 'input_statement', name: 'SENAO'}],
+      'with se_tocado(4):   (o senão é opcional)'),
+
     comando('robo_para_sempre', CORES.repetir, 'repetir para sempre %1 %2',
       [{type: 'input_dummy'}, {type: 'input_statement', name: 'FAZER'}], 'while True:', {nextStatement: undefined}),
     comando('robo_repetir', CORES.repetir, 'repetir %1 vezes %2 %3',
@@ -155,6 +184,12 @@ function definir() {
       "guardar('contador', 0): guarda um número numa variável do robô", {inputsInline: true}),
     leitura('robo_ler', CORES.variaveis, 'ler %1', [{type: 'field_input', name: 'NOME', text: 'contador'}], 'Number',
       "ler('contador'): o número guardado na variável do robô"),
+
+    // uma linha em Python que ainda não tem bloco (o "Trazer do Python" cria estes): vai para o programa como está
+    comando('robo_python', CORES.python, 'Python %1', [{type: 'field_input', name: 'CODIGO', text: 'bip()'}],
+      'Uma linha em Python, escrita como está (para o que ainda não tem bloco)'),
+    leitura('robo_python_valor', CORES.python, 'Python %1', [{type: 'field_input', name: 'CODIGO', text: '0'}], null,
+      'Um valor em Python, escrito como está (ex.: aleatorio(1, 6))'),
   ]);
   for (const tipo of ['robo_guardar', 'robo_ler']) {
     const init = B.Blocks[tipo].init;
@@ -231,6 +266,32 @@ function criarGerador() {
   f.robo_zerar_giroscopio = b => `zerar_giroscopio(${b.getFieldValue('PORTA')})\n`;
   f.robo_zerar_cronometro = () => 'zerar_cronometro()\n';
   f.robo_ler = b => [`ler(${texto(b.getFieldValue('NOME'))})`, ORDEM.ATOMO];
+
+  // linha e valor em Python, como estão; um valor que não é nome nem chamada vai entre parênteses quando precisa
+  f.robo_python = b => `${b.getFieldValue('CODIGO')}\n`;
+  f.robo_python_valor = b => {
+    const codigo = String(b.getFieldValue('CODIGO')).trim() || '0';
+    return [codigo, /^[\p{L}_][\p{L}\p{N}_.]*(\(.*\))?$/u.test(codigo) ? ORDEM.ATOMO : ORDEM.NADA];
+  };
+  // variáveis do Python (blocos do próprio Blockly: definir, mudar e ler)
+  const nomeDaVariavel = b => {
+    const v = b.getField('VAR').getVariable();
+    return nomePython(v.getName ? v.getName() : v.name);
+  };
+  f.variables_set = b => `${nomeDaVariavel(b)} = ${valor(b, 'VALUE', ORDEM.NADA)}\n`;
+  f.variables_get = b => [nomeDaVariavel(b), ORDEM.ATOMO];
+  f.math_change = b => `${nomeDaVariavel(b)} += ${valor(b, 'DELTA', ORDEM.NADA)}\n`;
+
+  // decidir pelo sensor: with se_...(): e, se o senão tiver blocos, with senao():
+  const seComSenao = (b, cabeca) => {
+    const senao = G.statementToCode(b, 'SENAO');
+    return `${cabeca}:\n${corpo(b, 'FAZER')}${senao ? `with senao():\n${senao}` : ''}`;
+  };
+  f.robo_se_cor = b => seComSenao(b, `with se_ver_cor(${b.getFieldValue('PORTA')}, ${b.getFieldValue('COR')})`);
+  f.robo_se_luz = b => seComSenao(b, `with se_luz(${b.getFieldValue('PORTA')}, ${texto(b.getFieldValue('OP'))}, ${num(b, 'VALOR')})`);
+  f.robo_se_distancia = b => seComSenao(b,
+    `with se_distancia(${b.getFieldValue('PORTA')}, ${texto(b.getFieldValue('OP'))}, ${num(b, 'VALOR')})`);
+  f.robo_se_tocado = b => seComSenao(b, `with se_tocado(${b.getFieldValue('PORTA')})`);
 
   f.robo_para_sempre = b => `while True:\n${corpo(b, 'FAZER')}`;
   f.robo_repetir = b => `for _ in range(${Math.max(0, Math.round(Number(b.getFieldValue('VEZES'))))}):\n${corpo(b, 'FAZER')}`;
@@ -328,6 +389,10 @@ const CAIXA = {
       {kind: 'block', type: 'logic_operation', fields: {OP: 'AND'}},
       {kind: 'block', type: 'logic_operation', fields: {OP: 'OR'}},
       {kind: 'block', type: 'logic_negate'},
+      {kind: 'block', type: 'robo_se_cor'},
+      {kind: 'block', type: 'robo_se_luz'},
+      {kind: 'block', type: 'robo_se_distancia', fields: {PORTA: '4'}},
+      {kind: 'block', type: 'robo_se_tocado', fields: {PORTA: '4'}},
     ]},
     {kind: 'category', name: 'Repetir', colour: CORES.repetir, contents: [
       {kind: 'block', type: 'robo_para_sempre'},
@@ -359,6 +424,11 @@ const CAIXA = {
       {kind: 'block', type: 'robo_guardar',
        inputs: {VALOR: {block: {type: 'robo_conta', fields: {OP: '+'}, inputs: {A: {block: {type: 'robo_ler'}}, B: n(1)}}}}},
       {kind: 'block', type: 'robo_ler'},
+    ]},
+    {kind: 'category', name: 'Variáveis do Python', colour: CORES.python, custom: 'VARIABLE'},
+    {kind: 'category', name: 'Linha em Python', colour: CORES.python, contents: [
+      {kind: 'block', type: 'robo_python'},
+      {kind: 'block', type: 'robo_python_valor'},
     ]},
   ],
 };
@@ -487,9 +557,26 @@ async function criar(div, aoMudar) {
     limparAvisos,
     redimensionar: () => Blockly.svgResize(ws),
     salvar,
+    /** Troca os blocos pela área estado (do "Trazer do Python", para_blocos.py). */
+    carregar(estado) {
+      Blockly.serialization.workspaces.load(estado, ws);
+      apagarSoltos();
+      const inicio = ws.getTopBlocks(false).find(b => b.type === 'robo_inicio');
+      if (inicio) ws.centerOnBlock(inicio.id);
+      ws.scroll(0, 0);
+      aoMudar(gerar());
+      salvar();
+    },
     area: ws,
   };
 }
 
-globalThis.ESTBlocos = {criar, carregarBlockly};
+/** O Python de uma área de blocos (sem desenhar nada): para o teste no Node (ferramentas/teste_blocos.js). */
+function pythonDaArea(ws, G = criarGerador()) {
+  G.init(ws);
+  const inicio = ws.getTopBlocks(true).find(b => b.type === 'robo_inicio');
+  return limpar(G.finish(inicio ? G.blockToCode(inicio) : 'from robo import *\n')).codigo;
+}
+
+globalThis.ESTBlocos = {criar, carregarBlockly, definir, criarGerador, pythonDaArea};
 })();

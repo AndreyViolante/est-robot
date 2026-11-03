@@ -36,5 +36,14 @@ jobs:
         run: node ferramentas/teste_obr.js
       - name: Protocolo da página de programar (USB e Bluetooth)
         run: node ferramentas/teste_protocolo.js
+      - name: Simulador (giroscópio, motor, cronômetro, mensagens, caminho do Dirigir, seguidor)
+        run: python ferramentas/teste_simulador.py
+      - name: Ida e volta Python -> blocos -> Python (mesmos bytes)
+        shell: bash
+        run: |
+          # o mesmo Blockly da página (a versão está no modo_blocos.js)
+          versao=$(grep -o "const VERSAO = '[^']*'" docs/programar/modo_blocos.js | cut -d"'" -f2)
+          npm install --no-audit --no-fund --no-save --prefix "$RUNNER_TEMP/blockly" "blockly@$versao"
+          BLOCKLY_DIR="$RUNNER_TEMP/blockly/node_modules/blockly" python ferramentas/teste_blocos.py
       - name: O tasks.json do VS Code é válido
         run: python -c "import json; json.load(open('.vscode/tasks.json', encoding='utf-8'))"

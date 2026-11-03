@@ -76,6 +76,12 @@ def importar_est_json(texto, arquivo=''):
     return importar_est.traduzir_json(texto, arquivo)
 
 
+def para_blocos_json(fonte):
+    """O programa em Python como área de blocos da aba Blocos (para_blocos.py, ao lado deste arquivo)."""
+    import para_blocos
+    return para_blocos.para_blocos_json(fonte)
+
+
 def avisos_de_portas_json(ligadas_json):
     """Os avisos do enviar.py para as portas que o último programa usa e em que o robô não tem nada ligado."""
     if _ultimo is None or not hasattr(_ultimo[0], 'avisos_de_portas'):

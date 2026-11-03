@@ -30,3 +30,6 @@ simulador/programa.js
 /resultado_teste_geral.txt
 # programas pessoais de quem desenvolve o projeto (não vão para o GitHub)
 /meus_programas/
+# o Blockly do teste dos blocos, se instalado aqui (npm install --prefix ferramentas blockly@<versão da página>)
+/ferramentas/node_modules/
+/ferramentas/package*.json

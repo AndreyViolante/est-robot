@@ -816,6 +816,47 @@ async function trocarModo(novo) {
 $('abaPython').addEventListener('click', () => trocarModo('python'));
 $('abaBlocos').addEventListener('click', () => trocarModo('blocos'));
 
+/** O Python como área de blocos, com o Python do navegador (para_blocos.py). */
+async function blocosDoPython(fonte) {
+  if (!worker) iniciarCompilador();
+  if (!pythonPronto) mensagem('info', 'Preparando o Python do navegador…', '<p>Na primeira vez demora alguns segundos.</p>');
+  await workerPronto;
+  return new Promise((ok, falha) => {
+    const id = proximoId++;
+    const relogio = setTimeout(() => { pedidos.delete(id); falha(new Error('o Python do navegador demorou demais')); }, LIMITE_MS);
+    pedidos.set(id, {ok, falha, relogio});
+    worker.postMessage({id, blocosDe: fonte});
+  });
+}
+
+$('btTrazer').addEventListener('click', async () => {
+  try {
+    await abrirBlocos();
+  } catch (e) {
+    return;                       // a mensagem já está na área de blocos
+  }
+  limparMensagens();
+  let r;
+  try {
+    r = await blocosDoPython(editor.valor());
+  } catch (e) {
+    r = {erro: e.message};
+  }
+  limparMensagens();
+  if (r.erro) {
+    mensagem('erro', 'Não deu para trazer o Python', `<p>${escapar(r.erro)}</p>`);
+    return;
+  }
+  const atual = blocos.codigo().trim();
+  if (atual !== 'from robo import *' && atual !== editor.valor().trim() &&
+      !confirm('Os blocos vão ser trocados pelo programa da aba Python. Continuar?')) return;
+  blocos.carregar(r.estado);
+  mensagem(r.python ? 'aviso' : 'ok', 'O programa da aba Python agora está em blocos',
+    r.python ? `<p>${r.python === 1 ? '1 linha ainda não tem bloco e ficou' : `${r.python} linhas ainda não têm bloco e ficaram`} ` +
+               'num bloco cinza "Python", com o texto como está: o programa faz o mesmo.</p>'
+             : '<p>Todas as linhas viraram blocos.</p>');
+});
+
 $('btLevar').addEventListener('click', () => {
   if (!blocos) return;
   const codigo = blocos.codigo(), atual = editor.valor().trim();
