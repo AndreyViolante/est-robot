@@ -87,6 +87,18 @@ def round_num(mode=1, src=None, out=None):                             # Arredon
     if src: b.wires.append((1, src, out))
     return b                                                            # saida 3
 def random_num(lo, hi): return Blk(4010, 1, f'{lo}|{hi}|50|0|0', ' ')            # Aleatorio entre lo e hi, saida 5
+# mensagens pelo Bluetooth (bloco Mensagens da IDE): o titulo vai na porta, quem recebe no campo 1
+def message_send(title, to, value, src=None, out=None):
+    """Enviar mensagem: numero (modo 2), texto (1) ou logico (3). src/out: numero ligado por fio."""
+    if isinstance(value, bool):
+        return Blk(5001, 3, f'{to}|{0 if value else 1}|0|0|0|0|0|0|0|0|0|0|0', title)
+    if isinstance(value, str):
+        return Blk(5001, 1, f'{to}|0|0|{value}|0|0|0|0|0|0|0|0|0', title)
+    b = Blk(5001, 2, f'{to}|0|{value}|0|0|0|0|0|0|0|0|0|0', title)
+    if src: b.wires.append((3, src, out))
+    return b
+def message_receive_num(title): return Blk(5001, 5, '|0|0|0|0|0|0|0|0|0|0|0|0', title)   # saida 11
+def bluetooth(on): return Blk(5002, 1 if on else 2, '', ' ')                     # ligar / desligar o Bluetooth
 def ultrasonic_cm(port): return Blk(3009, 3, '4|50|0|0|0|0|0', str(port))         # saida 4 = distancia em cm
 
 # ---- variaveis e contas ----

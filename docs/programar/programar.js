@@ -40,8 +40,25 @@ function salvar() {
 
 // ---------------------------------------------------------------- editor (CodeMirror, ou a caixa de texto se ele não carregar)
 
+/** Um trecho do teclado de programação, pronto para inserir: a quebra de linha ganha o recuo da linha atual e
+    o que está entre « » fica selecionado (para o aluno já digitar por cima). */
+function prepararTrecho(modelo, recuo) {
+  const texto = modelo.replace(/\n/g, '\n' + recuo);
+  const ini = texto.indexOf('«'), fim = texto.indexOf('»');
+  return {texto: texto.replace(/[«»]/g, ''), selecao: ini >= 0 && fim > ini ? [ini, fim - 1] : null};
+}
+
 function criarEditor(caixa, somenteLeitura = false) {
   if (!globalThis.CodeMirror) {
+    const inserir = modelo => {
+      const v = caixa.value, a = caixa.selectionStart, b = caixa.selectionEnd;
+      const inicioDaLinha = v.lastIndexOf('\n', a - 1) + 1;
+      const {texto, selecao} = prepararTrecho(modelo, v.slice(inicioDaLinha).match(/^[ \t]*/)[0]);
+      caixa.setRangeText(texto, a, b, 'end');
+      if (selecao) caixa.setSelectionRange(a + selecao[0], a + selecao[1]);
+      caixa.dispatchEvent(new Event('input'));
+      caixa.focus();
+    };
     caixa.readOnly = somenteLeitura;
     caixa.addEventListener('keydown', e => {           // Tab escreve 4 espaços, como no VS Code
       if (e.key !== 'Tab' || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -61,6 +78,14 @@ function criarEditor(caixa, somenteLeitura = false) {
       limparErro: () => {},
       focar: () => caixa.focus(),
       atualizar: () => {},
+      inserir,
+      comando: nome => {
+        if (nome === 'desfazer' || nome === 'refazer') document.execCommand(nome === 'desfazer' ? 'undo' : 'redo');
+        else if (nome === 'indentar') inserir('    ');
+        caixa.focus();
+      },
+      aoFocar: f => caixa.addEventListener('focus', f),
+      aoSair: f => caixa.addEventListener('blur', f),
     };
   }
   const cm = CodeMirror.fromTextArea(caixa, {
@@ -95,6 +120,22 @@ function criarEditor(caixa, somenteLeitura = false) {
     limparErro,
     focar: () => cm.focus(),
     atualizar: () => cm.refresh(),
+    inserir: modelo => {
+      const de = cm.getCursor('from');
+      const {texto, selecao} = prepararTrecho(modelo, cm.getLine(de.line).match(/^\s*/)[0]);
+      cm.replaceSelection(texto);
+      if (selecao) {
+        const pos = i => cm.posFromIndex(cm.indexFromPos(de) + i);
+        cm.setSelection(pos(selecao[0]), pos(selecao[1]));
+      }
+      cm.focus();
+    },
+    comando: nome => {
+      cm.execCommand({indentar: 'indentMore', desindentar: 'indentLess', desfazer: 'undo', refazer: 'redo'}[nome]);
+      cm.focus();
+    },
+    aoFocar: f => cm.on('focus', f),
+    aoSair: f => cm.on('blur', f),
   };
 }
 
@@ -301,6 +342,7 @@ quadro.addEventListener('load', () => {
 function abrirSimulador(r) {
   window.ESTPROGRAMA = {nome: r.nome, gerado: agora(), bytes: r.bytes, fonte: r.fonte, linhas: r.linhas,
                         variaveis: r.variaveis, avisos: r.avisos};
+  mostrarTeclado(false);
   $('sim').hidden = false;
   document.documentElement.classList.add('travado');
   quadro.src = `simulador/index.html?${Date.now()}`;     // carrega de novo: o programa.js lê o ESTPROGRAMA
@@ -313,6 +355,20 @@ function fecharSimulador() {
   $('btSimular').focus();
 }
 $('btFecharSim').addEventListener('click', fecharSimulador);
+
+// "Levar para o código" do Dirigir, no simulador: o caminho feito com as setas vira o programa do editor
+window.ESTDoSimulador = codigo => {
+  const atual = editor.valor().trim();
+  if (atual && atual !== INICIAL.trim() && atual !== codigo.trim() &&
+      !confirm('Trocar o programa do editor pelo caminho que você fez dirigindo o robô? O que está escrito agora some ' +
+               '(clique em Cancelar e use Baixar .py antes, se quiser guardar).')) return;
+  fecharSimulador();
+  trocarPrograma(codigo, $('nome').value);
+  salvar();
+  limparMensagens();
+  mensagem('ok', 'Programa escrito dirigindo o robô',
+    '<p>Aperte <b>Simular</b> para ver o robô fazer o mesmo caminho sozinho. Depois é só mudar os números.</p>');
+};
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sim').hidden) fecharSimulador(); });
 
 // ---------------------------------------------------------------- envio pelo USB (WebHID)
@@ -320,7 +376,24 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sim').
 let ocupado = false;
 function travar(sim) {
   ocupado = sim;
-  for (const id of ['btSimular', 'btEnviar', 'btGravar']) $(id).disabled = sim;
+  for (const id of ['btSimular', 'btEnviar', 'btGravar', 'btBluetooth', 'btGravarBluetooth']) $(id).disabled = sim;
+}
+
+const bytesDoPrograma = r => Uint8Array.from(r.bytes.match(/../g) || [], h => parseInt(h, 16));
+const detalhesDoEnvio = log => `<details class="detalhes"><summary>Detalhes do envio</summary><pre>${escapar(log.join('\n'))}</pre></details>`;
+
+/** Como o enviar.py termina: diz se o robô respondeu, se já está rodando ou onde ficou gravado. */
+function mostrarResultado(respostas, executar, r, log, via) {
+  const detalhes = detalhesDoEnvio(log);
+  if (!respostas) {
+    mensagem('aviso', 'O robô não respondeu',
+      `<p>Os pacotes foram enviados ${via}, mas o robô não respondeu nenhum. Confira se ele está ligado e se a IDE EST ` +
+      'está fechada, e tente de novo.</p>' + detalhes);
+  } else if (executar) {
+    mensagem('ok', 'Enviado!', '<p>O programa já está rodando no robô.</p>' + detalhes);
+  } else {
+    mensagem('ok', 'Gravado no robô', `<p>Gravado como <code>vscode/${escapar(r.nome_no_robo)}</code>: inicie pelo menu do robô.</p>` + detalhes);
+  }
 }
 
 async function atualizarRobo() {
@@ -378,7 +451,7 @@ async function enviarAoRobo(executar) {
       if (!r) return;
     }
 
-    const bytes = Uint8Array.from(r.bytes.match(/../g) || [], h => parseInt(h, 16));
+    const bytes = bytesDoPrograma(r);
     const caminho = `/vscode/${r.nome_no_robo}`;
     const caixa = mensagem('info', 'Enviando ao robô…', '<div class="progresso"><i></i></div>');
     const barra = caixa.querySelector('.progresso i');
@@ -405,20 +478,92 @@ async function enviarAoRobo(executar) {
       return;
     }
     caixa.remove();
-    const detalhes = `<details class="detalhes"><summary>Detalhes do envio</summary><pre>${escapar(log.join('\n'))}</pre></details>`;
-    if (!respostas) {
-      mensagem('aviso', 'O robô não respondeu',
-        '<p>Os pacotes foram enviados, mas o robô não respondeu nenhum. Confira se ele está ligado e se a IDE EST está ' +
-        'fechada, e tente de novo.</p>' + detalhes);
-    } else if (executar) {
-      mensagem('ok', 'Enviado!', '<p>O programa já está rodando no robô.</p>' + detalhes);
-    } else {
-      mensagem('ok', 'Gravado no robô', `<p>Gravado como <code>vscode/${escapar(r.nome_no_robo)}</code>: inicie pelo menu do robô.</p>` + detalhes);
-    }
+    mostrarResultado(respostas, executar, r, log, 'pelo USB');
   } catch (e) {
     mensagem('erro', 'Não enviei', `<p>${escapar(explicarErroUsb(e))}</p>`);
     console.error(e);
   } finally {
+    travar(false);
+  }
+}
+
+// ---------------------------------------------------------------- envio pelo Bluetooth (Web Serial: Chrome do Android)
+
+const temBluetooth = P.temWebSerial();
+
+function explicarErroBluetooth(e) {
+  if (e.name === 'NotFoundError') {
+    return 'nenhum robô escolhido. Pareie o robô nas configurações de Bluetooth do aparelho (a senha costuma ser 1234), ' +
+           'clique de novo e escolha o robô na lista.';
+  }
+  if (e.name === 'SecurityError') return 'o navegador não deixou abrir a lista do Bluetooth. Clique de novo em Enviar por Bluetooth.';
+  if (e.etapa === 'abrir' || e.name === 'NetworkError') {
+    return 'não consegui conectar ao robô pelo Bluetooth. Confira se ele está ligado e perto, com o Bluetooth ligado e ' +
+           'pareado com este aparelho, e se nenhum outro aparelho está conectado a ele.';
+  }
+  return `a conexão pelo Bluetooth caiu (${e.message}). Chegue mais perto do robô e tente de novo.`;
+}
+
+async function enviarPorBluetooth(executar) {
+  if (ocupado) return;
+  travar(true);
+  let canal = null;
+  try {
+    limparMensagens();
+    let r = null;
+    if (pythonPronto) {          // compila antes de abrir a lista do navegador (ela precisa vir logo depois do clique)
+      r = await compilarComMensagens();
+      if (!r) return;
+    }
+    let porta = await P.portaBluetoothPermitida();
+    if (!porta) {
+      const pedido = mensagem('info', 'Escolha o robô na janela do navegador', '<p>Só aparecem os aparelhos já pareados.</p>');
+      try {
+        porta = await P.escolherPortaBluetooth();
+      } catch (e) {
+        mensagem('erro', 'Não enviei', `<p>${escapar(explicarErroBluetooth(e))}</p>`);
+        return;
+      } finally {
+        pedido.remove();
+      }
+    }
+    if (!r) {
+      r = await compilarComMensagens();
+      if (!r) return;
+    }
+    const caixa = mensagem('info', 'Conectando pelo Bluetooth…', '<div class="progresso"><i></i></div>');
+    const barra = caixa.querySelector('.progresso i');
+    const log = [];
+    let respostas;
+    try {
+      try { canal = await P.abrirCanalBluetooth(porta); } catch (e) { e.etapa = 'abrir'; throw e; }
+      log.push(`${'APRESENTAÇÃO'.padEnd(20)} rx=${canal.apresentacao || '(sem resposta)'}`);
+      caixa.querySelector('b').textContent = 'Enviando pelo Bluetooth…';
+      let ligadas = null;
+      try { ligadas = await P.consultarPortas(canal); } catch (e) { console.warn(e); }
+      for (const aviso of ligadas ? await avisosDePortas(ligadas) : []) {
+        caixa.before(mensagem('aviso', 'AVISO', `<p>${escapar(aviso)}</p>`));
+      }
+      respostas = await P.enviarPorCanal(canal, bytesDoPrograma(r), `/vscode/${r.nome_no_robo}`, executar, passo => {
+        barra.style.width = `${Math.round(100 * passo.passo / passo.total)}%`;
+        log.push(`${passo.nome.padEnd(20)} tx=${passo.tx}...  rx=${passo.rx || '(sem resposta)'}`);
+      });
+    } catch (e) {
+      caixa.remove();
+      mensagem('erro', 'O envio pelo Bluetooth não terminou',
+        `<p>${escapar(explicarErroBluetooth(e))}</p>` + (log.length ? detalhesDoEnvio(log) : ''));
+      console.error(e);
+      return;
+    }
+    caixa.remove();
+    mostrarResultado(respostas, executar, r, log, 'pelo Bluetooth');
+    $('estadoBluetooth').className = respostas ? 'robo ligado' : 'robo';
+    $('estadoBluetooth').textContent = respostas ? 'O robô respondeu pelo Bluetooth.' : 'O robô não respondeu pelo Bluetooth.';
+  } catch (e) {
+    mensagem('erro', 'Não enviei', `<p>${escapar(explicarErroBluetooth(e))}</p>`);
+    console.error(e);
+  } finally {
+    if (canal) await canal.fechar().catch(() => {});
     travar(false);
   }
 }
@@ -445,8 +590,16 @@ if (temUsb) {
   atualizarRobo();
 } else {
   $('blocoEnvio').hidden = true;
-  $('semUsb').hidden = false;
 }
+if (temBluetooth) {
+  $('blocoBluetooth').hidden = false;
+  $('btBluetooth').addEventListener('click', () => enviarPorBluetooth(true));
+  $('btGravarBluetooth').addEventListener('click', () => enviarPorBluetooth(false));
+  if (temUsb) {          // no computador o USB vem primeiro: o Bluetooth fica como segunda opção, mais discreto
+    $('btBluetooth').classList.remove('principal', 'azul');
+  }
+}
+if (!temUsb && !temBluetooth) $('semUsb').hidden = false;
 
 function guardarAgora() {
   if (blocos) blocos.salvar();
@@ -456,7 +609,7 @@ document.addEventListener('keydown', e => {           // Ctrl+S guarda; Ctrl+Shi
   if (!(e.ctrlKey || e.metaKey) || e.altKey || !$('sim').hidden) return;
   const tecla = e.key.toLowerCase();
   if (tecla === 's' && !e.shiftKey) { e.preventDefault(); guardarAgora(); }
-  if (tecla === 'b' && e.shiftKey) { e.preventDefault(); temUsb ? enviarAoRobo(true) : simular(); }
+  if (tecla === 'b' && e.shiftKey) { e.preventDefault(); temUsb ? enviarAoRobo(true) : temBluetooth ? enviarPorBluetooth(true) : simular(); }
 });
 
 // arquivos: baixar e abrir
@@ -673,7 +826,94 @@ $('btLevar').addEventListener('click', () => {
   editor.focar();
 });
 
-if (salvo.modo === 'blocos') trocarModo('blocos');
+// no celular, quem abre a página pela primeira vez começa nos blocos (digitar Python na tela pequena é difícil)
+const telaPequena = () => window.matchMedia('(max-width: 600px)').matches;
+if (salvo.modo === 'blocos' || (!salvo.modo && typeof salvo.fonte !== 'string' && telaPequena())) trocarModo('blocos');
+
+// ---------------------------------------------------------------- celular: arquivos e Python dos blocos recolhidos
+
+$('btExtras').addEventListener('click', () => {
+  const aberto = $('extras').classList.toggle('aberto');
+  $('btExtras').setAttribute('aria-expanded', String(aberto));
+  $('btExtras').textContent = aberto ? 'Arquivos ▴' : 'Arquivos ▾';
+});
+$('btVerPython').addEventListener('click', () => {
+  const aberto = $('btVerPython').closest('.espelho').classList.toggle('aberto');
+  $('btVerPython').setAttribute('aria-expanded', String(aberto));
+  $('btVerPython').textContent = aberto ? 'Esconder' : 'Ver';
+  if (aberto && espelho) espelho.atualizar();
+});
+
+// ---------------------------------------------------------------- teclado de programação (celular e tablet)
+// Os símbolos que dão trabalho no teclado do celular e os comandos mais usados. Nos trechos, o que está entre « »
+// fica selecionado para o aluno digitar por cima; as teclas com nome de comando (indentar...) mexem no editor.
+
+const SIMBOLOS = [
+  ['⇥', 'indentar', 'Recuar a linha (4 espaços)'], ['⇤', 'desindentar', 'Desfazer o recuo da linha'],
+  [':', ':'], ['( )', '(«»)'], [')', ')'], ["' '", "'«»'"], ['=', ' = '], ['==', ' == '], ['<', ' < '], ['>', ' > '],
+  [',', ', '], ['.', '.'], ['_', '_'], ['+', ' + '], ['-', ' - '], ['*', ' * '], ['/', ' / '], ['#', '# '],
+  ['↶', 'desfazer', 'Desfazer'], ['↷', 'refazer', 'Refazer'],
+];
+const COMANDOS_DO_TECLADO = [
+  ['andar', 'andar(rotacoes=«1»)'], ['ré', 're(rotacoes=«1»)'], ['andar_cm', 'andar_cm(«20»)'],
+  ['virar →', 'virar_direita(«90»)'], ['virar ←', 'virar_esquerda(«90»)'], ['motores', 'motores(«30», 30)'],
+  ['parar', 'parar()'], ['esperar', 'esperar(«1»)'],
+  ['if', 'if «luz_refletida(1) < 50»:\n    '], ['else', 'else:\n    '], ['while', 'while «True»:\n    '],
+  ['for', 'for _ in range(«4»):\n    '],
+  ['luz', 'luz_refletida(«1»)'], ['cor', 'cor_vista(«1»)'], ['distância', 'distancia(«4»)'],
+  ['mostrar', "mostrar(«'Oi'»)"], ['bip', 'bip()'], ['guardar', "guardar('«x»', 0)"], ['ler', "ler('«x»')"],
+];
+const EDICAO = new Set(['indentar', 'desindentar', 'desfazer', 'refazer']);
+
+function montarTeclas(caixa, lista) {
+  for (const [rotulo, acao, dica] of lista) {
+    const b = Object.assign(document.createElement('button'), {type: 'button', textContent: rotulo, title: dica || acao});
+    // sem o pointerdown padrão o editor não perde o foco, e o teclado do aparelho continua aberto
+    b.addEventListener('pointerdown', e => e.preventDefault());
+    b.addEventListener('click', () => (EDICAO.has(acao) ? editor.comando(acao) : editor.inserir(acao)));
+    caixa.append(b);
+  }
+}
+montarTeclas($('teclasSimbolos'), SIMBOLOS);
+montarTeclas($('teclasComandos'), COMANDOS_DO_TECLADO);
+
+const usaToque = () => window.matchMedia('(pointer: coarse)').matches;
+let saiuDoEditor = null;
+function mostrarTeclado(sim) {
+  $('teclado').hidden = !sim;
+  document.body.classList.toggle('com-teclado', sim);
+}
+editor.aoFocar(() => {
+  clearTimeout(saiuDoEditor);
+  if (usaToque() && modo === 'python' && $('sim').hidden) mostrarTeclado(true);
+});
+editor.aoSair(() => { saiuDoEditor = setTimeout(() => mostrarTeclado(false), 150); });
+// no iPhone o teclado não diminui a página (o resizes-content do index.html é do Chrome): a barra sobe junto com ele
+if (window.visualViewport) {
+  const acompanhar = () => {
+    const vv = window.visualViewport;
+    $('teclado').style.bottom = `${Math.max(0, window.innerHeight - vv.height - vv.offsetTop)}px`;
+  };
+  window.visualViewport.addEventListener('resize', acompanhar);
+  window.visualViewport.addEventListener('scroll', acompanhar);
+}
+
+// ---------------------------------------------------------------- instalar (página na tela inicial, como aplicativo)
+
+let pedidoDeInstalar = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();                  // o botão da página pergunta na hora certa, em vez da faixa do navegador
+  pedidoDeInstalar = e;
+  $('btInstalar').hidden = false;
+});
+$('btInstalar').addEventListener('click', async () => {
+  if (!pedidoDeInstalar) return;
+  pedidoDeInstalar.prompt();
+  try { await pedidoDeInstalar.userChoice; } catch (e) { /* o navegador fechou a pergunta */ }
+  pedidoDeInstalar = null;
+  $('btInstalar').hidden = true;
+});
+window.addEventListener('appinstalled', () => { $('btInstalar').hidden = true; });
 
 // o link "Como enviar" (#ajuda) abre a caixa de ajuda
 for (const a of document.querySelectorAll('a[href="#ajuda"]')) a.addEventListener('click', () => { $('ajuda').open = true; });

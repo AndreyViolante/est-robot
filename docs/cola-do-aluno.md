@@ -31,8 +31,11 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 | `tocado(4)` | 1 se o botão de toque estiver apertado, 0 se não |
 
 Novos, ainda não vistos no robô: `graus_do_motor('B')` (quanto o motor girou), `giroscopio(2)` (ângulo do
-robô), `cronometro()` (segundos), `aleatorio(1, 6)`, `arredondar(...)` e os `zerar_motor('B')`,
-`zerar_giroscopio(2)`, `zerar_cronometro()`.
+robô), `cronometro()` (segundos), `aleatorio(1, 6)`, `arredondar(...)`, os `zerar_motor('B')`,
+`zerar_giroscopio(2)`, `zerar_cronometro()` e as mensagens pelo Bluetooth `enviar_mensagem('erro', erro)` e
+`mensagem_recebida('kp')`.
+
+No simulador, **🎮 Dirigir**: leve o robô pelas setas e o programa se escreve sozinho.
 
 ## Repetir e decidir
 

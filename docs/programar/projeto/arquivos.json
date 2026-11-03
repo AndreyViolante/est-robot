@@ -17,7 +17,13 @@
  "offline": [
   "compilador.js",
   "exemplos/11_seguidor_dois_sensores.py",
+  "icones/icone-180.png",
+  "icones/icone-192.png",
+  "icones/icone-32.png",
+  "icones/icone-512.png",
+  "icones/icone-maskable-512.png",
   "index.html",
+  "manifest.webmanifest",
   "modo_blocos.js",
   "ponte.py",
   "programar.css",

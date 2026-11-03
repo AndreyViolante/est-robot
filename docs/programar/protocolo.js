@@ -1,11 +1,12 @@
 'use strict';
-/* Protocolo USB do robô EST pelo navegador (WebHID: Chrome e Edge no computador e no Chromebook).
+/* Protocolo do robô EST pelo navegador: USB (WebHID: Chrome e Edge no computador e no Chromebook) e Bluetooth
+   (Web Serial: Chrome do Android e do computador).
 
    Os pacotes são os mesmos de est_protocol.py, byte a byte: SELECT, HEARTBEAT, DOWNLOAD, nome do arquivo,
-   dados em pedaços de até 1014 bytes, HEARTBEAT, DOWNLOAD e, para executar, RUN. Cada pacote vai num
-   output report de 1024 bytes (report ID 0) e, depois de cada um, a página espera a resposta do robô.
-   Antes de enviar, pergunta o que está ligado em cada porta (portas_ligadas de est_protocol.py).
-   Se est_protocol.py mudar, mude aqui também. */
+   dados em pedaços de até 1014 bytes, HEARTBEAT, DOWNLOAD e, para executar, RUN. Pelo USB cada pacote vai num
+   output report de 1024 bytes (report ID 0); pelo Bluetooth vai com o tamanho exato. Depois de cada um, a página
+   espera a resposta do robô. Antes de enviar, pergunta o que está ligado em cada porta (portas_ligadas de
+   est_protocol.py). Se est_protocol.py mudar, mude aqui também. */
 (function (raiz) {
 const VID = 0x0483, PID = 0x5750;
 const TAMANHO_REPORT = 1024;              // bytes de dados de cada report (o report ID 0 vai à parte)
@@ -155,48 +156,157 @@ async function abrirCanal(dispositivo) {
   };
 }
 
-/** Pergunta ao robô o que está ligado em cada porta (como portas_ligadas). null se não der para saber.
-    Deixa o robô aberto para o envio. */
+/** Pergunta pelo canal o que está ligado em cada porta (como portas_ligadas). null se não der para saber. */
+async function consultarPortas(canal, ms = 400) {
+  while (await canal.resposta(50)) { /* descarta respostas velhas */ }
+  for (let i = 0; i < 3; i++) {
+    await canal.mandar(CONSULTA_ESTADO);
+    const resposta = await canal.resposta(ms);
+    const portas = resposta ? lerPortas(resposta) : null;
+    if (portas) return portas;
+  }
+  return null;
+}
+
+/** Pelo USB: o que está ligado em cada porta. Deixa o robô aberto para o envio. */
 async function portasLigadas(dispositivo, ms = 400) {
   const canal = await abrirCanal(dispositivo);
   try {
-    while (await canal.resposta(50)) { /* descarta respostas velhas */ }
-    for (let i = 0; i < 3; i++) {
-      await canal.mandar(CONSULTA_ESTADO);
-      const resposta = await canal.resposta(ms);
-      const portas = resposta ? lerPortas(resposta) : null;
-      if (portas) return portas;
-    }
-    return null;
+    return await consultarPortas(canal, ms);
   } finally {
     canal.fechar();
   }
 }
 
-/** Envia o programa ao robô, lendo a resposta depois de cada pacote (como upload() de est_protocol.py).
+/** Envia o programa pelo canal, lendo a resposta depois de cada pacote (como upload() de est_protocol.py).
     aoAndar({passo, total, nome, tx, rx}) é chamado a cada pacote. Devolve quantos pacotes tiveram resposta. */
-async function enviar(dispositivo, programa, caminho, executar, aoAndar = () => {}) {
+async function enviarPorCanal(canal, programa, caminho, executar, aoAndar = () => {}) {
   const lista = sequencia(programa, caminho, executar);
-  const canal = await abrirCanal(dispositivo);
   let respostas = 0;
-  try {
-    for (let i = 0; i < lista.length; i++) {
-      const {pacote, nome, espera} = lista[i];
-      await canal.mandar(pacote);
-      const rx = await canal.resposta(Math.round(espera * 1000) + 300);
-      if (rx) respostas++;
-      aoAndar({passo: i + 1, total: lista.length, nome, tx: hex(pacote), rx: rx ? hex(rx) : null});
-    }
-  } finally {
-    canal.fechar();
-    try { await dispositivo.close(); } catch (e) { /* já fechado */ }
+  for (let i = 0; i < lista.length; i++) {
+    const {pacote, nome, espera} = lista[i];
+    await canal.mandar(pacote);
+    const rx = await canal.resposta(Math.round(espera * 1000) + 300);
+    if (rx) respostas++;
+    aoAndar({passo: i + 1, total: lista.length, nome, tx: hex(pacote), rx: rx ? hex(rx) : null});
   }
   return respostas;
 }
 
+/** Pelo USB: envia e fecha o robô no fim. */
+async function enviar(dispositivo, programa, caminho, executar, aoAndar = () => {}) {
+  const canal = await abrirCanal(dispositivo);
+  try {
+    return await enviarPorCanal(canal, programa, caminho, executar, aoAndar);
+  } finally {
+    canal.fechar();
+    try { await dispositivo.close(); } catch (e) { /* já fechado */ }
+  }
+}
+
+// ---------------------------------------------------------------- Bluetooth (Web Serial)
+// Como a IDE: conecta na porta serial do Bluetooth do robô e, antes de tudo, manda uma linha com o nome e o endereço
+// de quem conecta, terminada em \r\n (a IDE manda o nome e os 12 dígitos do endereço do Bluetooth do computador).
+// Depois, os mesmos pacotes do USB, cada um com o tamanho exato, e as respostas no mesmo formato (68 21 ... 16).
+// Ainda não conferido no robô.
+
+const SPP = '00001101-0000-1000-8000-00805f9b34fb';      // porta serial do Bluetooth clássico
+const NOME_NO_BLUETOOTH = 'EST-LAB';
+const linhaDeApresentacao = (nome = NOME_NO_BLUETOOTH) => Uint8Array.from(ascii(`${nome}000000000000\r\n`));
+
+const temWebSerial = () => typeof navigator !== 'undefined' && 'serial' in navigator && !!navigator.serial;
+
+/** A porta Bluetooth que o navegador já tem permissão para usar (sem perguntar), ou null. */
+async function portaBluetoothPermitida() {
+  if (!temWebSerial()) return null;
+  const portas = await navigator.serial.getPorts();
+  return portas.find(p => p.getInfo && p.getInfo().bluetoothServiceClassId) || null;
+}
+
+/** Mostra a janela do navegador para escolher o robô pareado (precisa vir de um clique). */
+async function escolherPortaBluetooth() {
+  return navigator.serial.requestPort({allowedBluetoothServiceClassIds: [SPP]});
+}
+
+/** Tamanho do pacote inteiro e válido que começa em i (68 .. tamanho .. soma 16), 0 se não houver um ali,
+    ou -1 se ali pode começar um pacote que ainda não chegou inteiro. */
+function pacoteEm(bytes, i) {
+  if (bytes[i] !== 0x68) return 0;
+  if (bytes.length - i < 5) return -1;
+  const total = 7 + (bytes[i + 3] | (bytes[i + 4] << 8));
+  if (total > 2048) return 0;                                 // tamanho impossível: não era começo de pacote
+  if (bytes.length - i < total) return -1;
+  const fim = i + total;
+  return bytes[fim - 1] === 0x16 && checksum(bytes.subarray(i, fim - 2)) === bytes[fim - 2] ? total : 0;
+}
+
+/** Separa os pacotes inteiros que chegaram em pedaços pelo Bluetooth.
+    Devolve {pacotes, resto}: o resto é o começo de um pacote que ainda não chegou inteiro. */
+function separarPacotes(bytes) {
+  const pacotes = [];
+  let i = 0;
+  while (i < bytes.length) {
+    const n = pacoteEm(bytes, i);
+    if (n > 0) { pacotes.push(bytes.slice(i, i + n)); i += n; continue; }
+    // um 68 no meio de lixo parece começo de pacote incompleto: só espera se não houver um pacote inteiro mais adiante
+    if (n < 0 && !bytes.subarray(i + 1).some((b, k) => b === 0x68 && pacoteEm(bytes, i + 1 + k) > 0)) break;
+    i++;
+  }
+  return {pacotes, resto: bytes.slice(i)};
+}
+
+/** Abre a conversa pelo Bluetooth: mesma cara do canal USB (mandar, resposta, fechar) e já se apresenta ao robô.
+    canal.apresentacao = o que o robô respondeu à linha de apresentação (ou null). */
+async function abrirCanalBluetooth(porta) {
+  await porta.open({baudRate: 115200});          // no Bluetooth a velocidade não vale, mas a API pede
+  const leitor = porta.readable.getReader(), escritor = porta.writable.getWriter();
+  const fila = [];
+  let acordar = null, resto = new Uint8Array(0);
+  const lendo = (async () => {
+    try {
+      for (;;) {
+        const {value, done} = await leitor.read();
+        if (done) break;
+        const junto = new Uint8Array(resto.length + value.length);
+        junto.set(resto);
+        junto.set(value, resto.length);
+        const r = separarPacotes(junto);
+        resto = r.resto;
+        if (r.pacotes.length) { fila.push(...r.pacotes); if (acordar) acordar(); }
+      }
+    } catch (e) { /* a porta fechou */ }
+  })();
+  const canal = {
+    mandar: pacote => escritor.write(pacote),
+    resposta: ms => new Promise(ok => {
+      if (fila.length) return ok(fila.shift());
+      const fim = setTimeout(() => { acordar = null; ok(null); }, ms);
+      acordar = () => { clearTimeout(fim); acordar = null; ok(fila.shift()); };
+    }),
+    async fechar() {
+      try { await leitor.cancel(); } catch (e) { /* já parou */ }
+      await lendo;
+      leitor.releaseLock();
+      escritor.releaseLock();
+      try { await porta.close(); } catch (e) { /* já fechada */ }
+    },
+    apresentacao: null,
+  };
+  try {
+    await canal.mandar(linhaDeApresentacao());
+    const r = await canal.resposta(600);
+    canal.apresentacao = r ? hex(r, r.length) : null;
+  } catch (e) {
+    await canal.fechar();
+    throw e;
+  }
+  return canal;
+}
+
 const API = {VID, PID, TAMANHO_REPORT, PEDACO, checksum, frame, HEARTBEAT, DOWNLOAD, CONSULTA_ESTADO, pacoteSelect,
              pacoteRun, pacoteNome, pacoteDados, pacotesDeDados, sequencia, lerPortas, temWebHID, roboPermitido,
-             escolherRobo, portasLigadas, enviar};
+             escolherRobo, consultarPortas, portasLigadas, enviarPorCanal, enviar, SPP, linhaDeApresentacao,
+             temWebSerial, portaBluetoothPermitida, escolherPortaBluetooth, separarPacotes, abrirCanalBluetooth};
 if (typeof module === 'object' && module.exports) module.exports = API;     // para testar no Node
 else raiz.ESTProtocolo = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

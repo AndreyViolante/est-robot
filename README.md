@@ -20,10 +20,21 @@ independente, sem relação com o fabricante do robô.
 no Chrome ou no Edge (Windows, Mac, Linux ou Chromebook). Dá para escrever em Python ou montar o
 programa com blocos, vendo ao lado o Python que os blocos geram. A página compila no próprio
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
-portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). No
-celular dá para programar e simular. O mesmo arquivo `.py` funciona no VS Code. Depois da primeira
-visita, a página funciona sem internet naquele navegador, e o botão **Compartilhar link** copia um link
-com o programa dentro (quem abre já vê o programa no simulador; nada fica guardado em servidor).
+portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
+arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
+navegador, e o botão **Compartilhar link** copia um link com o programa dentro (quem abre já vê o
+programa no simulador; nada fica guardado em servidor).
+
+**No celular e no tablet Android** (Chrome), a mesma página:
+- **📲 Instalar** põe a página na tela inicial, como um aplicativo, e ela abre sem internet;
+- quem abre pela primeira vez começa nos **blocos**; na aba Python, uma **barra de programação** acima do
+  teclado tem os símbolos difíceis de achar (`:` `( )` `'` `==` e o recuo de 4 espaços) e os comandos mais
+  usados: tocar em `if` escreve `if luz_refletida(1) < 50:` com a condição selecionada, pronta para trocar;
+- **Enviar por Bluetooth**, com o robô pareado no aparelho (senha 1234). A página faz o que a IDE faz pelo
+  Bluetooth (se apresenta ao robô e manda os mesmos pacotes do USB), mas **ainda não foi testado no robô**;
+  a tarefa **Testar o Bluetooth do robô** confere pelo computador, só com perguntas;
+- no simulador, **🎮 Dirigir**: o aluno anda com o robô pelas setas e a página escreve o programa
+  (`andar_cm(20)`, `virar_direita(90)`), que vai para o editor com um toque; dois dedos aproximam a pista.
 
 ```python
 from robo import *
@@ -269,11 +280,15 @@ Antes de enviar, o programa confere o robô e avisa:
 | `giroscopio(2)`, `velocidade_do_giro(2)`, `zerar_giroscopio(2)` | sensor giroscópio: o ângulo do robô em graus (para virar 90° certinho) |
 | `cronometro()`, `zerar_cronometro()` | segundos passados (8 cronômetros: `cronometro(2)`...) |
 | `aleatorio(1, 6)`, `arredondar(valor)` | número sorteado no robô; arredondar para o inteiro mais perto |
+| `enviar_mensagem('erro', erro)`, `mensagem_recebida('kp')` | mensagens pelo Bluetooth (o bloco Mensagens da IDE): para outro robô (`para='nome'`) ou para quem estiver conectado; no simulador as enviadas aparecem em Variáveis |
+| `ligar_bluetooth()`, `desligar_bluetooth()` | o Bluetooth do robô |
 
 Os números dos botões da controladora (`BOTAO_CIMA`, `BOTAO_ESQUERDA`...) ficam no `calibracao.py`: se a
 tarefa **Teste geral no robô** mostrar outros números, troque lá. Rotação do motor, giroscópio, cronômetro,
-aleatório e arredondar seguem a tabela de compilação da própria IDE para esses blocos, mas ninguém viu ainda
-no robô.
+aleatório, arredondar e mensagens seguem a tabela de compilação da própria IDE para esses blocos, mas ninguém
+viu ainda no robô. A controladora não manda as leituras dos sensores para o computador (nem para a IDE: o
+"monitor" dela mostra só o que está ligado em cada porta); com as mensagens, um programa no robô poderá mandar
+valores para o celular, depois que o formato delas for conferido no laboratório (`ferramentas/bluetooth.py --escutar`).
 
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
 no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura
@@ -327,6 +342,9 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/testar_robo.py](ferramentas/testar_robo.py) | teste de conexão com o robô |
 | [ferramentas/ver_sensores.py](ferramentas/ver_sensores.py) | mostra a luz dos sensores S1, S2 e S3 na tela do robô (para medir o preto e o branco) |
 | [ferramentas/programas_no_robo.py](ferramentas/programas_no_robo.py) | lista, apaga, roda, baixa e copia os programas gravados no robô e mostra a bateria |
+| [ferramentas/bluetooth.py](ferramentas/bluetooth.py) | conecta ao robô pelo Bluetooth (como a IDE) e só pergunta firmware, portas e bateria; `--escutar` mostra o que o robô mandar |
+| [ferramentas/teste_protocolo.js](ferramentas/teste_protocolo.js) | testa o protocolo da página de programar (USB e Bluetooth) sem o robô |
+| [ferramentas/icones.py](ferramentas/icones.py) | desenha os ícones da página instalável (precisa do Pillow) |
 | [ferramentas/rodar.cmd](ferramentas/rodar.cmd) | as tarefas do VS Code usam o Python do pacote, se houver, ou o do computador |
 | [ferramentas/atualizar.py](ferramentas/atualizar.py) | tarefa "Atualizar o projeto" (baixa a versão nova sem mexer nos arquivos do professor) |
 | [ferramentas/empacotar.py](ferramentas/empacotar.py) | monta o pacote para Windows com o Python dentro |
@@ -345,8 +363,8 @@ O resultado esperado é `13/13 gabaritos identicos` e `linguagem em portugues: O
 (liga-desliga, proporcional e PID), parar na linha, tela, som, luz, esperar, ultrassom, `se(...)`,
 `repetir_ate(...)`, variáveis, `cor_vista`, envio em pedaços e "gravar sem executar".
 **Ainda não visto funcionando no robô:** o sensor de toque (os bytes batem com a IDE), `ao_mesmo_tempo`,
-os botões da controladora, `ajustando`, rotação do motor, giroscópio, cronômetro, o envio pelo navegador
-e as tarefas de apagar, rodar e copiar programas. Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
+os botões da controladora, `ajustando`, rotação do motor, giroscópio, cronômetro, mensagens, o envio pelo
+navegador (pelo USB e pelo Bluetooth) e as tarefas de apagar, rodar e copiar programas. Cada comando em português gera exatamente o que a IDE geraria para o bloco equivalente.
 A tarefa **Teste geral no robô** passa por todos esses, um de cada vez: manda um programa, diz o que deve
 acontecer, pergunta se aconteceu e no fim grava o resumo em `resultado_teste_geral.txt`.
 

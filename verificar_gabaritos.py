@@ -551,6 +551,15 @@ parar()""",
         ('aleatório e arredondar',
          """mostrar(arredondar(aleatorio(1, 6) / 2))""",
          lambda d: b'\x0d\x05' in d and re.search(rb'\x0e.{12}', d, re.S) is not None),
+        # bloco Mensagens e Bluetooth da IDE: escrita interna 0x33 tipo 6 (mensagens) e tipo 5 (ligar o Bluetooth)
+        ('mensagens pelo Bluetooth: enviar número, texto e lógico, receber número',
+         """ligar_bluetooth()
+enviar_mensagem('erro', luz_refletida(1) - 50)
+enviar_mensagem('oi', 'ola', para='robo2')
+enviar_mensagem('pronto', True)
+mostrar(mensagem_recebida('kp'))""",
+         lambda d: all(t in d for t in (b'\x33\x05\x01\x00', b'\x33\x06\x01\x0c', b'\x33\x06\x00\x0c', b'\x33\x06\x02\x09',
+                                        b'\x33\x06\x04\x09', b'EST-LAB', b'robo2', b'erro', b'kp'))),
     ]
     erros = [
         ('ajustes sem o passo', 'with ajustes(kp=0.4):\n    bip()', '(valor inicial, passo)'),
@@ -562,6 +571,7 @@ parar()""",
         ('cronômetro que não existe', 'mostrar(cronometro(9))', 'cronômetros 1 a 8'),
         ('rotação de motor em porta de sensor', 'mostrar(graus_do_motor(1))', 'não é de motor'),
         ('aleatório com os números trocados', 'mostrar(aleatorio(6, 1))', 'tem que ser o menor'),
+        ('título de mensagem com acento', "enviar_mensagem('ação', 1)", 'não serve'),
     ]
     ok = True
     with tempfile.TemporaryDirectory() as pasta:

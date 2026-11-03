@@ -38,6 +38,7 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'ajustes', 'medir_laco', 'calibrar_na_largada', 'limite_medido',
            'graus_do_motor', 'rotacoes_do_motor', 'potencia_do_motor', 'zerar_motor', 'giroscopio',
            'velocidade_do_giro', 'zerar_giroscopio', 'cronometro', 'zerar_cronometro', 'aleatorio', 'arredondar',
+           'enviar_mensagem', 'mensagem_recebida', 'ligar_bluetooth', 'desligar_bluetooth',
            'BOTAO_CIMA', 'BOTAO_BAIXO', 'BOTAO_ESQUERDA', 'BOTAO_DIREITA', 'BOTAO_CENTRO',
            'novo_programa', 'programa']
 
@@ -501,6 +502,46 @@ def arredondar(valor: float | Valor) -> float | Valor:
     if isinstance(valor, Valor):
         return Valor(_adiciona(_b.round_num(1, src=valor.bloco, out=valor.saida)), 3)
     return round(_const(valor))
+
+
+# Mensagens pelo Bluetooth: o bloco Mensagens da IDE, como as caixas de mensagem do EV3 (um título e um valor).
+# Seguem a tabela de compilação da IDE, mas ainda não foram conferidos no robô.
+
+def _texto_curto(texto, oque):
+    t = str(texto)
+    if not t or '|' in t or any(ord(c) > 126 or ord(c) < 32 for c in t):
+        raise ValueError(f'{oque} {texto!r} não serve: use letras sem acento, números e _ (sem "|")')
+    return t
+
+
+def enviar_mensagem(titulo: str, valor: float | str | bool | Valor, para: str = 'EST-LAB'):
+    """Manda uma mensagem pelo Bluetooth: para outro robô (para='nome do robô') ou para a página de programar
+    conectada pelo Bluetooth (para='EST-LAB', o padrão). Ex.: enviar_mensagem('erro', erro)
+    Ainda não conferido no robô."""
+    titulo, para = _texto_curto(titulo, 'o título'), _texto_curto(para, 'o nome de quem recebe')
+    if isinstance(valor, Valor):
+        return _adiciona(_b.message_send(titulo, para, 0, src=valor.bloco, out=valor.saida))
+    if isinstance(valor, str):
+        valor = _texto_curto(valor, 'a mensagem')
+    elif not isinstance(valor, bool):
+        valor = _const(valor)
+    return _adiciona(_b.message_send(titulo, para, valor))
+
+
+def mensagem_recebida(titulo: str) -> Valor:
+    """O último número que chegou pelo Bluetooth com esse título (0 enquanto nada chegou).
+    Ex.: kp = mensagem_recebida('kp')   Ainda não conferido no robô."""
+    return Valor(_adiciona(_b.message_receive_num(_texto_curto(titulo, 'o título'))), 11)
+
+
+def ligar_bluetooth():
+    """Liga o Bluetooth do robô. Ainda não conferido no robô."""
+    return _adiciona(_b.bluetooth(True))
+
+
+def desligar_bluetooth():
+    """Desliga o Bluetooth do robô. Ainda não conferido no robô."""
+    return _adiciona(_b.bluetooth(False))
 
 
 def ler(nome: str) -> Valor:

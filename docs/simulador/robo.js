@@ -187,6 +187,7 @@ class Robo {
     this.giro = 0;             // radianos que o robô girou desde o começo ou o último "zerar" (giroscópio perfeito)
     this.giroVel = 0;          // graus/s no último passo
     this.cronos = {};          // número do cronômetro -> instante do último "zerar" (sem zerar, conta desde 0)
+    this.mensagens = {};       // enviar_mensagem: título -> {para, valor} (o último enviado)
   }
 
   colocar(x, y, angGraus) {
@@ -378,6 +379,17 @@ class Robo {
     }
     if (tipo === 4) {
       this.luz = modo === 0 ? null : d.b(0) % 3;
+      return null;
+    }
+    if (tipo === 5) return null;                           // ligar/desligar o Bluetooth: nada a simular
+    if (tipo === 6) {
+      // mensagens (tabela de compilação da IDE, não conferido): título e quem recebe são endereços de texto
+      if (modo <= 2) {
+        const valor = modo === 0 ? d.texto(8) : modo === 1 ? d.f(8) : d.b(8) !== 0;
+        this.mensagens[d.texto(0)] = {para: d.texto(4), valor};
+      } else {
+        this.avisar('mensagem_recebida: no simulador não chega mensagem nenhuma, então dá 0.');
+      }
       return null;
     }
     this.avisar(`Dispositivo interno ${tipo} modo ${modo} ainda não simulado.`);

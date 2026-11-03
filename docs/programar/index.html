@@ -2,9 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Programe o robô EST pelo navegador, sem instalar nada: em Python ou com blocos, simule e envie pelo USB (Chrome ou Edge).">
+<!-- resizes-content: no celular, o teclado diminui a página, e a barra de programação fica logo acima dele -->
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<meta name="description" content="Programe o robô EST pelo navegador, sem instalar nada: em Python ou com blocos, simule e envie pelo USB ou pelo Bluetooth.">
+<meta name="theme-color" content="#0d1222">
 <title>Programar o robô EST</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css"
       integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous">
 <link rel="stylesheet" href="programar.css">
@@ -16,6 +21,8 @@
     EST-LAB <b>programar</b>
   </a>
   <nav class="links">
+    <button id="btInstalar" class="bt pequeno instalar" type="button" hidden
+            title="Põe a página na tela inicial, como um aplicativo (funciona sem internet)">📲 Instalar</button>
     <a href="../cola-do-aluno.pdf" target="_blank" rel="noopener">Cola de comandos</a>
     <a href="#ajuda">Como enviar</a>
   </nav>
@@ -32,12 +39,16 @@
         <input id="nome" type="text" value="meu_programa" maxlength="20" spellcheck="false" autocomplete="off"
                autocapitalize="off" title="Nome do programa no robô: letras, números e _ (até 20)"><span>.py</span>
       </label>
-      <label class="campo">Exemplo <select id="exemplo"><option value="">Escolha…</option></select></label>
-      <span class="arquivos">
-        <button id="btAbrir" class="bt pequeno" type="button" title="Abrir um arquivo .py do computador, ou um projeto .est da IDE EST (vira Python)">Abrir .py / .est</button>
-        <button id="btBaixar" class="bt pequeno" type="button" title="Baixar o programa como arquivo .py">Baixar .py</button>
-        <button id="btLink" class="bt pequeno" type="button" title="Copia um link com o programa dentro, para mandar a outra pessoa">Compartilhar link</button>
-      </span>
+      <!-- no celular estes ficam recolhidos atrás do botão "Arquivos" (o botão só aparece em tela estreita) -->
+      <button id="btExtras" class="bt pequeno so-celular" type="button" aria-expanded="false" aria-controls="extras">Arquivos ▾</button>
+      <div class="extras" id="extras">
+        <label class="campo">Exemplo <select id="exemplo"><option value="">Escolha…</option></select></label>
+        <span class="arquivos">
+          <button id="btAbrir" class="bt pequeno" type="button" title="Abrir um arquivo .py do computador, ou um projeto .est da IDE EST (vira Python)">Abrir .py / .est</button>
+          <button id="btBaixar" class="bt pequeno" type="button" title="Baixar o programa como arquivo .py">Baixar .py</button>
+          <button id="btLink" class="bt pequeno" type="button" title="Copia um link com o programa dentro, para mandar a outra pessoa">Compartilhar link</button>
+        </span>
+      </div>
       <input id="arquivo" type="file" accept=".py,.est,text/x-python,text/plain" hidden>
     </div>
     <div class="area-codigo" id="areaPython" role="tabpanel" aria-labelledby="abaPython">
@@ -48,15 +59,23 @@
       <div class="espelho">
         <div class="espelho-barra">
           <span>Python dos blocos</span>
+          <button id="btVerPython" class="bt pequeno ver-python" type="button" aria-expanded="false" aria-controls="espelhoCodigo">Ver</button>
           <button id="btLevar" class="bt pequeno" type="button" title="Copia este Python para a aba Python, para continuar escrevendo">Levar para o Python</button>
         </div>
-        <div class="espelho-codigo">
+        <div class="espelho-codigo" id="espelhoCodigo">
           <textarea id="pythonBlocos" spellcheck="false" aria-label="Python gerado pelos blocos (só leitura)"></textarea>
         </div>
       </div>
     </div>
     <p class="nota" id="guardado">O programa fica guardado neste navegador.</p>
   </section>
+
+  <!-- teclado de programação: no celular e no tablet, aparece logo acima do teclado enquanto o código está em edição.
+       Os botões não tiram o foco do editor (programar.js), então o teclado do aparelho continua aberto. -->
+  <div class="teclado" id="teclado" hidden role="toolbar" aria-label="Teclas de programação">
+    <div class="teclas" id="teclasSimbolos"></div>
+    <div class="teclas comandos" id="teclasComandos"></div>
+  </div>
 
   <aside class="painel">
     <section class="cartao acoes" aria-label="Simular e enviar">
@@ -66,8 +85,16 @@
         <button id="btGravar" class="bt" type="button" title="Grava no robô sem executar: inicie pelo menu do robô">Gravar sem executar</button>
         <p class="robo" id="estadoRobo" role="status"></p>
       </div>
+      <!-- Bluetooth (Web Serial): Chrome do Android e do computador. Ainda não conferido no robô. -->
+      <div id="blocoBluetooth" class="envio bluetooth" hidden>
+        <button id="btBluetooth" class="bt principal azul" type="button"
+                title="Compila, envia pelo Bluetooth e já executa (o robô precisa estar pareado)">ᛒ Enviar por Bluetooth</button>
+        <button id="btGravarBluetooth" class="bt" type="button" title="Grava pelo Bluetooth sem executar">Gravar pelo Bluetooth</button>
+        <p class="robo" id="estadoBluetooth" role="status">Pareie o robô no Bluetooth do aparelho antes (senha 1234).</p>
+      </div>
       <p class="sem-usb" id="semUsb" hidden>Para enviar ao robô, abra esta página no <b>Chrome</b> ou no <b>Edge</b>
-        de um computador (Windows, Mac ou Linux) ou de um Chromebook, com o robô no USB. Aqui dá para escrever e simular.</p>
+        de um computador ou Chromebook (pelo USB), ou no <b>Chrome</b> do Android (pelo Bluetooth). Aqui dá para
+        escrever e simular.</p>
       <p class="python" id="estadoPython" role="status">Preparando o Python do navegador…</p>
     </section>
 
@@ -91,6 +118,10 @@
       </ol>
       <p>No Linux, se o robô não aparecer na lista ou não abrir, o sistema precisa liberar o USB para o navegador
         (regra do udev para o dispositivo <code>0483:5750</code>).</p>
+      <p><b>No celular ou tablet Android</b> (Chrome): ligue o Bluetooth do robô e pareie nas configurações do
+        aparelho (a senha costuma ser <code>1234</code>). Depois use <b>Enviar por Bluetooth</b> e escolha o robô na
+        lista. O envio por Bluetooth ainda não foi conferido no robô: se não funcionar, conte o que apareceu nas
+        mensagens. <b>📲 Instalar</b> põe esta página na tela inicial, como um aplicativo.</p>
       <p>Na aba <b>Blocos</b> o programa é montado arrastando blocos, e ao lado aparece o Python que eles geram.
         <b>Levar para o Python</b> copia esse código para a aba Python, para continuar escrevendo.</p>
       <p>O programa fica guardado neste navegador. Para levar a outro computador, use <b>Baixar .py</b>; o mesmo

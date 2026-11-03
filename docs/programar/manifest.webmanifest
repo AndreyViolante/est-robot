@@ -1,0 +1,19 @@
+{
+  "name": "EST-LAB: programar o robô",
+  "short_name": "EST-LAB",
+  "description": "Programe o robô EST em Python ou com blocos, simule e envie ao robô. Funciona sem internet depois da primeira visita.",
+  "lang": "pt-BR",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1222",
+  "theme_color": "#0d1222",
+  "categories": ["education"],
+  "icons": [
+    {"src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

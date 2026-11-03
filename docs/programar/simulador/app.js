@@ -273,6 +273,11 @@ function reiniciar() {
   novaProva();
   placar = pista.obr && !editandoOBR && pista.obr.arena.percurso.length >= 2 && !pista.obr.erros.length
     ? new EST.OBR.Placar(pista) : null;
+  if (dirigir.ativo) {                      // dirigindo, reiniciar começa o caminho de novo
+    dirigir.toques = [];
+    dirigir.poses = [];
+    mostrarDirigindo();
+  }
   desenharLcd(true);
   atualizarTudo();
 }
@@ -366,13 +371,40 @@ function dimensionar() {
   vista.base = s * dpr;
 }
 
-// a lupa segue o robô; sem lupa, a pista inteira fica no meio
+// aumento extra (dois dedos no celular, ou os botões + e −) e o ponto da pista que fica no meio, em cm
+const zoom = {fator: 1, cx: null, cy: null};
+const ZOOM_MAXIMO = 6;
+const comLupa = () => !!($('lupa') && $('lupa').checked);
+
+// a lupa segue o robô; sem lupa, a pista inteira fica no meio (ou o ponto escolhido, com zoom)
 function ajustarVista() {
-  const lupa = $('lupa') && $('lupa').checked;
-  vista.escala = vista.base * (lupa ? LUPA : 1);
-  const cx = lupa ? robo.x : pista.largura / 2, cy = lupa ? robo.y : pista.altura / 2;
+  const lupa = comLupa();
+  vista.escala = vista.base * (lupa ? LUPA : 1) * zoom.fator;
+  const cx = lupa ? robo.x : zoom.cx ?? pista.largura / 2, cy = lupa ? robo.y : zoom.cy ?? pista.altura / 2;
   vista.x0 = cena.width / 2 - cx * vista.escala;
   vista.y0 = cena.height / 2 - cy * vista.escala;
+}
+
+/** Muda o zoom mantendo o ponto (px, py) da tela (pixels do canvas) no mesmo lugar da pista. */
+function zoomEm(fator, px = cena.width / 2, py = cena.height / 2) {
+  ajustarVista();
+  const mx = (px - vista.x0) / vista.escala, my = (py - vista.y0) / vista.escala;
+  zoom.fator = Math.max(1, Math.min(ZOOM_MAXIMO, fator));
+  const escala = vista.base * (comLupa() ? LUPA : 1) * zoom.fator;
+  zoom.cx = mx - (px - cena.width / 2) / escala;
+  zoom.cy = my - (py - cena.height / 2) / escala;
+  limitarZoom();
+}
+
+function limitarZoom() {
+  if (zoom.fator <= 1.001) { zoom.fator = 1; zoom.cx = zoom.cy = null; }
+  else {
+    zoom.cx = Math.max(0, Math.min(pista.largura, zoom.cx ?? pista.largura / 2));
+    zoom.cy = Math.max(0, Math.min(pista.altura, zoom.cy ?? pista.altura / 2));
+  }
+  $('btTudo').hidden = zoom.fator === 1;
+  $('btMenos').disabled = zoom.fator === 1;
+  $('btMais').disabled = zoom.fator >= ZOOM_MAXIMO;
 }
 
 function paraMundo(ev) {
@@ -583,6 +615,7 @@ function posicaoAlca() {
 
 function desenharAlca(c) {
   if (desafio || (estado === 'rodando' && !(arraste && arraste.tipo === 'girar'))) return;     // no desafio não gira
+  if (dirigir.ativo && dirigir.toques.length) return;      // dirigindo, o robô só anda pelas setas
   const [ax, ay] = posicaoAlca(), [fx, fy] = robo.ponto(robo.config.corpo.frente, 0);
   linha(c, fx, fy, ax, ay, 'rgba(34, 80, 255, 0.55)', 0.35);
   c.fillStyle = '#ffffff';
@@ -843,20 +876,64 @@ function dentroDoRobo(x, y) {
   return f >= -corpo.tras - 1 && f <= corpo.frente + 1 && Math.abs(l) <= corpo.largura / 2 + 1;
 }
 
-function oQueTemAqui(x, y) {
+function oQueTemAqui(x, y, toque = false) {
   const [ax, ay] = posicaoAlca();
-  if (Math.hypot(x - ax, y - ay) < Math.max(2.5, 10 / vista.escala * (window.devicePixelRatio || 1))) return {tipo: 'girar'};
+  const raio = (toque ? 26 : 10) / vista.escala * (window.devicePixelRatio || 1);     // o dedo precisa de alvo maior
+  if (Math.hypot(x - ax, y - ay) < Math.max(2.5, raio)) return {tipo: 'girar'};
   if (dentroDoRobo(x, y)) return {tipo: 'mover'};
   if (pista.obr) return null;               // na OBR os obstáculos são fixos no ladrilho
   const cx = pista.caixas.find(c => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h);
   return cx ? {tipo: 'caixa', caixa: cx} : null;
 }
 
+// dois dedos na pista: aproximar e afastar (pinça), mantendo o ponto entre os dedos embaixo deles
+const dedos = new Map();                    // pointerId -> {x, y} (pixels da tela)
+let pinca = null;                           // {dist, fator, mundo: [x, y]} no começo da pinça
+
+function meioDosDedos() {
+  const [a, b] = [...dedos.values()], r = cena.getBoundingClientRect(), k = cena.width / r.width;
+  return {px: ((a.x + b.x) / 2 - r.left) * k, py: ((a.y + b.y) / 2 - r.top) * k, dist: Math.hypot(a.x - b.x, a.y - b.y)};
+}
+
+function comecarPinca() {
+  if (arraste && (arraste.tipo === 'mover' || arraste.tipo === 'girar')) soltar({type: 'pointercancel'});
+  arraste = null;
+  ajustarVista();
+  const m = meioDosDedos();
+  pinca = {dist: Math.max(1, m.dist), fator: zoom.fator, mundo: [(m.px - vista.x0) / vista.escala, (m.py - vista.y0) / vista.escala]};
+}
+
+function seguirPinca() {
+  const m = meioDosDedos();
+  zoom.fator = Math.max(1, Math.min(ZOOM_MAXIMO, pinca.fator * m.dist / pinca.dist));
+  const escala = vista.base * (comLupa() ? LUPA : 1) * zoom.fator;
+  zoom.cx = pinca.mundo[0] - (m.px - cena.width / 2) / escala;
+  zoom.cy = pinca.mundo[1] - (m.py - cena.height / 2) / escala;
+  limitarZoom();
+}
+
 cena.addEventListener('pointerdown', ev => {
-  if (desafio) return;                      // no desafio o robô e a caixa ficam onde o desafio manda
+  if (ev.pointerType === 'touch') {
+    dedos.set(ev.pointerId, {x: ev.clientX, y: ev.clientY});
+    if (dedos.size === 2) { comecarPinca(); ev.preventDefault(); return; }
+    if (dedos.size > 2) return;
+  }
   const [x, y] = paraMundo(ev);
+  const toque = ev.pointerType === 'touch';
+  // com zoom, arrastar num lugar vazio da pista anda com a vista (também no desafio)
+  const vazio = !oQueTemAqui(x, y, toque) || desafio || (dirigir.ativo && dirigir.toques.length);
+  if (zoom.fator > 1 && !comLupa() && vazio && !editando && !(pista.obr && editandoOBR)) {
+    ajustarVista();
+    arraste = {tipo: 'vista', px: ev.clientX, py: ev.clientY, cx: zoom.cx, cy: zoom.cy};
+    cena.setPointerCapture(ev.pointerId);
+    cena.className = 'arrastando';
+    ev.preventDefault();
+    return;
+  }
+  if (desafio) return;                      // no desafio o robô e a caixa ficam onde o desafio manda
+  if (dirigir.ativo && dirigir.toques.length) return;     // dirigindo: o robô só anda pelas setas
   if (pista.obr && editandoOBR) { cliqueOBR(x, y, ev.shiftKey); ev.preventDefault(); return; }
-  let alvo = oQueTemAqui(x, y);
+  let alvo = oQueTemAqui(x, y, toque);
   // editando: a alça de girar vale sempre; o robô e as caixas se arrastam, menos quando o "Apagar" pega algo
   if (editando && !(alvo && alvo.tipo === 'girar')) {
     if (ferramenta === 'apagar') {
@@ -879,11 +956,22 @@ cena.addEventListener('pointerdown', ev => {
 });
 
 cena.addEventListener('pointermove', ev => {
+  if (dedos.has(ev.pointerId)) {
+    dedos.set(ev.pointerId, {x: ev.clientX, y: ev.clientY});
+    if (pinca && dedos.size === 2) { seguirPinca(); return; }
+  }
+  if (arraste && arraste.tipo === 'vista') {
+    const r = cena.getBoundingClientRect(), k = cena.width / r.width;
+    zoom.cx = arraste.cx - (ev.clientX - arraste.px) * k / vista.escala;
+    zoom.cy = arraste.cy - (ev.clientY - arraste.py) * k / vista.escala;
+    limitarZoom();
+    return;
+  }
   const [x, y] = paraMundo(ev);
   if (!arraste) {
     if (desafio) { cena.className = ''; return; }
     if (pista.obr && editandoOBR) { cena.className = 'desenhar'; return; }
-    const alvo = oQueTemAqui(x, y), girar = alvo && alvo.tipo === 'girar';
+    const alvo = oQueTemAqui(x, y, ev.pointerType === 'touch'), girar = alvo && alvo.tipo === 'girar';
     marcado = editando && ferramenta === 'apagar' && !girar ? itemEm(x, y) : null;
     mira = editando && ferramenta !== 'apagar' && !alvo ? {x, y, livre: ev.shiftKey} : null;
     cena.className = marcado ? 'apagar' : alvo ? (girar ? 'girar' : 'pega') : editando ? 'desenhar' : '';
@@ -914,9 +1002,14 @@ cena.addEventListener('pointermove', ev => {
 });
 
 function soltar(ev) {
+  if (ev.pointerId !== undefined) {
+    dedos.delete(ev.pointerId);
+    if (dedos.size < 2) pinca = null;
+  }
   if (!arraste) return;
   const a = arraste;
   arraste = null;
+  if (a.tipo === 'vista') { cena.className = ''; return; }
   if (a.tipo === 'linha') {
     if (ev.type !== 'pointercancel') terminarLinha(a.seg);
   } else if (a.tipo === 'apagar') {
@@ -937,6 +1030,138 @@ function soltar(ev) {
 cena.addEventListener('pointerup', soltar);
 cena.addEventListener('pointercancel', soltar);
 cena.addEventListener('pointerleave', () => { if (!arraste) mira = marcado = null; });
+
+// botões + − ⤢ e a pinça do touchpad (que o navegador manda como roda com Ctrl)
+$('btMais').addEventListener('click', () => zoomEm(zoom.fator * 1.5));
+$('btMenos').addEventListener('click', () => zoomEm(zoom.fator / 1.5));
+$('btTudo').addEventListener('click', () => { zoom.fator = 1; limitarZoom(); });
+cena.addEventListener('wheel', ev => {
+  if (!ev.ctrlKey) return;                  // a roda sozinha continua rolando a página
+  ev.preventDefault();
+  const r = cena.getBoundingClientRect(), k = cena.width / r.width;
+  zoomEm(zoom.fator * Math.exp(-ev.deltaY * 0.01), (ev.clientX - r.left) * k, (ev.clientY - r.top) * k);
+}, {passive: false});
+
+// ---------------------------------------------------------------- dirigir: o aluno anda com o robô e a página escreve o programa
+// Cada toque numa seta liga os motores simulados como o andar_cm / virar_direita do robo.py ligariam (mesma conta de
+// graus da roda), e o toque vira uma linha do programa; toques seguidos no mesmo sentido se juntam numa linha só.
+
+const dirigir = {ativo: false, toques: [], poses: []};     // toques: {tipo: 'andar' | 'virar', v}; poses: antes de cada um
+
+const motoresParados = () => Object.values(robo.motores).every(m => m.feito);
+
+function juntarToques(toques) {
+  const linhas = [];
+  for (const t of toques) {
+    const ult = linhas[linhas.length - 1];
+    if (ult && ult.tipo === t.tipo) {
+      ult.v += t.v;
+      if (Math.abs(ult.v) < 1e-9) linhas.pop();          // foi e voltou: some
+    } else {
+      linhas.push({...t});
+    }
+  }
+  return linhas;
+}
+
+function codigoDirigindo() {
+  const n = v => String(Math.round(v * 10) / 10);
+  const linhas = juntarToques(dirigir.toques).map(t => (t.tipo === 'andar' ? `andar_cm(${n(t.v)})`
+    : t.v > 0 ? `virar_direita(${n(t.v)})` : `virar_esquerda(${n(-t.v)})`));
+  return `from robo import *\n\n${linhas.length ? linhas.join('\n') : '# use as setas: cada toque vira uma linha aqui'}\n`;
+}
+
+function mostrarDirigindo() {
+  $('codigoDirigir').textContent = codigoDirigindo();
+  $('codigoDirigir').scrollTop = $('codigoDirigir').scrollHeight;
+  $('btDesfazerDirigir').disabled = !dirigir.toques.length;
+  $('btRecomecarDirigir').disabled = !dirigir.toques.length;
+  $('btLevarDirigir').disabled = !dirigir.toques.length;
+}
+
+function moverDirigindo(tipo) {
+  if (!dirigir.ativo || !motoresParados()) return;         // espera o movimento anterior acabar
+  const cfg = robo.config, k = robo.k, s = cfg.invertido ? -1 : 1;
+  const esq = robo.motores[cfg.motor_esquerdo], dir = robo.motores[cfg.motor_direito];
+  dirigir.poses.push({x: robo.x, y: robo.y, ang: robo.angGraus});
+  if (tipo === 'frente' || tipo === 're') {
+    const cm = +$('passoCm').value * (tipo === 're' ? -1 : 1);
+    const graus = Math.abs(cm) / (Math.PI * cfg.roda_cm) * 360, p = 50 * Math.sign(cm) * s;
+    esq.curso(p, graus, true, k);
+    dir.curso(p, graus, true, k);
+    dirigir.toques.push({tipo: 'andar', v: cm});
+  } else {
+    const g = +$('passoGraus').value * (tipo === 'esquerda' ? -1 : 1);          // + = direita, como o ângulo da pista
+    const graus = Math.abs(g) * cfg.entre_rodas_cm / cfg.roda_cm, p = 30 * s;
+    esq.curso(g > 0 ? p : -p, graus, true, k);
+    dir.curso(g > 0 ? -p : p, graus, true, k);
+    dirigir.toques.push({tipo: 'virar', v: g});
+  }
+  mostrarDirigindo();
+}
+
+function voltarDirigindo(pose) {
+  for (const m of Object.values(robo.motores)) m.parar(true);
+  robo.colocar(pose.x, pose.y, pose.ang);
+  if (robo.rastro[robo.rastro.length - 1] !== null) robo.rastro.push(null);
+  robo.rastro.push([robo.x, robo.y]);
+}
+
+function entrarDirigir() {
+  if (desafio) return;
+  reiniciar();                              // robô na largada, programa parado
+  dirigir.ativo = true;
+  dirigir.toques = [];
+  dirigir.poses = [];
+  $('btDirigir').setAttribute('aria-pressed', 'true');
+  $('cartaoDirigir').hidden = false;
+  mostrarDirigindo();
+  atualizarEstado();
+}
+
+function pararDirigir() {
+  dirigir.ativo = false;
+  $('btDirigir').setAttribute('aria-pressed', 'false');
+  $('cartaoDirigir').hidden = true;
+}
+
+function sairDirigir() {
+  if (!dirigir.ativo) return;
+  pararDirigir();
+  reiniciar();                              // de volta para a largada
+}
+
+$('btDirigir').addEventListener('click', () => (dirigir.ativo ? sairDirigir() : entrarDirigir()));
+for (const b of document.querySelectorAll('[data-mover]')) b.addEventListener('click', () => moverDirigindo(b.dataset.mover));
+$('btDesfazerDirigir').addEventListener('click', () => {
+  if (!dirigir.toques.length) return;
+  dirigir.toques.pop();
+  voltarDirigindo(dirigir.poses.pop());
+  mostrarDirigindo();
+});
+$('btRecomecarDirigir').addEventListener('click', () => {
+  if (!dirigir.poses.length) return;
+  const inicio = dirigir.poses[0];
+  dirigir.toques = [];
+  dirigir.poses = [];
+  voltarDirigindo(inicio);
+  robo.rastro = [[robo.x, robo.y]];
+  mostrarDirigindo();
+});
+$('btLevarDirigir').addEventListener('click', async () => {
+  const codigo = codigoDirigindo();
+  // dentro da página de programar, o programa vai direto para o editor dela
+  let pai = null;
+  try { pai = window.parent !== window && typeof window.parent.ESTDoSimulador === 'function' ? window.parent : null; } catch (e) { /* outra origem */ }
+  if (pai) { pai.ESTDoSimulador(codigo); return; }
+  try {
+    await navigator.clipboard.writeText(codigo);
+    $('btLevarDirigir').textContent = 'Copiado! Cole no seu programa';
+  } catch (e) {
+    $('btLevarDirigir').textContent = 'Selecione o programa acima e copie';
+  }
+  setTimeout(() => { $('btLevarDirigir').textContent = 'Levar para o código'; }, 2500);
+});
 
 // ---------------------------------------------------------------- painel
 
@@ -986,12 +1211,15 @@ function atualizarMotores() {
 
 function atualizarVariaveis() {
   const nomes = P && vm ? Object.keys(P.variaveis || {}) : [];
-  $('cartaoVariaveis').hidden = !nomes.length;
-  if (!nomes.length) return;
+  const mensagens = Object.entries(robo.mensagens);          // enviar_mensagem: o último valor de cada título
+  $('cartaoVariaveis').hidden = !nomes.length && !mensagens.length;
+  if (!nomes.length && !mensagens.length) return;
+  const texto = v => (typeof v === 'number' ? EST.numeroParaTexto(v).replace('.', ',') : String(v));
   $('variaveis').innerHTML = nomes.map(n => {
     const v = vm.lerFloat(P.variaveis[n]);
-    return `<tr><td>${escapar(n)}</td><td class="num">${EST.numeroParaTexto(v).replace('.', ',')}</td></tr>`;
-  }).join('');
+    return `<tr><td>${escapar(n)}</td><td class="num">${texto(v)}</td></tr>`;
+  }).join('') + mensagens.map(([titulo, m]) =>
+    `<tr title="mensagem para ${escapar(m.para)}"><td>✉ ${escapar(titulo)}</td><td class="num">${escapar(texto(m.valor))}</td></tr>`).join('');
 }
 
 function escapar(s) {
@@ -1063,8 +1291,9 @@ const TEXTO_ESTADO = {
 
 function atualizarEstado() {
   const bt = $('btExecutar');
-  bt.disabled = !vm;
-  $('btProxima').disabled = !vm || !marcas.length;
+  bt.disabled = !vm || dirigir.ativo;
+  $('btProxima').disabled = !vm || !marcas.length || dirigir.ativo;
+  $('btDirigir').hidden = !!desafio;
   bt.textContent = {rodando: '⏸ Pausar', pausado: '▶ Continuar', terminou: '▶ Executar de novo', erro: '▶ Executar de novo'}[estado] || '▶ Executar';
   const el = $('estado');
   el.className = 'estado' + (estado === 'terminou' ? ' ok' : estado === 'erro' ? ' erro' : '');
@@ -1079,6 +1308,7 @@ function atualizarEstado() {
     el.textContent = motivoParada.tipo === 'parada' ? `Ponto de parada: pausado na linha ${motivoParada.linha}`
       : `Pausado na linha ${motivoParada.linha}: aperte Próxima linha ou Continuar`;
   } else if (estado === 'rodando' && passoAPasso) el.textContent = 'Executando até a próxima linha';
+  else if (dirigir.ativo) el.textContent = 'Dirigindo: use as setas (no teclado também: ↑ ↓ ← →)';
   else el.textContent = TEXTO_ESTADO[estado];
   if (erroCarga) el.className = 'estado erro';
 }
@@ -1191,6 +1421,9 @@ function trocarPista(id) {
   $('pista').value = pista.id;
   if (pista.id === MINHA && !pista.linhas.length) editando = true;      // pista em branco: já abre desenhando
   if (pista.id === MINHA_OBR && !pista.obr.arena.percurso.length) editandoOBR = true;
+  pararDirigir();
+  zoom.fator = 1;                           // pista nova: vista inteira
+  limitarZoom();
   atualizarEditor();
   dimensionar();
   reiniciar();
@@ -1529,6 +1762,9 @@ function entrarDesafio(id) {
   robo.pista = pista;
   $('pista').value = 'desafio';
   montarSeletorDesafio();
+  pararDirigir();
+  zoom.fator = 1;
+  limitarZoom();
   atualizarEditor();
   dimensionar();
   reiniciar();
@@ -1743,6 +1979,12 @@ document.addEventListener('keydown', ev => {
   }
   if (ev.key === 'Escape' && arraste && arraste.tipo === 'linha') { arraste = null; return; }   // desiste da linha
   if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const SETAS = {ArrowUp: 'frente', ArrowDown: 're', ArrowLeft: 'esquerda', ArrowRight: 'direita'};
+  if (dirigir.ativo && SETAS[ev.key] && !digitando && tag !== 'SELECT') {
+    moverDirigindo(SETAS[ev.key]);
+    ev.preventDefault();
+    return;
+  }
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SUMMARY') return;
   if (ev.key === ' ') { executarOuPausar(); ev.preventDefault(); }
   else if (ev.key === 'r' || ev.key === 'R') reiniciar();
@@ -1793,6 +2035,11 @@ function quadro(agora) {
     while (acumulado >= DT && n < MAX_PASSOS && estado !== 'pausado') { passo(); acumulado -= DT; n++; }
     if (n >= MAX_PASSOS || estado === 'pausado') acumulado = 0;
     desenharLcd();
+  } else if (dirigir.ativo && !motoresParados()) {     // dirigindo: só a física, sem programa
+    acumulado += real * velocidade;
+    let n = 0;
+    while (acumulado >= DT && n < MAX_PASSOS) { robo.avancar(DT, tSim + DT); tSim += DT; acumulado -= DT; n++; }
+    if (motoresParados()) acumulado = 0;
   }
   desenhar();
   if (agora - ultimoPainel > 100) { ultimoPainel = agora; atualizarPainel(); }

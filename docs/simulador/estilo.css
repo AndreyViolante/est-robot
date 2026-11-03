@@ -84,7 +84,25 @@ button, select, input { font: inherit; color: inherit; }
 .estado { font-size: 0.9rem; color: var(--muted); }
 .estado.ok { color: var(--ok); } .estado.erro { color: var(--erro); font-weight: 600; }
 
-.quadro { background: var(--mesa); border-radius: 12px; overflow: hidden; touch-action: none; }
+.quadro { position: relative; background: var(--mesa); border-radius: 12px; overflow: hidden; touch-action: none; }
+/* aproximar a pista: botões no canto (no celular também dá com dois dedos) */
+.zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; }
+.zoom button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel);
+               color: var(--fg); font: 600 1.1rem var(--body); cursor: pointer; opacity: 0.88; }
+.zoom button:hover { opacity: 1; border-color: var(--led-azul); color: var(--led-azul); }
+/* dirigir: setas em cruz e o programa que vai se escrevendo */
+.desafio.dirigir { border-left-color: var(--led-roxo); }
+.dirigir-corpo { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-start; }
+.setas { display: grid; grid-template-columns: repeat(3, 3.2em); grid-template-rows: repeat(2, 3em); gap: 6px; flex: none; }
+.setas button { border: 2px solid var(--fg); border-radius: 10px; background: var(--panel); font-size: 1.2rem; cursor: pointer;
+                touch-action: manipulation; user-select: none; }
+.setas button:hover:not(:disabled) { border-color: var(--led-azul); color: var(--led-azul); }
+.setas button:active:not(:disabled) { background: var(--fg); color: var(--bg); }
+.setas button:disabled { opacity: 0.4; cursor: progress; }
+.setas .s-frente { grid-area: 1 / 2; } .setas .s-esq { grid-area: 2 / 1; } .setas .s-re { grid-area: 2 / 2; } .setas .s-dir { grid-area: 2 / 3; }
+.dirigir-lado { display: grid; gap: 6px; flex: 1 1 220px; min-width: 0; }
+.dirigir-passos { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.codigo-dirigir { padding: 6px 10px; max-height: 9.5em; white-space: pre; }
 .quadro canvas { display: block; width: 100%; cursor: default; }
 .quadro canvas.pega { cursor: grab; } .quadro canvas.girar { cursor: crosshair; } .quadro canvas.arrastando { cursor: grabbing; }
 .quadro canvas.desenhar { cursor: crosshair; } .quadro canvas.apagar { cursor: pointer; }
@@ -212,3 +230,20 @@ details.cartao[open] summary { margin-bottom: 8px; }
 .rodape .demo { margin: 0 0 8px; font-size: 0.9rem; color: var(--fg); }
 .rodape a { color: var(--led-azul); }
 kbd { font: 0.78rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
+/* ---- toque: botões, setas e caixas maiores para o dedo ---- */
+@media (pointer: coarse) {
+  .bt { padding: 10px 18px; }
+  .bt.pequeno { padding: 8px 14px; font-size: 0.9rem; }
+  .campo select, .campo input[type="number"] { padding: 7px 8px; }
+  .marcar input { width: 20px; height: 20px; }
+  .zoom button { width: 44px; height: 44px; }
+  .setas { grid-template-columns: repeat(3, 3.8em); grid-template-rows: repeat(2, 3.4em); }
+  .cruz { grid-template-columns: repeat(3, 3.4em); grid-template-rows: repeat(3, 3em); }
+  .fonte .nl.cod { width: 4em; }
+}
+@media (max-width: 600px) {
+  .layout { padding-inline: 10px; gap: 12px; }
+  .comandos { gap: 6px 8px; }
+  .bt.principal { min-width: 0; }
+}

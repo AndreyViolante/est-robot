@@ -34,8 +34,34 @@
         </select>
       </label>
       <span class="relogio" id="relogio" aria-label="Tempo simulado">0,0 s</span>
+      <button id="btDirigir" class="bt" type="button" aria-pressed="false"
+              title="Você dirige o robô com as setas e a página escreve o programa que faz o mesmo caminho">🎮 Dirigir</button>
       <span class="estado" id="estado" role="status">Carregando…</span>
     </div>
+
+    <section class="desafio dirigir" id="cartaoDirigir" hidden aria-labelledby="dirigirTitulo">
+      <div class="desafio-topo"><span id="dirigirTitulo">Dirigir · o robô anda e o programa se escreve</span></div>
+      <div class="dirigir-corpo">
+        <div class="setas" role="group" aria-label="Setas para dirigir o robô">
+          <button type="button" class="s-frente" data-mover="frente" aria-label="Andar para a frente">▲</button>
+          <button type="button" class="s-esq" data-mover="esquerda" aria-label="Virar à esquerda">↶</button>
+          <button type="button" class="s-dir" data-mover="direita" aria-label="Virar à direita">↷</button>
+          <button type="button" class="s-re" data-mover="re" aria-label="Andar de ré">▼</button>
+        </div>
+        <div class="dirigir-lado">
+          <div class="dirigir-passos">
+            <label class="campo">Andar <select id="passoCm"><option>5</option><option selected>10</option><option>20</option><option>30</option></select> cm</label>
+            <label class="campo">Virar <select id="passoGraus"><option>15</option><option selected>45</option><option>90</option></select> graus</label>
+          </div>
+          <pre class="fonte codigo-dirigir" id="codigoDirigir" aria-label="Programa escrito enquanto você dirige"></pre>
+          <div class="desafio-acoes">
+            <button id="btDesfazerDirigir" class="bt pequeno" type="button">↶ Desfazer</button>
+            <button id="btRecomecarDirigir" class="bt pequeno" type="button">⟲ Recomeçar</button>
+            <button id="btLevarDirigir" class="bt pequeno" type="button">Levar para o código</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="desafio" id="cartaoDesafio" hidden aria-labelledby="desafioTitulo">
       <div class="desafio-topo"><span id="desafioNum">Desafio</span><span id="desafioProgresso"></span></div>
@@ -69,6 +95,11 @@
 
     <div class="quadro" id="quadro">
       <canvas id="cena" aria-label="Pista vista de cima com o robô"></canvas>
+      <div class="zoom" role="group" aria-label="Aproximar a pista">
+        <button type="button" id="btMais" aria-label="Aproximar" title="Aproximar (no celular: dois dedos)">+</button>
+        <button type="button" id="btMenos" aria-label="Afastar" title="Afastar">−</button>
+        <button type="button" id="btTudo" aria-label="Ver a pista inteira" title="Ver a pista inteira" hidden>⤢</button>
+      </div>
     </div>
 
     <div class="opcoes">
@@ -188,7 +219,8 @@
     escolha <b>Terminal → Executar Tarefa → Simular no computador</b>.</p>
   O simulador executa os mesmos bytes que vão para o robô, mas o robô de verdade escorrega, a bateria
   muda a velocidade e os sensores variam com a luz: confira no robô antes da prova.
-  Atalhos: <kbd>Espaço</kbd> executa/pausa, <kbd>N</kbd> próxima linha, <kbd>R</kbd> reinicia.
+  Atalhos: <kbd>Espaço</kbd> executa/pausa, <kbd>N</kbd> próxima linha, <kbd>R</kbd> reinicia; dirigindo, as setas do
+  teclado andam com o robô. No celular, dois dedos aproximam e afastam a pista.
 </footer>
 
 <script src="vm.js"></script>

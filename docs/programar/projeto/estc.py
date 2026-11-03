@@ -129,6 +129,15 @@ MODELOS = {
        for m, tipo in (('1', 5), ('2', 4), ('3', 3))},
     # aleatorio entre dois numeros (0x0E)
     ('4010', '1'): Modelo([(1, _F), (2, _F), (5, SAIDA_F, 4)], [1, 2], [(0x0E, [_r(5), _r(1), _r(2)])]),
+    # mensagens (escrita interna 0x33 tipo 6, como as caixas de mensagem do EV3): o id 0 e o titulo, o 1 o nome de quem
+    # recebe; enviar texto (modo 0), numero (1) ou logico (2); receber numero (modo 4, o valor sai no id 11)
+    ('5001', '1'): Modelo([(0, TEXTO), (1, TEXTO), (4, TEXTO)], [0, 1, 4], [_interno(6, 0, 12, 0)]),
+    ('5001', '2'): Modelo([(0, TEXTO), (1, TEXTO), (3, _F)], [0, 1, 3], [_interno(6, 1, 12, 0)]),
+    ('5001', '3'): Modelo([(0, TEXTO), (1, TEXTO), (2, _L)], [0, 1, 2], [_interno(6, 2, 9, 0)]),
+    ('5001', '5'): Modelo([(0, TEXTO), (11, SAIDA_F, 4), (13, SAIDA_B, 1)], [0], [_interno(6, 4, 9, 0)]),
+    # bluetooth do robo (escrita interna 0x33 tipo 5): ligar e desligar
+    ('5002', '1'): Modelo([], [], [(0x33, [_b(5), _b(1), _b(0), ('raw', FIO_VAZIO)])]),
+    ('5002', '2'): Modelo([], [], [(0x33, [_b(5), _b(0), _b(0), ('raw', FIO_VAZIO)])]),
     # ---- ao mesmo tempo (nao existe na IDE): cada tarefa e uma thread, todas iniciadas antes de esperar ----
     (PARALELO, '1'): Modelo([], [], []),
     # ---- contas e comparacoes ----
@@ -339,7 +348,7 @@ def compilar(cadeia, compat_ide_fios=False):
         elif tipo == TEXTO:
             vaga = p.texto[(id(b), hw)]
             if (id(b), hw) not in p.ligados:
-                t = _texto(b.port)
+                t = _texto(b.port if hw == 0 else b.param(hw))      # o texto do id 0 fica na porta, como na IDE
                 a.emite(b'\x2f' + _e(vaga) + bytes([len(t)]) + t)
             a.emite(b'\x02' + _e(end) + _e(vaga))
         elif tipo == ZERO_F:

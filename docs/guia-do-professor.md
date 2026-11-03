@@ -25,6 +25,15 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
   duas coisas ao mesmo tempo, sensor de toque, envio pelo navegador...) e grava o resultado em
   `resultado_teste_geral.txt`.
 - Imprima a [cola de comandos](cola-do-aluno.pdf) (uma folha frente e verso) e deixe uma em cada bancada.
+- **Escola com tablets ou celulares Android:** abra a [página de programar](https://andreyviolante.github.io/est-robot/programar/)
+  no Chrome e toque em **📲 Instalar**: ela fica na tela inicial e funciona sem internet. No aparelho os
+  alunos começam pelos blocos; na aba Python há uma barra com os símbolos e os comandos acima do teclado.
+  Para enviar, pareie o robô no Bluetooth do aparelho (senha 1234) e use **Enviar por Bluetooth**. O envio
+  por Bluetooth ainda não foi conferido no robô: antes da aula, confira com a tarefa **Testar o Bluetooth do
+  robô** num computador.
+- Para os mais novos, antes de digitar: no simulador, **🎮 Dirigir** deixa o aluno levar o robô pelas setas
+  enquanto a página escreve o programa (`andar_cm(20)`, `virar_direita(90)`). Peça o caminho de um quadrado
+  dirigindo, leve para o código e mostre que o robô faz igual sozinho; depois o desafio é mudar os números.
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
   programas deste guia usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
 - Rode o quadrado da aula 2. Os valores do `calibracao.py` foram medidos num robô EST e fazem o
