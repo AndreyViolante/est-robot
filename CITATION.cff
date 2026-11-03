@@ -11,8 +11,8 @@ authors:
   - given-names: Andrey
     family-names: Violante
 doi: 10.5281/zenodo.23692767         # todas as versões (cada versão tem o seu no Zenodo)
-version: "0.1.4"
-date-released: "2026-10-27"
+version: "0.1.5"
+date-released: "2026-11-03"
 license: MIT
 repository-code: "https://github.com/AndreyViolante/est-robot"
 url: "https://andreyviolante.github.io/est-robot/"

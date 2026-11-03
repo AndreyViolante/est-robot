@@ -3,6 +3,34 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.5 (03/11/2026)
+
+- O projeto agora se chama **EST-LAB** (antes EST-ROBOT). O endereço, o pacote e os seus arquivos continuam
+  os mesmos.
+- **Celular e tablet Android:** a página de programar pode ir para a tela inicial (botão 📲 Instalar) e
+  funciona sem internet. No aparelho ela começa nos blocos; na aba Python, uma barra acima do teclado tem os
+  símbolos difíceis de achar e os comandos mais usados. O envio por Bluetooth pelo Chrome do Android está
+  pronto, mas ainda não foi conferido no robô: a tarefa "Testar o Bluetooth do robô" confere pelo computador,
+  só fazendo perguntas ao robô.
+- Simulador: **🎮 Dirigir**, em que o aluno leva o robô pelas setas e o programa se escreve sozinho
+  (`andar_cm`, `virar_direita`), e zoom com dois dedos ou com os botões + e −.
+- **Arena da OBR** no simulador: percurso com linha em ladrilhos de 30 cm, como no manual 2026, com a
+  pontuação da rodada. E o guia da OBR (`docs/guia-obr.md`): como organizar, testar e ajustar o programa.
+- Para a competição: `calibrar_na_largada(1, 2)` mede o preto e o branco na própria pista,
+  `with ajustes(kp=(0.4, 0.05)):` muda números pelos botões do robô, sem cabo, e `with medir_laco(5):` mostra
+  quantas voltas por segundo o laço faz. Os números dos botões ficam no `calibracao.py`.
+- **Abrir programa da IDE (.est):** o projeto feito na IDE EST vira Python, com os Meus Blocos como funções,
+  e a página diz se a tradução é exata (os mesmos bytes que a IDE manda).
+- Programas no robô: rodar um programa já gravado, baixar para a pasta `do_robo` (o simulador abre o
+  arquivo baixado) e copiar para os outros robôs da turma.
+- O envio avisa quando o sensor ligado na porta é de outro tipo que o do programa (sensores trocados).
+- Comandos novos, que seguem a tabela da IDE mas ainda não foram vistos no robô: `graus_do_motor`,
+  `giroscopio`, `cronometro` (e os `zerar_...`), `aleatorio`, `arredondar` e as mensagens pelo Bluetooth
+  `enviar_mensagem` e `mensagem_recebida`.
+- Página de programar: **Compartilhar link** (o programa vai dentro do próprio link) e modo sem internet.
+- A tarefa "Teste geral no robô" confere também rodar, baixar e copiar programas, a rotação do motor, o
+  cronômetro e o giroscópio.
+
 ## 0.1.4 (27/10/2026)
 
 - Registro no Zenodo: cada versão publicada ganha um DOI permanente, para citar o EST-ROBOT em
