@@ -3,6 +3,14 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.6 (04/11/2026)
+
+- Na aba **Blocos** da página de programar, o botão **Trazer do Python** faz o caminho de volta: o programa
+  escrito na aba Python vira blocos. O que ainda não tem bloco vira um bloco cinza "Python", com a linha como
+  está, e o programa continua fazendo o mesmo.
+- Blocos novos para montar: decidir pelo sensor (se o sensor vê a cor, a luz, a distância ou o toque, com o
+  "senão"), variáveis do Python e uma linha ou um valor em Python.
+
 ## 0.1.5 (03/11/2026)
 
 - O projeto agora se chama **EST-LAB** (antes EST-ROBOT). O endereço, o pacote e os seus arquivos continuam
