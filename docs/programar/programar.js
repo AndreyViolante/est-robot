@@ -621,18 +621,23 @@ if (temUsb) {
   atualizarRobo();
 } else {
   $('blocoEnvio').hidden = true;
+  $('btGravar').hidden = true;
 }
 if (temBluetooth) {
   $('blocoBluetooth').hidden = false;
+  $('btGravarBluetooth').hidden = false;
+  $('estadoBluetooth').hidden = false;
   $('btBluetooth').addEventListener('click', () => enviarPorBluetooth(true));
   $('btGravarBluetooth').addEventListener('click', () => enviarPorBluetooth(false));
-  if (temUsb) {          // no computador o USB vem primeiro: o Bluetooth fica como segunda opção, mais discreto
-    $('btBluetooth').classList.remove('principal', 'azul', 'grande');
-    $('btBluetooth').textContent = 'ᛒ Enviar';
-    $('blocoBluetooth').classList.add('secundario');
+  if (temUsb) {          // no computador o USB vem primeiro: o Bluetooth vai para as outras opções de envio
+    $('btBluetooth').className = 'item';
+    $('opcoesEnvio').prepend($('btBluetooth'));
+    $('blocoBluetooth').hidden = true;
   }
 }
 if (!temUsb && !temBluetooth) $('semUsb').hidden = false;
+// a setinha das outras opções de envio só aparece se houver alguma
+$('menuEnvio').hidden = ![...$('opcoesEnvio').children].some(b => !b.hidden);
 
 function guardarAgora() {
   if (blocos) blocos.salvar();
@@ -1051,24 +1056,31 @@ guardarVersao('ao abrir a página', {fonte: editor.valor(), nome: limparNome($('
 
 // ---------------------------------------------------------------- celular: arquivos e Python dos blocos recolhidos
 
-// menu Arquivo: abre e fecha no botão; fecha ao escolher, ao clicar fora e no Esc
-function menuArquivo(abrir) {
-  $('extras').classList.toggle('aberto', abrir);
-  $('btExtras').setAttribute('aria-expanded', String(abrir));
-  $('btExtras').textContent = abrir ? 'Arquivo ▴' : 'Arquivo ▾';
+// menus (Arquivo e as outras opções de envio): abrem e fecham no botão; fecham ao escolher, ao clicar fora e no Esc
+const MENUS = [{botao: 'btExtras', menu: 'extras', texto: 'Arquivo'}, {botao: 'btMaisEnvio', menu: 'opcoesEnvio'}];
+function abrirMenu(m, abrir) {
+  $(m.menu).classList.toggle('aberto', abrir);
+  $(m.botao).setAttribute('aria-expanded', String(abrir));
+  $(m.botao).textContent = `${m.texto ? m.texto + ' ' : ''}${abrir ? '▴' : '▾'}`;
 }
-$('btExtras').addEventListener('click', () => {
-  const abrir = !$('extras').classList.contains('aberto');
-  menuArquivo(abrir);
-  if (abrir) ($('extras').querySelector('select, button') || $('extras')).focus();
-});
-for (const item of $('extras').querySelectorAll('button')) item.addEventListener('click', () => menuArquivo(false));
-$('exemplo').addEventListener('change', () => menuArquivo(false));
+for (const m of MENUS) {
+  $(m.botao).addEventListener('click', () => {
+    const abrir = !$(m.menu).classList.contains('aberto');
+    for (const outro of MENUS) if (outro !== m) abrirMenu(outro, false);
+    abrirMenu(m, abrir);
+    if (abrir) ([...$(m.menu).querySelectorAll('select, button')].find(b => !b.hidden) || $(m.menu)).focus();
+  });
+  for (const item of $(m.menu).querySelectorAll('button')) item.addEventListener('click', () => abrirMenu(m, false));
+}
+$('exemplo').addEventListener('change', () => abrirMenu(MENUS[0], false));
 document.addEventListener('click', e => {
-  if ($('extras').classList.contains('aberto') && !e.target.closest('.menu-arquivo')) menuArquivo(false);
+  for (const m of MENUS) {
+    if ($(m.menu).classList.contains('aberto') && !$(m.menu).parentElement.contains(e.target)) abrirMenu(m, false);
+  }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && $('extras').classList.contains('aberto')) { menuArquivo(false); $('btExtras').focus(); }
+  if (e.key !== 'Escape') return;
+  for (const m of MENUS) if ($(m.menu).classList.contains('aberto')) { abrirMenu(m, false); $(m.botao).focus(); }
 });
 $('btVerPython').addEventListener('click', () => {
   const aberto = $('btVerPython').closest('.espelho').classList.toggle('aberto');

@@ -20,9 +20,9 @@
 <main class="layout">
   <section class="palco" aria-label="Pista">
     <div class="comandos">
-      <button id="btExecutar" class="bt principal" type="button" disabled>▶ Executar</button>
-      <button id="btReiniciar" class="bt" type="button">⟲ Reiniciar</button>
-      <button id="btProxima" class="bt" type="button" disabled title="Executa até o programa chegar na próxima linha e pausa (tecla N)">⏭ Próxima linha</button>
+      <button id="btExecutar" class="bt principal" type="button" disabled>Executar</button>
+      <button id="btReiniciar" class="bt" type="button">Reiniciar</button>
+      <button id="btProxima" class="bt" type="button" disabled title="Executa até o programa chegar na próxima linha e pausa (tecla N)">Próxima linha</button>
       <label class="campo">Velocidade
         <select id="velocidade">
           <option value="0.25">¼×</option>
@@ -35,7 +35,7 @@
       </label>
       <span class="relogio" id="relogio" aria-label="Tempo simulado">0,0 s</span>
       <button id="btDirigir" class="bt" type="button" aria-pressed="false"
-              title="Você dirige o robô com as setas e a página escreve o programa que faz o mesmo caminho">🎮 Dirigir</button>
+              title="Você dirige o robô com as setas e a página escreve o programa que faz o mesmo caminho">Dirigir</button>
       <span class="estado" id="estado" role="status">Carregando…</span>
     </div>
 
@@ -55,8 +55,8 @@
           </div>
           <pre class="fonte codigo-dirigir" id="codigoDirigir" aria-label="Programa escrito enquanto você dirige"></pre>
           <div class="desafio-acoes">
-            <button id="btDesfazerDirigir" class="bt pequeno" type="button">↶ Desfazer</button>
-            <button id="btRecomecarDirigir" class="bt pequeno" type="button">⟲ Recomeçar</button>
+            <button id="btDesfazerDirigir" class="bt pequeno" type="button">Desfazer</button>
+            <button id="btRecomecarDirigir" class="bt pequeno" type="button">Recomeçar</button>
             <button id="btLevarDirigir" class="bt pequeno" type="button">Levar para o código</button>
           </div>
         </div>
@@ -71,7 +71,7 @@
       <p class="desafio-status" id="desafioStatus"></p>
       <p class="so-leitor" id="avisoDesafio" aria-live="polite"></p>
       <div class="desafio-acoes">
-        <button id="btProximoDesafio" class="bt pequeno" type="button" hidden>Próximo desafio ▶</button>
+        <button id="btProximoDesafio" class="bt pequeno" type="button" hidden>Próximo desafio</button>
         <button id="btSairDesafio" class="bt pequeno" type="button">Sair do desafio</button>
         <details class="professor">
           <summary>Professor</summary>
@@ -113,7 +113,7 @@
       <label class="marcar" title="A luz refletida varia alguns pontos a cada leitura, como num sensor de verdade"><input type="checkbox" id="ruido"> Sensores com ruído</label>
     </div>
     <div class="editor" id="editor" hidden>
-      <button id="btEditar" class="bt pequeno" type="button" aria-pressed="false">✎ Desenhar a pista</button>
+      <button id="btEditar" class="bt pequeno" type="button" aria-pressed="false">Desenhar a pista</button>
       <div class="itens" id="itensEditor" hidden>
         <div class="ferramentas" role="radiogroup" aria-label="Ferramenta de desenho">
           <label><input type="radio" name="ferramenta" value="linha" checked><span>Linha</span></label>
@@ -121,7 +121,7 @@
           <label><input type="radio" name="ferramenta" value="caixa"><span>Caixa</span></label>
           <label><input type="radio" name="ferramenta" value="apagar"><span>Apagar</span></label>
         </div>
-        <button id="btDesfazer" class="bt pequeno" type="button" title="Desfaz a última mudança (Ctrl+Z)">↶ Desfazer</button>
+        <button id="btDesfazer" class="bt pequeno" type="button" title="Desfaz a última mudança (Ctrl+Z)">Desfazer</button>
         <button id="btApagarTudo" class="bt pequeno" type="button">Apagar tudo</button>
         <label class="campo">Mesa
           <input type="number" id="larguraMinha" min="60" max="400" step="10" aria-label="Largura da mesa em centímetros"> ×
@@ -129,10 +129,10 @@
       </div>
     </div>
     <div class="editor" id="editorOBR" hidden>
-      <button id="btMontarOBR" class="bt pequeno" type="button" aria-pressed="false">✎ Montar o percurso</button>
+      <button id="btMontarOBR" class="bt pequeno" type="button" aria-pressed="false">Montar o percurso</button>
       <div class="itens" id="itensOBR" hidden>
-        <button id="btTirarOBR" class="bt pequeno" type="button">↶ Tirar o último ladrilho</button>
-        <button id="btBecoOBR" class="bt pequeno" type="button" title="O robô volta para o ladrilho de antes: o último vira um beco sem saída (dois verdes)">↩ Meia-volta (beco)</button>
+        <button id="btTirarOBR" class="bt pequeno" type="button">Tirar o último ladrilho</button>
+        <button id="btBecoOBR" class="bt pequeno" type="button" title="O robô volta para o ladrilho de antes: o último vira um beco sem saída (dois verdes)">Meia-volta (beco)</button>
         <button id="btApagarOBR" class="bt pequeno" type="button">Apagar tudo</button>
         <label class="campo">Arena
           <input type="number" id="colunasOBR" min="2" max="12" aria-label="Ladrilhos na largura"> ×

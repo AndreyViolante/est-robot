@@ -1,7 +1,7 @@
 /* Página de programar o robô EST pelo navegador. Cores e tipos seguem o simulador e a página do projeto.
-   Organização (como os editores de robôs na web, ex. MakeCode e Pybricks): o caminho 1 Escreva, 2 Simule,
-   3 Envie fica à vista; o código ocupa o centro; os botões principais e as mensagens ficam numa coluna ao lado,
-   sempre visível; o que é de arquivo fica num menu só. */
+   Organização de editor de verdade (como o MakeCode e o Pybricks Code): a barra do editor tem o que se usa o
+   tempo todo (Python/Blocos, nome, Arquivo, Versões, Simular, Enviar); a coluna ao lado tem as mensagens e o
+   estado do robô. Botões retos, títulos normais, sem emojis nem sombras. */
 :root {
   --bg: #f1f3f8;
   --fg: #0d1222;
@@ -17,8 +17,7 @@
   --ok: #1d7f4e;
   --alerta: #a35a00;
   --erro: #c4252b;
-  --sombra: 0 1px 2px rgba(13, 18, 34, 0.06), 0 6px 18px rgba(13, 18, 34, 0.06);
-  --sombra-menu: 0 10px 30px rgba(13, 18, 34, 0.18);
+  --raio: 6px;
   --body: "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
   color-scheme: light;
@@ -29,7 +28,6 @@
     --code-bg: #060912; --code-fg: #dfe5f5;
     --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
     --ok: #4cc38a; --alerta: #f0a94b; --erro: #ff6b70;
-    --sombra: none; --sombra-menu: 0 10px 30px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
 }
@@ -38,7 +36,6 @@
   --code-bg: #060912; --code-fg: #dfe5f5;
   --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
   --ok: #4cc38a; --alerta: #f0a94b; --erro: #ff6b70;
-  --sombra: none; --sombra-menu: 0 10px 30px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
@@ -49,8 +46,7 @@ button, select, input { font: inherit; color: inherit; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--led-azul); outline-offset: 2px; border-radius: 4px; }
 [hidden] { display: none !important; }
-code, kbd { font-family: var(--mono); font-size: 0.92em; }
-kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--panel); }
+code { font-family: var(--mono); font-size: 0.92em; }
 html.travado { overflow: hidden; }
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -63,68 +59,61 @@ html.travado { overflow: hidden; }
 .leds { display: inline-flex; gap: 5px; }
 .led { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 .led.azul { background: var(--led-azul); } .led.roxo { background: var(--led-roxo); } .led.vermelho { background: var(--led-vermelho); }
-.links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; font: 600 0.85rem var(--mono); }
-.links a { text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
-.links a:hover { border-color: var(--fg); }
-.links .instalar { padding: 2px 10px; }
+.links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; font-size: 0.9rem; }
+.links a { text-decoration: none; color: var(--muted); }
+.links a:hover { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
 
-/* ---- layout: o código no centro, a coluna de simular/enviar/mensagens ao lado ---- */
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 370px); gap: 16px 20px;
+/* ---- layout: o editor e, ao lado, as mensagens ---- */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 16px;
           padding: 16px clamp(16px, 3vw, 28px) 24px; align-items: start; }
-.cartao { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0;
-          box-shadow: var(--sombra); }
-.cartao h2 { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0; }
-.painel { display: flex; flex-direction: column; gap: 14px; min-width: 0; position: sticky; top: 12px;
+.cartao { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.cartao h2 { font-size: 0.95rem; font-weight: 600; margin: 0 0 8px; }
+.painel { display: flex; flex-direction: column; gap: 12px; min-width: 0; position: sticky; top: 12px;
           max-height: calc(100vh - 24px); overflow: auto; scrollbar-width: thin; }
 .nota { font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
 
-/* etapas: 1 Escreva, 2 Simule, 3 Envie */
-.etapa { display: inline-flex; align-items: center; gap: 8px; font: 600 0.78rem var(--mono); letter-spacing: 0.08em;
-         text-transform: uppercase; color: var(--muted); margin: 0; }
-.etapa b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--fg);
-           color: var(--bg); font: 700 0.75rem var(--mono); letter-spacing: 0; }
-
 /* ---- editor ---- */
 .editor { display: grid; gap: 10px; }
-.barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.ferramentas { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.ferramentas { display: inline-flex; align-items: center; gap: 6px; }
+.executar { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
 .campo { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--muted); min-width: 0; }
-.campo input, .campo select { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; background: var(--bg);
+.campo input, .campo select { border: 1px solid var(--line); border-radius: var(--raio); padding: 4px 8px; background: var(--bg);
                               color: var(--fg); min-width: 0; }
-.campo.nome input { width: 15ch; font-family: var(--mono); }
+.campo.nome input { width: 14ch; font-family: var(--mono); }
 .campo.nome span { font-family: var(--mono); margin-left: -4px; }
 .campo select { max-width: 15em; }
-.area-codigo { border-radius: 10px; overflow: hidden; background: var(--code-bg); }
-.area-codigo textarea, .area-codigo .CodeMirror { height: clamp(340px, calc(100vh - 196px), 1000px); }
+.area-codigo { border-radius: var(--raio); overflow: hidden; background: var(--code-bg); }
+.area-codigo textarea, .area-codigo .CodeMirror { height: clamp(340px, calc(100vh - 190px), 1000px); }
 .area-codigo textarea { display: block; width: 100%; border: 0; resize: vertical; padding: 12px 14px; background: var(--code-bg);
                         color: var(--code-fg); font: 0.95rem/1.6 var(--mono); tab-size: 4; }
 .rodape-editor { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin: 0; }
 
-/* abas Python | Blocos */
-.abas { display: inline-flex; border: 2px solid var(--fg); border-radius: 999px; padding: 2px; gap: 2px; }
-.aba { border: 0; background: transparent; border-radius: 999px; padding: 3px 14px; font-weight: 600; cursor: pointer; }
+/* abas Python | Blocos: um seletor de duas partes */
+.abas { display: inline-flex; border: 1px solid var(--line); border-radius: var(--raio); overflow: hidden; }
+.aba { border: 0; background: var(--panel); padding: 4px 14px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.aba + .aba { border-left: 1px solid var(--line); }
 .aba[aria-selected="true"] { background: var(--fg); color: var(--bg); }
-.aba:hover:not([aria-selected="true"]) { color: var(--led-azul); }
+.aba:hover:not([aria-selected="true"]) { color: var(--fg); }
 
-/* menu Arquivo: tudo o que é de arquivo num lugar só */
-.menu-arquivo { position: relative; }
-.menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: min(330px, calc(100vw - 32px));
-        display: none; gap: 2px; padding: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-        box-shadow: var(--sombra-menu); }
+/* menus (Arquivo e as outras opções de envio) */
+.menu-arquivo, .menu-envio { position: relative; }
+.menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 250px; display: none; padding: 4px;
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--raio);
+        box-shadow: 0 6px 20px rgba(13, 18, 34, 0.16); }
+.menu-envio .menu { left: auto; right: 0; min-width: 210px; }
 .menu.aberto { display: grid; }
-.menu .exemplo { display: grid; gap: 4px; padding: 6px 8px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
-.menu .exemplo select { max-width: none; width: 100%; padding: 6px 8px; }
-.menu .item { display: grid; grid-template-columns: 1.7em minmax(0, 1fr); align-items: baseline; text-align: left; width: 100%;
-              border: 0; background: transparent; padding: 8px 8px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.menu .item .ico { grid-row: span 2; }
-.menu .item small { grid-column: 2; font-weight: 400; color: var(--muted); font-size: 0.8rem; }
-.menu .item:hover, .menu .item:focus-visible { background: var(--bg); color: var(--led-azul); }
+.menu .exemplo { display: grid; gap: 4px; padding: 6px 8px 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.menu .exemplo select { max-width: none; width: 100%; padding: 5px 8px; }
+.menu .item { display: block; text-align: left; width: 100%; border: 0; background: transparent; padding: 7px 10px;
+              border-radius: 4px; cursor: pointer; }
+.menu .item:hover, .menu .item:focus-visible { background: var(--bg); }
 
 /* área de blocos: blocos à esquerda, o Python que eles geram à direita */
 .area-blocos { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 10px;
-               height: clamp(380px, calc(100vh - 196px), 1000px); }
+               height: clamp(380px, calc(100vh - 190px), 1000px); }
 /* isolation: a caixa de categorias do Blockly tem z-index alto e passava por cima do simulador (.sim, z-index 10) */
-.blockly { position: relative; min-height: 0; min-width: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+.blockly { position: relative; min-height: 0; min-width: 0; border-radius: var(--raio); overflow: hidden; border: 1px solid var(--line);
            background: var(--bg); isolation: isolate; }
 .blockly .carregando { margin: 0; padding: 16px; color: var(--muted); }
 .blockly .blocklyToolboxCategoryLabel { font: 600 0.88rem var(--body); }
@@ -132,11 +121,11 @@ html.travado { overflow: hidden; }
   .blockly .blocklyToolboxCategoryLabel { font-size: 0.74rem; }
   .blockly .blocklyToolboxCategory { padding-right: 2px; }
 }
-.espelho { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--code-bg); border-radius: 10px;
+.espelho { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--code-bg); border-radius: var(--raio);
            overflow: hidden; }
 .espelho-barra { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
                  padding: 8px 10px; color: var(--code-fg); font: 600 0.8rem var(--mono); border-bottom: 1px solid #222a40; }
-.espelho-barra .bt { color: var(--code-fg); border-color: var(--code-fg); }
+.espelho-barra .bt { color: var(--code-fg); border-color: #3a4566; background: transparent; }
 .espelho-codigo { flex: 1; min-height: 0; }
 .espelho-codigo textarea, .espelho-codigo .CodeMirror { height: 100%; }
 .espelho-codigo textarea { display: block; width: 100%; border: 0; resize: none; padding: 12px 14px; background: var(--code-bg);
@@ -170,28 +159,23 @@ html.travado { overflow: hidden; }
 .linha-erro { background: rgba(226, 54, 58, 0.28); }
 .CodeMirror-gutter-wrapper .linha-erro-num, .linha-erro-num { background: #e2363a; color: #fff !important; }
 
-/* ---- botões ---- */
-.bt { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border-radius: 999px;
-      cursor: pointer; border: 2px solid var(--fg); background: transparent; font-weight: 600; }
-.bt:hover:not(:disabled) { border-color: var(--led-azul); color: var(--led-azul); }
-.bt.principal { background: var(--fg); color: var(--bg); }
-.bt.principal:hover:not(:disabled) { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
-.bt.azul { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
-.bt.pequeno { padding: 3px 12px; font-size: 0.85rem; border-width: 1px; }
-.bt.grande { width: 100%; padding-block: 12px; font-size: 1.05rem; }
+/* ---- botões: retos, um só cheio (o que envia ao robô) ---- */
+.bt { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 14px; border-radius: var(--raio);
+      cursor: pointer; border: 1px solid var(--line); background: var(--panel); font-weight: 600; white-space: nowrap; }
+.bt:hover:not(:disabled) { border-color: var(--fg); }
+.bt.principal { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
+.bt.principal:hover:not(:disabled) { filter: brightness(1.1); border-color: var(--led-azul); }
+.bt.pequeno { padding: 4px 10px; font-size: 0.88rem; }
+.bt.seta { padding-inline: 8px; }
+/* Enviar e a setinha das outras opções de envio formam um botão dividido */
+.executar:has(.envio:not([hidden])) .menu-envio:not([hidden]) .bt.seta {
+  margin-left: -7px; border-radius: 0 var(--raio) var(--raio) 0; background: var(--led-azul); border-color: var(--led-azul);
+  color: #fff; border-left-color: rgba(255, 255, 255, 0.45); }
+.executar:has(.menu-envio:not([hidden])) .envio .bt.principal { border-radius: var(--raio) 0 0 var(--raio); }
 .bt:disabled { opacity: 0.5; cursor: progress; }
 
-/* ---- coluna de ações: simular e enviar ---- */
-.acoes { display: grid; gap: 10px; }
-.acoes .etapa:not(:first-child) { margin-top: 6px; }
-.envio { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.envio > .bt.grande { flex: 1 0 100%; }
-.rotulo-bt { display: none; font-size: 0.85rem; color: var(--muted); }
-/* no computador o USB vem primeiro: o Bluetooth fica numa linha discreta, com os dois botões pequenos */
-.bluetooth.secundario { padding-top: 10px; border-top: 1px dashed var(--line); }
-.bluetooth.secundario .rotulo-bt { display: inline; }
-.bluetooth.secundario > #btBluetooth { flex: none; width: auto; padding: 3px 12px; font-size: 0.85rem; border-width: 1px; }
-.robo, .python { font-size: 0.82rem; color: var(--muted); margin: 0; display: flex; gap: 8px; align-items: baseline; flex: 1 0 100%; }
+/* estado do robô e do Python */
+.robo, .python { font-size: 0.85rem; color: var(--muted); margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
 .robo::before, .python::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line); flex: none;
                                  transform: translateY(-1px); }
 .robo:empty { display: none; }
@@ -199,33 +183,31 @@ html.travado { overflow: hidden; }
 .python.carregando::before { background: var(--alerta); animation: pisca 1s infinite alternate; }
 .python.falhou::before { background: var(--erro); }
 @keyframes pisca { to { opacity: 0.25; } }
-.sem-usb { margin: 0; font-size: 0.88rem; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px dashed var(--line); }
+.sem-usb { margin: 4px 0 0; font-size: 0.86rem; color: var(--muted); }
+.conexao { padding-bottom: 6px; }
 
-/* ---- mensagens: o console da página ---- */
-.console { display: grid; gap: 10px; }
-.console-topo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
-.console-topo .python { flex: 0 1 auto; }
-.mensagens { display: grid; gap: 10px; font-size: 0.92rem; }
-.mensagens .vazio { color: var(--muted); margin: 0; }
-.msg { border-left: 4px solid var(--line); padding: 8px 12px; border-radius: 4px 10px 10px 4px; background: var(--bg);
+/* ---- mensagens ---- */
+.mensagens { display: grid; gap: 8px; font-size: 0.92rem; }
+.mensagens .vazio { color: var(--muted); margin: 0; font-size: 0.88rem; }
+.msg { border-left: 3px solid var(--line); padding: 6px 10px; border-radius: 0 var(--raio) var(--raio) 0; background: var(--bg);
        overflow-wrap: anywhere; }
 .msg > b:first-child { display: block; }
 .msg p { margin: 4px 0 0; }
 .msg pre { margin: 6px 0 0; white-space: pre-wrap; font: 0.88rem/1.5 var(--mono); }
 .msg input.link { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 6px 8px;
                   font: 0.8rem var(--mono); color: var(--fg); background: var(--panel); border: 1px solid var(--line);
-                  border-radius: 6px; }
+                  border-radius: 4px; }
 .msg.ok { border-color: var(--ok); }
 .msg.ok > b:first-child { color: var(--ok); }
 .msg.aviso { border-color: var(--alerta); }
 .msg.aviso > b:first-child { color: var(--alerta); }
 .msg.erro { border-color: var(--erro); }
 .msg.erro > b:first-child { color: var(--erro); }
-.msg.erro pre { background: var(--code-bg); color: var(--code-fg); padding: 6px 10px; border-radius: 6px; }
-.msg.aviso pre { background: var(--panel); padding: 4px 8px; border-radius: 6px; }
+.msg.erro pre { background: var(--code-bg); color: var(--code-fg); padding: 6px 10px; border-radius: 4px; }
+.msg.aviso pre { background: var(--panel); padding: 4px 8px; border-radius: 4px; }
 .msg .bt { margin-top: 8px; }
 .msg.info > b:first-child { color: var(--led-azul); }
-.progresso { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.progresso { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 8px; }
 .progresso i { display: block; height: 100%; width: 0; background: var(--led-azul); transition: width .15s; }
 .detalhes summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; }
 .detalhes pre { font: 0.75rem/1.5 var(--mono); white-space: pre; overflow-x: auto; margin: 6px 0 0; }
@@ -253,7 +235,7 @@ html.travado { overflow: hidden; }
            padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
 .teclas { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
 .teclas::-webkit-scrollbar { display: none; }
-.teclas button { flex: none; min-width: 44px; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px;
+.teclas button { flex: none; min-width: 44px; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--raio);
                  background: var(--bg); color: var(--fg); font: 600 1.05rem var(--mono); cursor: pointer;
                  touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .teclas button:active { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
@@ -263,40 +245,32 @@ body.com-teclado { padding-bottom: 104px; }          /* o fim do código não fi
 
 /* ---- toque: botões e campos maiores para o dedo ---- */
 @media (pointer: coarse) {
-  .bt.pequeno { padding: 7px 14px; font-size: 0.9rem; }
-  .aba { padding: 7px 18px; }
+  .bt, .bt.pequeno { padding: 8px 14px; font-size: 0.92rem; }
+  .bt.seta { padding-inline: 10px; }
+  .aba { padding: 8px 18px; }
   .campo input, .campo select { padding: 7px 10px; }
   .menu .item { padding-block: 11px; }
   .ajuda summary { padding: 4px 0; }
 }
 
-/* ---- tela estreita: uma coluna; simular e enviar em cima, lado a lado ---- */
+/* ---- tela estreita: uma coluna; Simular e Enviar na primeira linha da barra ---- */
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
-  .painel { display: contents; }
-  .acoes { order: -1; grid-template-columns: 1fr 1fr; align-items: start; gap: 8px 10px; }
-  .acoes .etapa { display: none; }
-  /* Simular e o envio principal lado a lado; gravar e o estado do robô embaixo, na largura toda */
-  .envio:not(.secundario) { display: contents; }
-  .envio:not(.secundario) > .bt.pequeno { grid-column: 1 / -1; justify-self: start; }
-  .envio:not(.secundario) > .robo, .acoes > .envio.secundario, .acoes > .sem-usb { grid-column: 1 / -1; }
-  .envio > .bt.grande, .acoes > .bt.grande { padding-block: 10px; font-size: 1rem; }
+  .painel { position: static; max-height: none; overflow: visible; }
   .area-codigo textarea, .area-codigo .CodeMirror { height: clamp(300px, 58vh, 700px); }
 }
 @media (max-width: 600px) {
   .topo { padding-block: 8px; }
-  .links { gap: 4px 12px; }
+  .links { gap: 4px 14px; }
   .so-largo { display: none; }
-  .layout { padding-inline: 10px; gap: 12px; }
-  .cartao { padding: 12px; border-radius: 12px; }
-  .barra .etapa { display: none; }
+  .layout { padding-inline: 10px; gap: 10px; }
+  .cartao { padding: 10px; }
+  .executar { order: -1; flex: 1 0 100%; margin-left: 0; }
+  .executar > #btSimular, .executar > .envio:not([hidden]) { flex: 1 1 0; display: flex; }
+  .executar .envio .bt { flex: 1; }
+  .executar .bt { padding-block: 9px; font-size: 0.98rem; }
   .campo.nome input { width: 11ch; }
-  /* no celular o menu Arquivo abre dentro do cartão, na largura toda */
-  .ferramentas { margin-left: 0; }
-  .menu-arquivo { position: static; }
-  .menu { position: static; width: 100%; box-shadow: none; margin-top: 4px; }
-  .menu.aberto { order: 9; flex-basis: 100%; }
-  .barra:has(.menu.aberto) .ferramentas, .barra:has(.menu.aberto) .menu-arquivo { display: contents; }
+  .menu { left: 0; right: auto; }
   /* dvh: a altura que sobra com o teclado aberto e a barra do navegador */
   .area-codigo textarea, .area-codigo .CodeMirror { height: clamp(260px, 56dvh, 640px); }
   .blockly { height: clamp(320px, 62dvh, 680px); }
@@ -307,19 +281,19 @@ body.com-teclado { padding-bottom: 104px; }          /* o fim do código não fi
 
 /* ---- versões do programa (versoes.js) ---- */
 .versoes { width: min(680px, calc(100vw - 32px)); max-height: min(85vh, 760px); border: 1px solid var(--line);
-           border-radius: 14px; background: var(--panel); color: var(--fg); padding: 16px 18px; }
+           border-radius: 8px; background: var(--panel); color: var(--fg); padding: 16px 18px; }
 .versoes::backdrop { background: rgba(5, 8, 16, 0.55); }
 .versoes-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .versoes h2 { margin: 0; font-size: 1.1rem; }
 .versoes-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 10px 0 0; }
 .versoes-acoes .nota { margin: 0; }
 .lista-versoes { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
-.lista-versoes li { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--bg); min-width: 0; }
+.lista-versoes li { border: 1px solid var(--line); border-radius: var(--raio); padding: 8px 12px; background: var(--bg); min-width: 0; }
 .lista-versoes li.igual { border-style: dashed; }
 .v-topo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
 .v-motivo { color: var(--muted); font-size: 0.85rem; }
 .v-info { color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
 .lista-versoes summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 .lista-versoes pre { background: var(--code-bg); color: var(--code-fg); font: 0.8rem/1.5 var(--mono); padding: 8px 10px;
-                     border-radius: 6px; max-height: 260px; overflow: auto; margin: 6px 0 0; white-space: pre; }
+                     border-radius: 4px; max-height: 260px; overflow: auto; margin: 6px 0 0; white-space: pre; }
 .lista-versoes .bt { margin-top: 8px; }

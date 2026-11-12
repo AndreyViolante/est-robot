@@ -24,7 +24,7 @@ com a linha como está, e o programa continua fazendo o mesmo). A página compil
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
 portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
-navegador, e **Arquivo → Compartilhar link** copia um link com o programa dentro (quem abre já vê o
+navegador, e **Arquivo → Copiar link do programa** gera um link com o programa dentro (quem abre já vê o
 programa no simulador; nada fica guardado em servidor). O botão **Versões** mostra as versões do programa
 guardadas no navegador (a cada simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5
 minutos enquanto o aluno escreve; ficam as últimas 30) e deixa voltar para qualquer uma.

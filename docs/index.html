@@ -10,381 +10,261 @@
 <link rel="apple-touch-icon" href="programar/icones/icone-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: a boot sequence read top to bottom. Hero = code compiling into real bytes and lighting the brick's
-   LCD; then what the tool does, how to start, a note on pedagogical use, and plain answers. */
+/* Página do projeto: mostra a ferramenta de verdade (fotos de tela) e diz o que ela faz, sem enfeites.
+   Tipos: Atkinson Hyperlegible (feita para leitura fácil) e JetBrains Mono no código. */
 :root {
-  --bg: #f1f3f8;
+  --bg: #f6f7fb;
   --fg: #0d1222;
   --muted: #586079;
-  --line: #d4d9e4;
+  --line: #d9dde7;
   --panel: #ffffff;
   --code-bg: #0f1424;
   --code-fg: #dfe5f5;
   --led-azul: #2250ff;
   --led-roxo: #7a3ee3;
   --led-vermelho: #e2363a;
-  --lcd-bg: #c7d1cb;
-  --lcd-fg: #1c2722;
-  --lcd-edge: #8e9a93;
-  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
   --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --pixel: "Silkscreen", "Courier New", monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0a0d16; --fg: #e7ebf6; --muted: #98a1b8; --line: #232a3e; --panel: #121727;
-    --code-bg: #060912; --code-fg: #dfe5f5;
-    --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
-    --lcd-bg: #a3b4aa; --lcd-fg: #0f1713; --lcd-edge: #5f6c65;
+    --code-bg: #060912; --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0a0d16; --fg: #e7ebf6; --muted: #98a1b8; --line: #232a3e; --panel: #121727;
-  --code-bg: #060912; --code-fg: #dfe5f5;
-  --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
-  --lcd-bg: #a3b4aa; --lcd-fg: #0f1713; --lcd-edge: #5f6c65;
+  --code-bg: #060912; --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
 body { background: var(--bg); color: var(--fg); font: 400 1.05rem/1.6 var(--body); }
-a { color: inherit; }
-a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-within {
-  outline: 3px solid var(--led-azul); outline-offset: 3px; border-radius: 4px;
-}
-.wrap { max-width: 1180px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
+a { color: var(--led-azul); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--led-azul); outline-offset: 3px; border-radius: 4px; }
+code { font: 400 0.88em var(--mono); background: color-mix(in srgb, var(--fg) 7%, transparent); padding: 1px 5px;
+       border-radius: 4px; overflow-wrap: anywhere; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
 
-/* ---- top bar ---- */
-.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
-.mark { display: flex; align-items: center; gap: 10px; font: 600 0.95rem var(--mono); letter-spacing: 0.02em; text-decoration: none; }
+/* topo */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; padding-block: 18px;
+       border-bottom: 1px solid var(--line); }
+.mark { display: flex; align-items: center; gap: 10px; font: 600 1rem var(--mono); color: var(--fg); text-decoration: none; }
 .leds { display: inline-flex; gap: 5px; }
 .led { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-.led.azul { background: var(--led-azul); }
-.led.roxo { background: var(--led-roxo); }
-.led.vermelho { background: var(--led-vermelho); }
-.nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 22px; font: 600 0.88rem var(--mono); }
-.nav a { text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; }
-.nav a:hover { border-color: var(--fg); }
-.nav a.gh { border-color: var(--line); }
-.nav a.abrir { border: 2px solid var(--fg); border-radius: 999px; padding: 6px 14px; }
-.nav a.abrir:hover { background: var(--fg); color: var(--bg); }
-@media (max-width: 760px) { .nav .secao { display: none; } }
+.led.azul { background: var(--led-azul); } .led.roxo { background: var(--led-roxo); } .led.vermelho { background: var(--led-vermelho); }
+.nav { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; font-size: 0.95rem; }
+.nav a { color: var(--muted); text-decoration: none; }
+.nav a:hover { color: var(--fg); text-decoration: underline; }
+@media (max-width: 700px) { .nav .secao { display: none; } }
 
-/* ---- hero ---- */
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(20px, 3vw, 36px) clamp(28px, 5vw, 72px);
-        align-items: start; padding-block: clamp(24px, 6vw, 72px) clamp(40px, 7vw, 96px); }
-.eyebrow { font: 600 0.78rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
-           display: flex; align-items: center; gap: 10px; }
-.hero { container-type: inline-size; }
-.hero-head { grid-column: 1 / -1; min-width: 0; }
-.hero-text { min-width: 0; }
-/* o titulo ocupa a largura toda e cresce com ela; "CONTROLADORA" cabe mesmo com a fonte substituta */
-h1 { font: 900 clamp(2.6rem, 7vw, 6rem)/0.88 var(--display); font-size: clamp(2.4rem, 9.5cqi, 8.6rem);
-     text-transform: uppercase; letter-spacing: -0.01em;
-     margin: 18px 0 22px; text-wrap: balance; }
-h1 .py { color: var(--led-azul); }
-.lede { font-size: clamp(1.08rem, 1.6vw, 1.28rem); max-width: 34ch; color: var(--fg); margin: 0 0 30px; }
-.lede strong { font-weight: 700; }
-.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
-.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px;
-       font: 700 1rem var(--body); text-decoration: none; border: 2px solid var(--fg); cursor: pointer; }
-.btn.solid { background: var(--fg); color: var(--bg); }
-.btn.solid:hover { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
-.btn.line { background: transparent; color: var(--fg); }
-.btn.line:hover { border-color: var(--led-azul); color: var(--led-azul); }
+/* abertura: o que é, os dois jeitos de usar e a tela de verdade */
+.abertura { padding-block: clamp(32px, 6vw, 64px) clamp(32px, 5vw, 56px); }
+.abertura > div { max-width: 760px; }
+.abertura figure.tela { margin-top: clamp(28px, 4vw, 44px); }
+h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); line-height: 1.15; margin: 0 0 18px; text-wrap: balance; }
+.lede { font-size: 1.12rem; margin: 0 0 24px; }
+.botoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+.btn { display: inline-flex; align-items: center; padding: 10px 18px; border-radius: 6px; font-weight: 700; text-decoration: none;
+       border: 1px solid var(--line); color: var(--fg); background: var(--panel); }
+.btn:hover { border-color: var(--fg); }
+.btn.solid { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
+.btn.solid:hover { filter: brightness(1.1); }
+.pequeno { font-size: 0.92rem; color: var(--muted); margin: 0; }
 
-/* the device composition */
-.rig { display: grid; gap: 14px; }
-.code { background: var(--code-bg); color: var(--code-fg); border-radius: 14px; padding: 18px 20px; font: 400 0.9rem/1.7 var(--mono);
-        overflow-x: auto; }
-.code .file { font-size: 0.72rem; letter-spacing: 0.08em; color: #8b95b4; margin-bottom: 8px; display: block; }
-.code pre { margin: 0; white-space: pre; }
-.code .k { color: #9fb4ff; } .code .f { color: #ffffff; font-weight: 600; } .code .n { color: #ffb4b6; } .code .c { color: #7f8aa8; }
-.code .ln { display: block; border-left: 2px solid transparent; padding-left: 10px; margin-left: -12px; transition: border-color .3s, background .3s; }
-.code .ln.hot { border-color: var(--led-azul); background: rgba(97, 135, 255, 0.12); }
-.flow { display: flex; align-items: center; gap: 10px; font: 600 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.flow::before, .flow::after { content: ""; height: 1px; flex: 1; background: var(--line); }
-.bytes-box { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 14px 16px; overflow-x: auto; }
-.bytes { display: grid; grid-template-columns: repeat(12, 2.3ch); gap: 4px 8px; font: 400 0.82rem var(--mono); color: var(--muted); min-width: max-content; }
-.bytes span { transition: color .25s; }
-.bytes span.op48 { color: var(--led-azul); font-weight: 600; }
-.bytes span.op30 { color: var(--led-roxo); font-weight: 600; }
-.bytes span.lit { color: var(--fg); }
-.bytes-key { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 0.74rem var(--mono); color: var(--muted); }
-.bytes-key b { font-weight: 600; }
-.bytes-key .k48 { color: var(--led-azul); } .bytes-key .k30 { color: var(--led-roxo); }
-.brick { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; background: var(--panel);
-         border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
-.lcd { background: var(--lcd-bg); color: var(--lcd-fg); border: 3px solid var(--lcd-edge); border-radius: 6px; padding: 10px 14px;
-       font: 400 clamp(0.95rem, 2.2vw, 1.15rem)/1.55 var(--pixel); min-height: 6.2em;
-       background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 3px); }
-.lcd div { white-space: nowrap; overflow: hidden; text-overflow: clip; }
-.brick-side { display: grid; justify-items: center; gap: 10px; font: 600 0.68rem var(--mono); letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
-.status-led { width: 22px; height: 22px; border-radius: 50%; background: var(--led-azul);
-              box-shadow: 0 0 0 4px color-mix(in srgb, var(--led-azul) 22%, transparent), 0 0 22px var(--led-azul); }
-.blink { animation: blink 1.2s steps(2, jump-none) infinite; }
-@keyframes blink { 50% { opacity: 0.25; } }
+/* fotos de tela */
+figure.tela { margin: 0; }
+.tela img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.tela figcaption { font-size: 0.88rem; color: var(--muted); margin-top: 8px; }
 
-/* ---- ribbon of real USB bytes ---- */
-.ribbon { border-block: 1px solid var(--line); overflow: hidden; padding-block: 12px; font: 400 0.82rem var(--mono); color: var(--muted); }
-.ribbon-track { display: flex; width: max-content; gap: 48px; animation: slide 38s linear infinite; }
-.ribbon-track span b { color: var(--fg); font-weight: 600; }
-@keyframes slide { to { transform: translateX(-50%); } }
+/* seções */
+section { padding-block: clamp(40px, 6vw, 72px); border-top: 1px solid var(--line); }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; margin: 0 0 8px; }
+h3 { font-size: 1.15rem; margin: 0 0 8px; }
+.intro { color: var(--muted); max-width: 64ch; margin: 0 0 32px; }
+.par { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 20px 44px; align-items: start; margin-bottom: 48px; }
+.par.invertido { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); }
+.par.invertido > :first-child { order: 2; }
+.par p { margin: 0 0 12px; }
+.lista { columns: 2 300px; column-gap: 44px; padding-left: 1.2em; margin: 0; }
+.lista li { margin-bottom: 10px; break-inside: avoid; }
 
-/* ---- sections ---- */
-section { padding-block: clamp(56px, 8vw, 110px); }
-.sec-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 24px 48px; align-items: end; margin-bottom: 40px; }
-h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: uppercase; margin: 10px 0 0; text-wrap: balance; }
-.sec-head p { margin: 0; color: var(--muted); max-width: 52ch; }
+/* como começar */
+.caminhos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 44px; }
+.caminhos ol { padding-left: 1.3em; margin: 0 0 16px; }
+.caminhos li { margin-bottom: 10px; }
 
-.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-bottom: 26px; font-size: 0.95rem; }
-.legend span { display: inline-flex; align-items: center; gap: 8px; }
-.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 0 40px; }
-.status li { list-style: none; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 14px; align-items: baseline;
-             padding-block: 14px; border-bottom: 1px solid var(--line); }
-.status li .led { transform: translateY(1px); }
-.status li > span > b { display: block; font-weight: 700; }
-.status li small b { font-weight: 700; color: var(--fg); }
-.status li small { color: var(--muted); font-size: 0.9rem; }
-.status ul { padding: 0; margin: 0; display: contents; }
-
-/* recursos em grupos, na ordem em que o aluno usa: escrever, testar, enviar; e o que é do professor */
-.grupos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 36px; }
-@media (max-width: 1100px) { .grupos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 600px) { .grupos { grid-template-columns: minmax(0, 1fr); } }
-.grupo h3 { display: flex; align-items: center; gap: 10px; margin: 0; padding-bottom: 12px; border-bottom: 2px solid var(--fg);
-            font: 600 0.8rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; }
-.grupo h3 .num { font: 900 2rem/1 var(--display); letter-spacing: 0; color: var(--led-azul); }
-.grupo .status { display: block; margin: 0; padding: 0; }
-.grupo .status li { padding-block: 12px; }
-
-/* como começar: dois caminhos lado a lado */
-.trilhas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 40px clamp(28px, 4vw, 56px); }
-.trilha > h3 { font: 600 0.8rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
-.trilha > h3 b { color: var(--fg); }
-.trilha .ctas { margin-top: 22px; }
-.trilha .step { padding-block: 16px 20px; }
-.trilha .step::before { font-size: 2.6rem; margin-bottom: 6px; }
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 0; counter-reset: passo;
-         border-top: 2px solid var(--fg); }
-.step { counter-increment: passo; padding: 22px 22px 26px 0; border-bottom: 1px solid var(--line); }
-.step::before { content: counter(passo); display: block; font: 900 3.4rem/1 var(--display); color: var(--led-azul); margin-bottom: 10px; }
-.step h3 { font: 700 1.12rem var(--body); margin: 0 0 6px; }
-.step p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-.step code, .faq code, .lede code { font: 400 0.86em var(--mono); background: color-mix(in srgb, var(--fg) 8%, transparent);
-            padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
-
-/* ---- chamada para testes ---- */
-.anuncio { container-type: inline-size; background: var(--code-bg); color: var(--code-fg); border-radius: 28px;
-           padding: clamp(24px, 5vw, 64px); display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-           gap: 28px clamp(28px, 5vw, 64px); align-items: end; }
-.anuncio-topo { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-.anuncio .eyebrow { color: #8b95b4; }
-.anuncio .eyebrow .led { background: #8aa4ff; }
-.anuncio-lcd { min-height: 0; font-size: 0.9rem; padding: 6px 12px; line-height: 1.45; }
-.anuncio h2 { font-size: clamp(2.4rem, 8.5cqi, 6rem); line-height: 0.9; margin: 0; color: #fff; }
-.anuncio h2 span { color: #8aa4ff; }
-.anuncio-corpo p { margin: 0 0 16px; color: #b9c2dc; max-width: 46ch; }
-.anuncio-corpo .ctas { margin-top: 26px; }
-.anuncio .btn.solid { background: #fff; color: #0d1222; border-color: #fff; }
-.anuncio .btn.solid:hover { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
-.anuncio .btn.line { color: #fff; border-color: #3a4566; }
-.anuncio .btn.line:hover { border-color: #fff; color: #fff; }
-.anuncio-corpo .nota { font: 400 0.85rem var(--mono); color: #8b95b4; margin: 18px 0 0; }
-
-/* ---- faq ---- */
-.faq { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 0 48px; }
-.faq div { padding-block: 20px; border-top: 1px solid var(--line); }
-.faq h3 { font: 700 1.1rem var(--body); margin: 0 0 6px; }
+/* perguntas */
+.faq { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 0 44px; }
+.faq div { padding-block: 18px; border-top: 1px solid var(--line); }
+.faq h3 { font-size: 1.05rem; margin: 0 0 6px; }
 .faq p { margin: 0; color: var(--muted); max-width: 60ch; }
-.faq .citacao { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--led-azul); color: var(--fg);
-                background: color-mix(in srgb, var(--fg) 5%, transparent); font-size: 0.9rem; overflow-wrap: anywhere; }
-.faq .copiar { margin-top: 10px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
-               background: transparent; color: var(--fg); font: 600 0.85rem var(--body); cursor: pointer; }
-.faq .copiar:hover { border-color: var(--led-azul); color: var(--led-azul); }
+.faq .citacao { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--line); color: var(--fg);
+                background: color-mix(in srgb, var(--fg) 4%, transparent); font-size: 0.9rem; overflow-wrap: anywhere; }
+.faq .copiar { margin-top: 10px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--line);
+               background: var(--panel); color: var(--fg); font: 600 0.88rem var(--body); cursor: pointer; }
+.faq .copiar:hover { border-color: var(--fg); }
 
-footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 8px; }
+footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 6px; }
 
 @media (max-width: 860px) {
-  .hero, .anuncio, .sec-head, .trilhas { grid-template-columns: minmax(0, 1fr); }
-  h1 { font-size: clamp(2.2rem, 12cqi, 6rem); }
-}
-@media (max-width: 460px) {
-  .code .c { display: none; }   /* no celular o código cabe no quadro sem os comentários */
-  .brick { grid-template-columns: minmax(0, 1fr); }
-  .brick-side { grid-auto-flow: column; justify-content: start; align-items: center; }
-}
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .blink, .ribbon-track { animation: none; }
-  .code .ln, .bytes span { transition: none; }
+  .par, .caminhos { grid-template-columns: minmax(0, 1fr); }
+  .par.invertido { grid-template-columns: minmax(0, 1fr); }
+  .par.invertido > :first-child { order: 0; }
 }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="bar">
-    <a class="mark" href="#topo" id="topo"><span class="leds"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>EST-LAB</a>
+    <a class="mark" href="./"><span class="leds" aria-hidden="true"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>EST-LAB</a>
     <nav class="nav" aria-label="Seções">
-      <a class="secao" href="#recursos">Recursos</a>
-      <a class="secao" href="#como">Como começar</a>
+      <a class="secao" href="#recursos">O que faz</a>
+      <a class="secao" href="#comecar">Como começar</a>
       <a class="secao" href="#perguntas">Perguntas</a>
-      <a class="gh" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub ↗</a>
-      <a class="abrir" href="programar/">Programar</a>
+      <a href="simulador/index.html">Simulador</a>
+      <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </header>
 
-  <div class="hero">
-    <div class="hero-head">
-      <div class="eyebrow"><i class="led azul blink"></i>Nova ferramenta para aulas de robótica</div>
-      <h1>Sua controladora EST, programada em <span class="py">Python</span>.</h1>
+  <div class="abertura">
+    <div>
+      <h1>Programe a controladora EST em Python, com comandos em português.</h1>
+      <p class="lede">O EST-LAB escreve o programa do aluno e manda para o robô EST sem a IDE do fabricante: pelo
+        navegador ou pelo VS Code, com comandos como <code>andar_cm(30)</code> e <code>virar_direita(90)</code>.
+        Criado por Andrey Violante, professor de robótica, para as aulas dele. É gratuito e de código aberto.</p>
+      <p class="botoes">
+        <a class="btn solid" href="programar/">Programar no navegador</a>
+        <a class="btn" href="https://github.com/AndreyViolante/est-robot/releases/latest" target="_blank" rel="noopener">Baixar para Windows</a>
+      </p>
+      <p class="pequeno">Sem o robô por perto? Veja o exemplo do seguidor de linha no <a href="simulador/index.html">simulador</a>.</p>
     </div>
-    <div class="hero-text">
-      <p class="lede">Os alunos escrevem os comandos <strong>em português</strong>, no VS Code ou no navegador, e o programa vai direto para o robô, sem a IDE do fabricante. Uma ferramenta criada por <strong>Andrey Violante</strong>, gratuita e de código aberto, para ensinar programação de verdade.</p>
-      <div class="ctas">
-        <a class="btn solid" href="https://github.com/AndreyViolante/est-robot/releases/latest" target="_blank" rel="noopener">Baixar para Windows</a>
-        <a class="btn line" href="programar/">Programar no navegador</a>
-        <a class="btn line" href="simulador/index.html">Ver no simulador</a>
-      </div>
-    </div>
-
-    <div class="rig" aria-label="Exemplo: código em português compilado para os bytes que o robô executa">
-      <div class="code">
-        <span class="file">11_seguidor_dois_sensores.py</span>
-<pre><span class="ln"><span class="k">from</span> robo <span class="k">import</span> *</span><span class="ln"> </span><span class="ln">RETO = <span class="n">30</span></span><span class="ln">FORA = <span class="n">30</span></span><span class="ln">DENTRO = <span class="n">-15</span></span><span class="ln"> </span><span class="ln"><span class="k">with</span> <span class="f">para_sempre</span>():</span><span class="ln">    <span class="k">with</span> <span class="f">se_ver_cor</span>(<span class="n">1</span>, <span class="n">PRETO</span>):</span><span class="ln">        <span class="f">motores</span>(DENTRO, FORA)  <span class="c"># vira para a esquerda</span></span><span class="ln">    <span class="k">with</span> <span class="f">senao</span>():</span><span class="ln">        <span class="k">with</span> <span class="f">se_ver_cor</span>(<span class="n">2</span>, <span class="n">PRETO</span>):</span><span class="ln">            <span class="f">motores</span>(FORA, DENTRO)  <span class="c"># vira para a direita</span></span><span class="ln">        <span class="k">with</span> <span class="f">senao</span>():</span><span class="ln">            <span class="f">motores</span>(RETO, RETO)  <span class="c"># anda reto</span></span></pre>
-      </div>
-      <div class="flow">compila para</div>
-      <div class="bytes-box">
-        <div class="bytes" id="bytes"></div>
-        <div class="bytes-key"><span><b class="k48">48</b> início de bloco</span><span><b class="k30">30</b> lê o sensor</span><span>bytes reais gerados pelo compilador</span></div>
-      </div>
-      <div class="brick">
-        <div class="lcd" aria-label="Tela do robô">
-          <div>Funcionou!</div>
-          <div>luz: 47</div>
-          <div>dist: 23 cm</div>
-        </div>
-        <div class="brick-side"><span class="status-led blink" aria-hidden="true"></span>luz azul</div>
-      </div>
-    </div>
+    <figure class="tela">
+      <img src="img/programar.webp" width="1920" height="1080" alt="A página de programar: o código do seguidor de linha à esquerda e, à direita, a mensagem de que ele compilou com 414 bytes, 0,2% do espaço do robô.">
+      <figcaption>A página de programar, com o seguidor de linha do exemplo já compilado.</figcaption>
+    </figure>
   </div>
-</div>
-
-<div class="ribbon" aria-hidden="true">
-  <div class="ribbon-track" id="ribbon"></div>
 </div>
 
 <div class="wrap">
   <section id="recursos">
-    <div class="sec-head">
-      <div><div class="eyebrow">Recursos</div><h2>O que a ferramenta faz</h2></div>
-      <p>Do primeiro programa à prova da OBR: escrever, testar no simulador e mandar para o robô, tudo em português. O compilador gera, byte a byte, os mesmos programas que a IDE oficial.</p>
+    <h2>O que dá para fazer</h2>
+    <p class="intro">O compilador gera, byte a byte, os mesmos programas que a IDE oficial gera para os mesmos blocos.
+      A diferença está no que fica em volta: o aluno escreve em português, vê o robô andar antes de enviar e entende
+      o que deu errado.</p>
+
+    <div class="par">
+      <div>
+        <h3>Escrever, e entender o erro</h3>
+        <p>Os comandos são em português e o <code>if</code>, o <code>while</code> e o <code>for</code> do Python
+          funcionam com os sensores. Quando algo está errado, a mensagem diz a linha e o que fazer, e o editor marca a
+          linha.</p>
+        <p>Antes de enviar, ele também avisa o que quase sempre é engano: variável criada e nunca usada, laço sem
+          espera e motor que fica ligado quando o programa termina.</p>
+      </div>
+      <figure class="tela">
+        <img src="img/erro.webp" width="1770" height="495" loading="lazy" alt="Um programa com andr(rotacoes=2) na linha 5: a linha fica marcada em vermelho e a mensagem diz: não conheço andr. Você quis dizer andar?">
+        <figcaption>Erro de digitação na linha 5.</figcaption>
+      </figure>
     </div>
-    <div class="grupos">
-      <div class="grupo">
-        <h3><span class="num">1</span>Escrever</h3>
-        <ul class="status">
-          <li><i class="led azul"></i><span><b>Python de verdade, em português</b><small><code>andar_cm(30)</code>, <code>virar_direita(90)</code> e o <code>if</code>, o <code>while</code> e o <code>for</code> do Python com os sensores</small></span></li>
-          <li><i class="led azul"></i><span><b>Blocos e Python lado a lado</b><small>Monta com blocos e vê o Python ao lado; <b>Trazer do Python</b> faz o caminho de volta</small></span></li>
-          <li><i class="led azul"></i><span><b>Erros e avisos explicados</b><small>"não conheço andr. Você quis dizer andar?", com a linha; e, antes de enviar, variável sem uso, laço sem espera e motor ligado no fim</small></span></li>
-          <li><i class="led azul"></i><span><b>Versões guardadas</b><small>O navegador guarda as últimas 30 versões do programa, e dá para voltar para qualquer uma</small></span></li>
-        </ul>
+
+    <div class="par invertido">
+      <div>
+        <h3>Testar no simulador</h3>
+        <p>O simulador executa os mesmos bytes que vão para o robô, numa pista vista de cima: dá para ver o caminho,
+          a tela, a luz, os motores e o que cada sensor está lendo, com um gráfico da luz refletida ao longo do tempo.
+          <b>Próxima linha</b> vai linha por linha, com a linha do Python em destaque.</p>
+        <p>Tem pistas de seguidor, uma arena da OBR com a pontuação da rodada, 8 desafios com correção automática e o
+          modo <b>Dirigir</b>, em que o aluno leva o robô pelas setas e o programa se escreve.</p>
       </div>
-      <div class="grupo">
-        <h3><span class="num">2</span>Testar</h3>
-        <ul class="status">
-          <li><i class="led roxo"></i><span><b>Simulador com desafios</b><small>Pista vista de cima, 8 desafios com correção automática e a arena da OBR com a pontuação da rodada</small></span></li>
-          <li><i class="led roxo"></i><span><b>Linha por linha</b><small><b>Próxima linha</b> e pontos de parada, com a linha do Python que está rodando em destaque</small></span></li>
-          <li><i class="led roxo"></i><span><b>Gráfico dos sensores</b><small>A luz refletida e a distância ao longo do tempo, enquanto o robô anda: dá para ver o seguidor oscilando</small></span></li>
-          <li><i class="led roxo"></i><span><b>Dirigir</b><small>O aluno leva o robô pelas setas e o programa se escreve sozinho, com <code>andar_cm</code> e <code>virar_direita</code></small></span></li>
-        </ul>
+      <figure class="tela">
+        <img src="img/simulador.webp" width="1920" height="1410" loading="lazy" alt="O simulador: o robô fazendo a curva de um quadrado preto, e ao lado as leituras dos sensores S1 a S4 e o gráfico da luz refletida.">
+        <figcaption>O seguidor no quadrado, pausado na curva, com as leituras dos sensores.</figcaption>
+      </figure>
+    </div>
+
+    <div class="par">
+      <div>
+        <h3>Blocos, com o Python ao lado</h3>
+        <p>Para quem vem da programação em blocos: o programa é montado arrastando blocos, e ao lado aparece o Python
+          que eles geram. O caminho de volta também existe: <b>Trazer do Python</b> transforma o programa escrito em
+          blocos.</p>
+        <p>No celular e no tablet Android, a página vai para a tela inicial e funciona sem internet.</p>
       </div>
-      <div class="grupo">
-        <h3><span class="num">3</span>Enviar</h3>
-        <ul class="status">
-          <li><i class="led vermelho"></i><span><b>No VS Code ou no navegador</b><small><code>Ctrl+Shift+B</code> manda pelo cabo USB; no navegador, sem instalar nada, até em Chromebook</small></span></li>
-          <li><i class="led vermelho"></i><span><b>Celular e tablet Android</b><small>A página vai para a tela inicial e funciona sem internet; o envio pelo Bluetooth ainda está sendo conferido no robô</small></span></li>
-          <li><i class="led vermelho"></i><span><b>Quanto o programa ocupa</b><small>Depois de compilar, a porcentagem do espaço do robô que o programa usa</small></span></li>
-          <li><i class="led vermelho"></i><span><b>Sem estragar nada</b><small>O programa vai numa pasta própria do robô; o firmware não muda e a IDE oficial continua funcionando</small></span></li>
-        </ul>
+      <figure class="tela">
+        <img src="img/blocos.webp" width="1920" height="1080" loading="lazy" alt="A aba Blocos: o seguidor de linha montado com blocos coloridos, e ao lado o mesmo programa em Python.">
+        <figcaption>O mesmo seguidor, em blocos.</figcaption>
+      </figure>
+    </div>
+
+    <h3>Também</h3>
+    <ul class="lista">
+      <li>Envio pelo cabo USB (<code>Ctrl+Shift+B</code> no VS Code, ou o botão na página); pelo Bluetooth do Android, ainda sendo conferido no robô.</li>
+      <li>Depois de compilar, mostra quanto do espaço do robô o programa usa.</li>
+      <li>Guarda as últimas versões do programa no navegador, para voltar a uma delas.</li>
+      <li>Abre um projeto da IDE EST (<code>.est</code>) como Python, e salva o Python como <code>.est</code>.</li>
+      <li>As medidas de cada robô (rodas, preto e branco de cada sensor) ficam num arquivo só, o <code>calibracao.py</code>.</li>
+      <li>Pacote para Windows com o Python dentro: não precisa de administrador, e atualiza pelo próprio VS Code.</li>
+      <li>O programa vai numa pasta própria do robô. O firmware não muda, e a IDE oficial continua funcionando.</li>
+    </ul>
+  </section>
+
+  <section id="comecar">
+    <h2>Como começar</h2>
+    <p class="intro">São dois caminhos, e o mesmo arquivo <code>.py</code> funciona nos dois.</p>
+    <div class="caminhos">
+      <div>
+        <h3>No navegador, sem instalar</h3>
+        <ol>
+          <li>Abra a página <a href="programar/">Programar</a> no Chrome ou no Edge (no Android, no Chrome).</li>
+          <li>Escreva em Python ou monte com blocos, e aperte <b>Simular</b>.</li>
+          <li>Ligue o robô no cabo USB e aperte <b>Enviar ao robô</b>. Na primeira vez, escolha o robô na lista.</li>
+        </ol>
       </div>
-      <div class="grupo">
-        <h3><span class="num">4</span>Ensinar</h3>
-        <ul class="status">
-          <li><i class="led azul"></i><span><b>Material para o professor</b><small>Guia com 8 aulas, cola de comandos para imprimir, trilha de desafios e guia da OBR</small></span></li>
-          <li><i class="led azul"></i><span><b>Projetos da IDE EST, ida e volta</b><small>Abre um <code>.est</code> como Python e salva o Python como <code>.est</code>, com os mesmos bytes</small></span></li>
-          <li><i class="led azul"></i><span><b>Calibração por robô</b><small>As medidas de cada robô num arquivo só, usado por todos os programas</small></span></li>
-          <li><i class="led azul"></i><span><b>Instala sem administrador</b><small>Pacote para Windows com o Python dentro e atualização com um clique</small></span></li>
-        </ul>
+      <div>
+        <h3>No VS Code, no Windows</h3>
+        <ol>
+          <li>Baixe o <code>est-robot-windows.zip</code> em <a href="https://github.com/AndreyViolante/est-robot/releases/latest">Releases</a> (já traz o Python) e use <b>Extrair Tudo</b>.</li>
+          <li>No VS Code, <b>Arquivo → Abrir Pasta</b>, com a extensão Python instalada.</li>
+          <li>Abra o <code>meu_programa.py</code> e aperte <code>Ctrl+Shift+B</code>: o robô acende a luz, apita e escreve "Funcionou!".</li>
+          <li>Anote no <code>calibracao.py</code> as medidas do robô e o preto e o branco de cada sensor.</li>
+        </ol>
       </div>
     </div>
   </section>
 
-  <section id="como">
-    <div class="sec-head">
-      <div><div class="eyebrow">Passo a passo</div><h2>Como começar</h2></div>
-      <p>Dois caminhos, e o mesmo arquivo <code>.py</code> funciona nos dois. Pelo navegador começa em um minuto; pelo VS Code leva uns 10, com um computador com Windows e o robô carregado.</p>
-    </div>
-    <div class="trilhas">
-      <div class="trilha">
-        <h3><b>No navegador</b> · sem instalar nada</h3>
-        <div class="steps">
-          <div class="step"><h3>Abra a página</h3><p><a href="programar/">Programar</a>, no Chrome ou no Edge (no Android, no Chrome).</p></div>
-          <div class="step"><h3>Escreva e simule</h3><p>Em Python ou com blocos; aperte <b>Simular</b> para ver o robô andando.</p></div>
-          <div class="step"><h3>Envie</h3><p>Robô no cabo USB e <b>Enviar ao robô</b>: na primeira vez, escolha o robô na lista.</p></div>
-        </div>
-        <div class="ctas"><a class="btn solid" href="programar/">Programar no navegador</a></div>
+  <section id="professor">
+    <h2>Para o professor</h2>
+    <div class="par">
+      <div>
+        <p>O EST-LAB foi feito para a sala de aula. O objetivo é o aluno entender o que o robô faz e aprender a
+          programar, e não receber programas prontos: por isso os exemplos são poucos, e cada turma escreve os seus.</p>
+        <p>A IA pode ajudar a explicar um código ou a encontrar um erro, mas quem programa é o aluno. Em competições,
+          siga sempre as regras da prova.</p>
       </div>
-      <div class="trilha">
-        <h3><b>No VS Code</b> · Windows</h3>
-        <div class="steps">
-          <div class="step"><h3>Baixe</h3><p>O <code>est-robot-windows.zip</code> em <a href="https://github.com/AndreyViolante/est-robot/releases/latest">Releases</a>, que já traz o Python, e use <b>Extrair Tudo</b>.</p></div>
-          <div class="step"><h3>Abra no VS Code</h3><p>Arquivo → Abrir Pasta, com a extensão Python instalada.</p></div>
-          <div class="step"><h3>Primeiro programa</h3><p>Abra o <code>meu_programa.py</code> e aperte <code>Ctrl+Shift+B</code>: luz, som e "Funcionou!" na tela do robô.</p></div>
-          <div class="step"><h3>Meça o robô</h3><p>Anote no <code>calibracao.py</code> as medidas e o preto e o branco de cada sensor.</p></div>
-          <div class="step"><h3>Dê a aula</h3><p>Siga o <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>, com 8 aulas, e use os desafios do simulador.</p></div>
-        </div>
-        <div class="ctas"><a class="btn line" href="https://github.com/AndreyViolante/est-robot/releases/latest" target="_blank" rel="noopener">Baixar para Windows</a></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="pedagogico">
-    <div class="anuncio">
-      <div class="anuncio-topo">
-        <div class="eyebrow"><i class="led azul blink"></i>Uso pedagógico</div>
-        <div class="lcd anuncio-lcd" aria-hidden="true"><div>Aprender</div><div>programando!</div></div>
-      </div>
-      <h2>Feita para ensinar. <span>Use para aprender.</span></h2>
-      <div class="anuncio-corpo">
-        <p>O EST-LAB foi criado por Andrey Violante para a sala de aula. O objetivo é o aluno entender o que o robô faz e aprender a programar, e não receber programas prontos: por isso os exemplos são poucos, e cada turma escreve os seus.</p>
-        <p>Use em aulas, clubes e projetos de robótica. A IA pode ajudar a explicar um código ou a encontrar um erro, mas quem programa é o aluno. Em competições, siga sempre as regras da prova.</p>
-        <div class="ctas">
-          <a class="btn solid" href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md" target="_blank" rel="noopener">Guia do professor</a>
-          <a class="btn line" href="cola-do-aluno.pdf" target="_blank" rel="noopener">Cola de comandos (PDF)</a>
-        </div>
-        <p class="nota">Gratuito e de código aberto (licença MIT).</p>
+      <div>
+        <p>O <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md" target="_blank" rel="noopener">guia do professor</a>
+          tem 8 aulas, do primeiro programa ao seguidor de linha. A <a href="cola-do-aluno.pdf" target="_blank" rel="noopener">cola de comandos</a>
+          cabe numa folha, frente e verso, e o <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-obr.md" target="_blank" rel="noopener">guia da OBR</a>
+          ajuda a organizar e ajustar o programa da prova prática.</p>
+        <p class="pequeno">Código e material sob licença MIT: use, copie e adapte para as suas aulas.</p>
       </div>
     </div>
   </section>
 
   <section id="perguntas">
-    <div class="sec-head">
-      <div><div class="eyebrow">Dúvidas</div><h2>Perguntas</h2></div>
-      <p>As dúvidas mais comuns de quem vai começar.</p>
-    </div>
+    <h2>Perguntas</h2>
+    <p class="intro">As dúvidas mais comuns de quem vai começar.</p>
     <div class="faq">
       <div><h3>Pode estragar o robô?</h3><p>Não. O robô recebe só um programa, numa pasta própria (<code>/vscode</code>), do mesmo jeito que a IDE envia os dela. O firmware não é alterado, e dá para voltar a usar a IDE oficial a qualquer momento.</p></div>
       <div><h3>Preciso desinstalar a IDE EST?</h3><p>Não, os dois convivem. Só feche a IDE na hora de enviar pelo EST-LAB, porque ela conversa com o robô ao mesmo tempo.</p></div>
       <div><h3>É gratuito?</h3><p>Sim. O código e o material são livres (licença MIT): use, copie e adapte para as suas aulas.</p></div>
       <div><h3>Para que idade serve?</h3><p>Os comandos são em português e os erros aparecem explicados, com a linha. Para quem está começando, há os blocos com o Python ao lado.</p></div>
       <div><h3>Funciona no Mac ou no Chromebook?</h3><p>Pelo navegador, sim: a página <a href="programar/">Programar</a> funciona no Chrome e no Edge, em Windows, Mac, Linux e Chromebook. O VS Code com envio pelo cabo é para Windows.</p></div>
-      <div><h3>E no celular ou tablet?</h3><p>No Android, abra a página <a href="programar/">Programar</a> no Chrome e toque em <b>📲 Instalar</b>: ela fica na tela inicial e funciona sem internet. Tem blocos, uma barra com os símbolos do Python acima do teclado, o simulador com o modo <b>Dirigir</b> (o programa se escreve enquanto o aluno anda com o robô) e o envio pelo Bluetooth, que ainda vai ser conferido no robô.</p></div>
+      <div><h3>E no celular ou tablet?</h3><p>No Android, abra a página <a href="programar/">Programar</a> no Chrome e toque em <b>Instalar</b>: ela fica na tela inicial e funciona sem internet. Tem blocos, uma barra com os símbolos do Python acima do teclado, o simulador com o modo <b>Dirigir</b> (o programa se escreve enquanto o aluno anda com o robô) e o envio pelo Bluetooth, que ainda vai ser conferido no robô.</p></div>
       <div><h3>Isso é legal?</h3><p>É um projeto independente, feito para o robô conversar com outro programa (interoperabilidade). Não usa código do fabricante e não distribui nada da IDE. Também não tem relação com o fabricante.</p></div>
       <div><h3>Usa nas suas aulas?</h3><p>Conte para o autor <a href="https://github.com/AndreyViolante/est-robot/issues/new?template=escola.yml" target="_blank" rel="noopener">registrando a sua escola</a> (opcional e público, sem dados de alunos).</p></div>
       <div><h3>O EST-LAB coleta dados?</h3><p>Só números anônimos: quantas instalações perguntam pela versão nova por dia (no máximo uma vez cada) e quantas visitas estas páginas recebem. Nada de nomes, e-mails ou dados de alunos, e sem cookies. Para desligar no VS Code, ponha <code>AVISO_DE_VERSAO = False</code> no <code>calibracao.py</code>.</p></div>
@@ -402,57 +282,6 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   </footer>
 </div>
 
-<script>
-(function () {
-  // bytes reais do compilador (estc.py) para o seguidor do topo: o bloco "se ver preto"
-  var HEX = '48 01 00 00 00 0c 01 2d 00 00 00 0d 02 00 30 00 00 00 00 0c 01 01 04 00 00 00 0f 11 00 00 00 13 00 00 00 0f 00 00 00 0d 1f 00 00 01 05 00 00 00 13 03 00 1e 00 00 00 dc 00 00 00 13 02 00 20 02 00 20'.split(' ');
-  var MARCAS = { 0: 'op48', 14: 'op30' };   // posicoes onde comeca cada instrucao destacada
-  var box = document.getElementById('bytes');
-  var cells = HEX.map(function (h, i) {
-    var s = document.createElement('span');
-    s.textContent = h;
-    if (MARCAS[i]) s.className = MARCAS[i];
-    box.appendChild(s);
-    return s;
-  });
-
-  // faixa com o pacote USB que leva o programa ao robo (formato real)
-  var frames = ['<b>68 11 0a</b> 11 00 02 2f 76 73 63 6f 64 65 2f 73 … da <b>16</b> selecionar',
-                '<b>68 11 0c</b> 01 00 01 87 <b>16</b> consulta a bateria',
-                '<b>68 11 04</b> 18 00 01 01 00 08 2f 76 73 63 6f 64 … 3d <b>16</b> nome do arquivo',
-                '<b>68 11 04</b> 31 01 02 01 00 02 00 00 00 29 00 00 … 1c <b>16</b> programa',
-                '<b>68 11 0a</b> 15 00 01 2f 76 73 63 6f 64 65 2f 73 … 37 <b>16</b> executar'];
-  var track = document.getElementById('ribbon');
-  var html = frames.map(function (f) { return '<span>' + f + '</span>'; }).join('');
-  track.innerHTML = html + html;
-
-  // momento do topo: as linhas do codigo acendem e os bytes correm, em ciclo
-  var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var linhas = document.querySelectorAll('.code .ln');
-  if (!reduz) {
-    var ciclo = function () {
-      var i = 0;
-      var passo = setInterval(function () {
-        linhas.forEach(function (l, k) { l.classList.toggle('hot', k === i); });
-        i++;
-        if (i > linhas.length) {
-          clearInterval(passo);
-          linhas.forEach(function (l) { l.classList.remove('hot'); });
-          var j = 0;
-          var corre = setInterval(function () {
-            if (j < cells.length) cells[j].classList.add('lit');
-            if (j - 10 >= 0 && j - 10 < cells.length) cells[j - 10].classList.remove('lit');
-            j++;
-            if (j > cells.length + 10) { clearInterval(corre); setTimeout(ciclo, 2400); }
-          }, 45);
-        }
-      }, 650);
-    };
-    setTimeout(ciclo, 600);
-  }
-
-})();
-</script>
 <script>
 /* referência ABNT: a data de acesso é a de hoje, e o botão copia o texto pronto */
 (function () {

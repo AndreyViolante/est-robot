@@ -824,7 +824,7 @@ function atualizarDica() {
   else if (pista.obr) texto = dicaOBR();
   else if (pista.id !== MINHA) texto = pista.dica + arrastar;
   else if (editando) texto = DICAS_EDITOR[ferramenta] + ' Ctrl+Z desfaz.';
-  else if (!pista.linhas.length) texto = 'Pista em branco: aperte "✎ Desenhar a pista" para fazer a sua.';
+  else if (!pista.linhas.length) texto = 'Pista em branco: aperte "Desenhar a pista" para fazer a sua.';
   else texto = 'A pista que você desenhou, guardada neste navegador.' + arrastar;
   if (pista.id === MINHA && semGuardar) texto += ' Atenção: este navegador não deixa guardar, a pista some quando a página fechar.';
   $('dica').textContent = texto;
@@ -836,7 +836,7 @@ function atualizarEditor() {
   $('editor').hidden = !minha;
   $('itensEditor').hidden = !editando;
   $('btEditar').setAttribute('aria-pressed', String(editando));
-  $('btEditar').textContent = editando ? '✓ Pronto' : '✎ Desenhar a pista';
+  $('btEditar').textContent = editando ? 'Pronto' : 'Desenhar a pista';
   $('btDesfazer').disabled = !historico.length;
   $('btApagarTudo').disabled = !minha || !(pista.linhas.length + pista.verdes.length + pista.caixas.length);
   $('larguraMinha').value = pista.largura;
@@ -1469,7 +1469,7 @@ function atualizarVariaveis() {
     const v = vm.lerFloat(P.variaveis[n]);
     return `<tr><td>${escapar(n)}</td><td class="num">${texto(v)}</td></tr>`;
   }).join('') + mensagens.map(([titulo, m]) =>
-    `<tr title="mensagem para ${escapar(m.para)}"><td>✉ ${escapar(titulo)}</td><td class="num">${escapar(texto(m.valor))}</td></tr>`).join('');
+    `<tr title="mensagem para ${escapar(m.para)}"><td>${escapar(titulo)} <small>(mensagem)</small></td><td class="num">${escapar(texto(m.valor))}</td></tr>`).join('');
 }
 
 function escapar(s) {
@@ -1563,7 +1563,7 @@ function atualizarAvisos() {
   const lista = [...(P && P.avisos ? P.avisos : []), ...robo.avisos];
   const caixa = $('avisos');
   caixa.hidden = !lista.length;
-  caixa.innerHTML = lista.map(a => `<p>⚠ ${escapar(a)}</p>`).join('');
+  caixa.innerHTML = lista.map(a => `<p>${escapar(a)}</p>`).join('');
 }
 
 const TEXTO_ESTADO = {
@@ -1578,7 +1578,7 @@ function atualizarEstado() {
   bt.disabled = !vm || dirigir.ativo;
   $('btProxima').disabled = !vm || !marcas.length || dirigir.ativo;
   $('btDirigir').hidden = !!desafio;
-  bt.textContent = {rodando: '⏸ Pausar', pausado: '▶ Continuar', terminou: '▶ Executar de novo', erro: '▶ Executar de novo'}[estado] || '▶ Executar';
+  bt.textContent = {rodando: 'Pausar', pausado: 'Continuar', terminou: 'Executar de novo', erro: 'Executar de novo'}[estado] || 'Executar';
   const el = $('estado');
   el.className = 'estado' + (estado === 'terminou' ? ' ok' : estado === 'erro' ? ' erro' : '');
   if (erroCarga) el.textContent = `Este programa não pode ser simulado: ${erroCarga.message} (byte ${erroCarga.pc})`;
@@ -1818,7 +1818,7 @@ function dicaOBR() {
            'último é a chegada (faixa vermelha). "Meia-volta" faz um beco sem saída; Shift + clique passa de novo por um ' +
            'ladrilho (cruzamento). Clique num ladrilho já colocado para escolher o perigo dele ou pôr um checkpoint.';
   }
-  if (!pista.obr.arena.percurso.length) return 'Arena em branco: aperte "✎ Montar o percurso" para fazer a sua com ladrilhos de 30 cm.';
+  if (!pista.obr.arena.percurso.length) return 'Arena em branco: aperte "Montar o percurso" para fazer a sua com ladrilhos de 30 cm.';
   return 'A arena que você montou, guardada neste navegador.' + rodada;
 }
 
@@ -1828,7 +1828,7 @@ function atualizarEditorOBR() {
   $('editorOBR').hidden = !minha;
   $('itensOBR').hidden = !editandoOBR;
   $('btMontarOBR').setAttribute('aria-pressed', String(editandoOBR));
-  $('btMontarOBR').textContent = editandoOBR ? '✓ Pronto' : '✎ Montar o percurso';
+  $('btMontarOBR').textContent = editandoOBR ? 'Pronto' : 'Montar o percurso';
   if (!minha) return;
   const a = pista.obr.arena, t = a.percurso[escolhidoOBR];
   $('btTirarOBR').disabled = !a.percurso.length;
@@ -1927,7 +1927,7 @@ function atualizarOBR() {
   if (!mostra) return;
   let pontos = '0', tempo = '5:00', conta = '', texto, classe = 'desafio-status';
   if (!placar) {
-    texto = editandoOBR ? 'Montando a arena: aperte "✓ Pronto" para correr.'
+    texto = editandoOBR ? 'Montando a arena: aperte "Pronto" para correr.'
       : pista.obr.erros.length ? 'A arena tem problemas: veja a lista embaixo da pista.' : 'Monte o percurso para correr.';
   } else {
     const p = placar.pontos, resta = Math.max(0, EST.OBR.RODADA - tSim);
@@ -2032,7 +2032,7 @@ function novaProva() {
 function montarSeletorDesafio() {
   $('desafio').innerHTML = '<option value="">Nenhum (treino livre)</option>' + EST.DESAFIOS.map((d, i) => {
     const livre = liberado(i);
-    return `<option value="${d.id}"${livre ? '' : ' disabled'}>${livre ? '' : '🔒 '}${i + 1}. ${escapar(d.titulo)}${cumprido(d.id) ? ' ✓' : ''}</option>`;
+    return `<option value="${d.id}"${livre ? '' : ' disabled'}>${i + 1}. ${escapar(d.titulo)}${cumprido(d.id) ? ' ✓' : ''}</option>`;
   }).join('');
   $('desafio').value = desafio ? desafio.id : '';
 }
@@ -2104,7 +2104,7 @@ function atualizarStatusDesafio() {
   const r = prova.resultado, proximo = EST.DESAFIOS[EST.DESAFIOS.indexOf(desafio) + 1];
   let texto, classe = 'desafio-status';
   if (r && r.ok) {
-    texto = `🏆 Desafio cumprido em ${num(prova.tempo)} s!` + (proximo ? '' : ' Você completou a trilha!');
+    texto = `Desafio cumprido em ${num(prova.tempo)} s!` + (proximo ? '' : ' Você completou a trilha!');
     classe += ' ok';
   } else if (r) {
     texto = `Ainda não: ${r.motivo}. Aperte Reiniciar e tente de novo.`;

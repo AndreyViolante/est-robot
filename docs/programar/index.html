@@ -22,7 +22,7 @@
   </a>
   <nav class="links" aria-label="Ajuda e atalhos">
     <button id="btInstalar" class="bt pequeno instalar" type="button" hidden
-            title="Põe a página na tela inicial, como um aplicativo (funciona sem internet)">📲 Instalar</button>
+            title="Põe a página na tela inicial, como um aplicativo (funciona sem internet)">Instalar</button>
     <a href="../simulador/index.html" target="_blank" rel="noopener" class="so-largo">Simulador</a>
     <a href="../cola-do-aluno.pdf" target="_blank" rel="noopener">Cola<span class="so-largo"> de comandos</span></a>
     <a href="#ajuda">Ajuda</a>
@@ -30,9 +30,8 @@
 </header>
 
 <main class="layout">
-  <section class="cartao editor" aria-labelledby="etapaEscreva">
+  <section class="cartao editor" aria-label="Programa">
     <div class="barra">
-      <h2 class="etapa" id="etapaEscreva"><b>1</b> Escreva</h2>
       <div class="abas" role="tablist" aria-label="Como escrever o programa">
         <button id="abaPython" class="aba" type="button" role="tab" aria-selected="true" aria-controls="areaPython">Python</button>
         <button id="abaBlocos" class="aba" type="button" role="tab" aria-selected="false" aria-controls="areaBlocos">Blocos</button>
@@ -46,18 +45,30 @@
           <button id="btExtras" class="bt pequeno" type="button" aria-expanded="false" aria-controls="extras">Arquivo ▾</button>
           <div class="menu" id="extras">
             <label class="campo exemplo">Abrir um exemplo <select id="exemplo"><option value="">Escolha…</option></select></label>
-            <button id="btAbrir" class="item" type="button"><span class="ico" aria-hidden="true">📂</span>Abrir .py ou .est
-              <small>do computador; o projeto da IDE EST vira Python</small></button>
-            <button id="btBaixar" class="item" type="button"><span class="ico" aria-hidden="true">⬇</span>Baixar .py
-              <small>para guardar ou abrir no VS Code</small></button>
-            <button id="btSalvarEst" class="item" type="button"><span class="ico" aria-hidden="true">⬇</span>Salvar para a IDE EST (.est)
-              <small>abre na IDE do fabricante, com os mesmos blocos</small></button>
-            <button id="btLink" class="item" type="button"><span class="ico" aria-hidden="true">🔗</span>Compartilhar link
-              <small>o programa vai dentro do link, para mandar ao professor</small></button>
+            <button id="btAbrir" class="item" type="button" title="Do computador; um projeto da IDE EST vira Python">Abrir .py ou .est…</button>
+            <button id="btBaixar" class="item" type="button" title="Para guardar ou abrir no VS Code">Baixar .py</button>
+            <button id="btSalvarEst" class="item" type="button" title="Para abrir na IDE EST, com os mesmos blocos">Salvar para a IDE EST (.est)</button>
+            <button id="btLink" class="item" type="button" title="O programa vai dentro do link, para mandar a outra pessoa">Copiar link do programa</button>
           </div>
         </div>
         <button id="btVersoes" class="bt pequeno" type="button"
-                title="As versões do programa guardadas neste navegador: veja e volte para qualquer uma">🕘 Versões</button>
+                title="As versões do programa guardadas neste navegador: veja e volte para qualquer uma">Versões</button>
+      </div>
+      <div class="executar">
+        <button id="btSimular" class="bt" type="button" title="Compila e mostra o robô andando no simulador">Simular</button>
+        <span id="blocoEnvio" class="envio"><button id="btEnviar" class="bt principal" type="button"
+              title="Compila, envia pelo USB e já executa (Ctrl+Shift+B)">Enviar ao robô</button></span>
+        <!-- Bluetooth (Web Serial): Chrome do Android e do computador. Ainda não conferido no robô. -->
+        <span id="blocoBluetooth" class="envio" hidden><button id="btBluetooth" class="bt principal" type="button"
+              title="Compila, envia pelo Bluetooth e já executa (o robô precisa estar pareado)">Enviar por Bluetooth</button></span>
+        <div class="menu-envio" id="menuEnvio">
+          <button id="btMaisEnvio" class="bt seta" type="button" aria-expanded="false" aria-controls="opcoesEnvio"
+                  aria-label="Mais opções de envio" title="Mais opções de envio">▾</button>
+          <div class="menu" id="opcoesEnvio">
+            <button id="btGravar" class="item" type="button" title="Grava no robô sem executar: inicie pelo menu do robô">Gravar sem executar</button>
+            <button id="btGravarBluetooth" class="item" type="button" hidden title="Grava pelo Bluetooth sem executar">Gravar pelo Bluetooth</button>
+          </div>
+        </div>
       </div>
       <input id="arquivo" type="file" accept=".py,.est,text/x-python,text/plain" hidden>
     </div>
@@ -79,7 +90,7 @@
       </div>
     </div>
     <p class="nota rodape-editor"><span id="guardado">O programa fica guardado neste navegador.</span>
-      <span class="so-largo"><kbd>Ctrl+S</kbd> guarda uma versão · <kbd>Ctrl+Shift+B</kbd> envia ao robô</span></p>
+      <span class="so-largo">Ctrl+S guarda uma versão. Ctrl+Shift+B envia ao robô.</span></p>
   </section>
 
   <!-- teclado de programação: no celular e no tablet, aparece logo acima do teclado enquanto o código está em edição.
@@ -90,70 +101,54 @@
   </div>
 
   <aside class="painel">
-    <section class="cartao acoes" aria-label="Simular e enviar">
-      <h2 class="etapa"><b>2</b> Simule</h2>
-      <button id="btSimular" class="bt principal grande" type="button" title="Compila e mostra o robô andando no simulador">▶ Simular</button>
-      <h2 class="etapa"><b>3</b> Envie ao robô</h2>
-      <div id="blocoEnvio" class="envio">
-        <button id="btEnviar" class="bt principal azul grande" type="button" title="Compila, envia pelo USB e já executa (Ctrl+Shift+B)">⬆ Enviar ao robô</button>
-        <button id="btGravar" class="bt pequeno" type="button" title="Grava no robô sem executar: inicie pelo menu do robô">Gravar sem executar</button>
-        <p class="robo" id="estadoRobo" role="status"></p>
+    <section class="cartao console" aria-labelledby="tituloMensagens">
+      <h2 id="tituloMensagens">Mensagens</h2>
+      <div id="mensagens" class="mensagens" aria-live="polite">
+        <p class="vazio">Erros, avisos e o resultado do envio aparecem aqui.</p>
       </div>
-      <!-- Bluetooth (Web Serial): Chrome do Android e do computador. Ainda não conferido no robô. -->
-      <div id="blocoBluetooth" class="envio bluetooth" hidden>
-        <span class="rotulo-bt">Pelo Bluetooth:</span>
-        <button id="btBluetooth" class="bt principal azul grande" type="button"
-                title="Compila, envia pelo Bluetooth e já executa (o robô precisa estar pareado)">ᛒ Enviar por Bluetooth</button>
-        <button id="btGravarBluetooth" class="bt pequeno" type="button" title="Grava pelo Bluetooth sem executar">Gravar pelo Bluetooth</button>
-        <p class="robo" id="estadoBluetooth" role="status">Pareie o robô no Bluetooth do aparelho antes (senha 1234).</p>
-      </div>
-      <p class="sem-usb" id="semUsb" hidden>Para enviar ao robô, abra esta página no <b>Chrome</b> ou no <b>Edge</b>
-        de um computador ou Chromebook (pelo USB), ou no <b>Chrome</b> do Android (pelo Bluetooth). Aqui dá para
-        escrever e simular.</p>
     </section>
 
-    <section class="cartao console" aria-labelledby="tituloMensagens">
-      <div class="console-topo">
-        <h2 id="tituloMensagens">Mensagens</h2>
-        <p class="python" id="estadoPython" role="status">Preparando o Python do navegador…</p>
-      </div>
-      <div id="mensagens" class="mensagens" aria-live="polite">
-        <p class="vazio">Erros, avisos e o resultado do envio aparecem aqui. Comece por <b>▶ Simular</b>.</p>
-      </div>
+    <section class="cartao conexao" aria-labelledby="tituloConexao">
+      <h2 id="tituloConexao">Robô e navegador</h2>
+      <p class="python" id="estadoPython" role="status">Preparando o Python do navegador…</p>
+      <p class="robo" id="estadoRobo" role="status"></p>
+      <p class="robo" id="estadoBluetooth" role="status" hidden>Pareie o robô no Bluetooth do aparelho antes (senha 1234).</p>
+      <p class="sem-usb" id="semUsb" hidden>Para enviar ao robô, abra esta página no Chrome ou no Edge de um computador
+        ou Chromebook (pelo USB), ou no Chrome do Android (pelo Bluetooth). Aqui dá para escrever e simular.</p>
     </section>
 
     <details class="cartao ajuda" id="ajuda">
-      <summary>Ajuda: como enviar, blocos e arquivos</summary>
+      <summary>Ajuda</summary>
       <h3>Enviar pelo cabo USB</h3>
       <ol>
-        <li>Use o <b>Chrome</b> ou o <b>Edge</b> num computador ou Chromebook.</li>
+        <li>Use o Chrome ou o Edge num computador ou Chromebook.</li>
         <li>Ligue o robô e conecte o cabo USB. Feche a IDE EST, se estiver aberta: ela conversa com o robô ao mesmo
           tempo e atrapalha o envio.</li>
         <li>Clique em <b>Enviar ao robô</b>. Na primeira vez o navegador mostra uma lista: escolha o robô e clique em
           <b>Conectar</b>. Nas próximas ele já lembra.</li>
-        <li>O robô começa a andar logo: deixe-o no chão. <b>Gravar sem executar</b> só grava; inicie pelo menu do
-          robô (pasta <code>vscode</code>).</li>
+        <li>O robô começa a andar logo: deixe-o no chão. Para só gravar, use a setinha ao lado de <b>Enviar ao
+          robô</b> e <b>Gravar sem executar</b>; depois inicie pelo menu do robô (pasta <code>vscode</code>).</li>
       </ol>
       <p>No Linux, se o robô não aparecer na lista ou não abrir, o sistema precisa liberar o USB para o navegador
         (regra do udev para o dispositivo <code>0483:5750</code>).</p>
       <h3>Celular e tablet Android</h3>
       <p>No Chrome, ligue o Bluetooth do robô e pareie nas configurações do aparelho (a senha costuma ser
         <code>1234</code>). Depois use <b>Enviar por Bluetooth</b> e escolha o robô na lista. O envio por Bluetooth
-        ainda não foi conferido no robô: se não funcionar, conte o que apareceu nas mensagens. <b>📲 Instalar</b> põe
-        esta página na tela inicial, como um aplicativo.</p>
+        ainda não foi conferido no robô: se não funcionar, conte o que apareceu nas mensagens. <b>Instalar</b>, no
+        alto, põe esta página na tela inicial, como um aplicativo.</p>
       <h3>Blocos e Python</h3>
       <p>Na aba <b>Blocos</b> o programa é montado arrastando blocos, e ao lado aparece o Python que eles geram.
         <b>Levar para o Python</b> copia esse código para a aba Python, para continuar escrevendo, e
         <b>Trazer do Python</b> faz o caminho de volta: o programa da aba Python vira blocos. O que ainda não tem
         bloco vira um bloco cinza "Python", com a linha como está.</p>
       <h3>Arquivos e versões</h3>
-      <p>O programa fica guardado neste navegador, e <b>🕘 Versões</b> deixa voltar para o que estava antes (a cada
+      <p>O programa fica guardado neste navegador, e <b>Versões</b> deixa voltar para o que estava antes (a cada
         simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5 minutos). No menu <b>Arquivo</b>:
         <b>Baixar .py</b> leva o programa para outro computador (o mesmo arquivo funciona no
         <a href="https://github.com/AndreyViolante/est-robot">EST-LAB do VS Code</a>); <b>Abrir .py ou .est</b> também
         abre um projeto da IDE EST, com os Meus Blocos como funções; <b>Salvar para a IDE EST</b> faz o caminho de
-        volta; e <b>Compartilhar link</b> copia um link com o programa dentro, para mandar ao professor (nada fica
-        guardado em servidor).</p>
+        volta; e <b>Copiar link do programa</b> gera um link com o programa dentro, para mandar ao professor (nada
+        fica guardado em servidor).</p>
       <h3>Sem internet</h3>
       <p>Depois da primeira visita, esta página funciona sem internet neste navegador: o editor, os blocos, o
         simulador e o envio ao robô.</p>
@@ -176,7 +171,7 @@
 
 <div class="sim" id="sim" hidden role="dialog" aria-modal="true" aria-label="Simulador">
   <div class="sim-barra">
-    <button id="btFecharSim" class="bt" type="button">← Voltar ao código</button>
+    <button id="btFecharSim" class="bt" type="button">Voltar ao código</button>
     <span class="sim-titulo">Simulador</span>
   </div>
   <iframe id="quadroSim" title="Simulador do robô EST"></iframe>

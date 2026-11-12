@@ -75,12 +75,12 @@ button, select, input { font: inherit; color: inherit; }
 }
 @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 .comandos, .opcoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.bt { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; cursor: pointer;
-      border: 2px solid var(--fg); background: transparent; font-weight: 600; }
-.bt:hover:not(:disabled) { border-color: var(--led-azul); color: var(--led-azul); }
-.bt.principal { background: var(--fg); color: var(--bg); min-width: 9.5em; justify-content: center; }
-.bt.principal:hover:not(:disabled) { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
-.bt.pequeno { padding: 4px 12px; font-size: 0.85rem; border-width: 1px; }
+.bt { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--panel); font-weight: 600; }
+.bt:hover:not(:disabled) { border-color: var(--fg); }
+.bt.principal { background: var(--led-azul); border-color: var(--led-azul); color: #fff; min-width: 8em; justify-content: center; }
+.bt.principal:hover:not(:disabled) { filter: brightness(1.1); border-color: var(--led-azul); }
+.bt.pequeno { padding: 4px 10px; font-size: 0.85rem; }
 .bt:disabled { opacity: 0.45; cursor: not-allowed; }
 .campo { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--muted); }
 .campo select { color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
@@ -113,10 +113,10 @@ button, select, input { font: inherit; color: inherit; }
 .quadro canvas.desenhar { cursor: crosshair; } .quadro canvas.apagar { cursor: pointer; }
 /* trilha de desafios */
 .desafio { display: grid; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--led-azul);
-           border-radius: 12px; padding: 10px 14px; }
+           border-radius: 8px; padding: 10px 14px; }
 .desafio.cumprido { border-left-color: var(--ok); }
 .desafio-topo { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
-                font: 600 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+                font-size: 0.85rem; color: var(--muted); }
 .desafio h2 { margin: 0; font-size: 1.05rem; }
 .desafio p { margin: 0; }
 .desafio-status { font-weight: 600; }
@@ -133,7 +133,7 @@ button, select, input { font: inherit; color: inherit; }
           border: 1px dashed var(--line); border-radius: 12px; }
 .editor .itens { display: contents; }
 .bt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-.ferramentas { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--panel); }
+.ferramentas { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
 .ferramentas label { position: relative; cursor: pointer; }
 .ferramentas input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
 .ferramentas span { display: block; padding: 4px 12px; font-size: 0.85rem; font-weight: 600; }
@@ -160,8 +160,8 @@ button, select, input { font: inherit; color: inherit; }
 
 /* ---- painel ---- */
 .painel { display: grid; gap: 12px; min-width: 0; }
-.cartao { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
-.cartao h2, .cartao summary { margin: 0 0 8px; font: 600 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cartao { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.cartao h2, .cartao summary { margin: 0 0 8px; font: 600 0.92rem var(--body); color: var(--fg); }
 .cartao summary { cursor: pointer; margin: 0; }
 details.cartao[open] summary { margin-bottom: 8px; }
 
@@ -195,6 +195,7 @@ details.cartao[open] summary { margin-bottom: 8px; }
 /* gráfico dos sensores no tempo */
 .grafico-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .grafico-topo h2 { margin-bottom: 4px; }
+.abas-painel .aba-painel h2 { font-size: 0.88rem; color: var(--muted); }
 .graficos { display: grid; gap: 10px; }
 .grafico { margin: 0; }
 .grafico figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; font-size: 0.8rem; color: var(--muted); margin-bottom: 2px; }
@@ -243,12 +244,12 @@ details.cartao[open] summary { margin-bottom: 8px; }
 
 /* ---- abas do painel: Programa, Sensores, Variáveis, Medidas (em vez de uma pilha comprida de cartões) ---- */
 .abas-painel { display: grid; gap: 12px; }
-.abas-painel .abas { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 999px; background: var(--bg);
-                     border: 1px solid var(--line); }
-.abas-painel .abas button { flex: 1 1 auto; border: 0; background: transparent; border-radius: 999px; padding: 5px 10px;
-                            font: 600 0.82rem var(--body); color: var(--muted); cursor: pointer; }
+.abas-painel .abas { display: flex; flex-wrap: wrap; gap: 0 4px; border-bottom: 1px solid var(--line); margin: -4px -14px 0;
+                     padding: 0 10px; }
+.abas-painel .abas button { border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 9px 8px 7px;
+                            margin-bottom: -1px; font: 600 0.88rem var(--body); color: var(--muted); cursor: pointer; }
 .abas-painel .abas button:hover { color: var(--fg); }
-.abas-painel .abas button[aria-selected="true"] { background: var(--fg); color: var(--bg); }
+.abas-painel .abas button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--led-azul); }
 .abas-painel h2 { margin: 0 0 6px; }
 .aba-painel { min-width: 0; }
 .aba-painel .fonte { max-height: min(62vh, 640px); }

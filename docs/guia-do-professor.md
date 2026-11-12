@@ -98,7 +98,7 @@ roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou
 - **Sem internet:** depois da primeira visita, a página funciona sem internet naquele navegador
   (editor, blocos, simulador e envio). Num laboratório com internet ruim, abra a página uma vez em cada
   computador antes da aula.
-- **Compartilhar link** (menu **Arquivo**): copia um link com o programa dentro. O aluno manda pelo WhatsApp e o
+- **Copiar link do programa** (menu **Arquivo**): gera um link com o programa dentro. O aluno manda pelo WhatsApp e o
   professor abre e já vê o programa rodando no simulador, sem baixar arquivo. Serve também para o
   professor mandar o programa da aula para a turma. O programa vai no próprio link e não fica guardado
   em nenhum servidor.
