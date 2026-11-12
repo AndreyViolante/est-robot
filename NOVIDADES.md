@@ -3,6 +3,25 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.7 (12/11/2026)
+
+- **Pacote para Windows mais simples.** A pasta extraída mostra só o que o aluno usa: `Abrir o EST-LAB`,
+  `LEIA-ME.txt`, `meu_programa.py`, `calibracao.py` e `exemplos`. Dois cliques em **Abrir o EST-LAB** abrem o
+  VS Code já com o primeiro programa. O resto do projeto e o Python ficam na pasta `sistema`, que o VS Code
+  esconde. O botão de download do site baixa direto o arquivo certo. Quem já tem o projeto atualiza como
+  sempre, e a pasta continua como estava.
+- **Avisos antes de enviar**, com a linha e como arrumar: variável criada e nunca usada, `while True` que
+  repete sem esperar nem ler sensor, e motor que fica ligado quando o programa termina. Não impedem o envio.
+- Depois de compilar, aparece **quanto do espaço do robô** o programa usa.
+- **Salvar para a IDE EST (.est)**, o caminho de volta do "Abrir programa da IDE": o arquivo abre na IDE com
+  os mesmos blocos e dá os mesmos bytes. Na página de programar, fica no menu **Arquivo**.
+- Simulador: a aba **Sensores** tem o gráfico da leitura de cada sensor enquanto o robô anda, e a coluna da
+  direita virou abas (Programa, Sensores, Variáveis, Medidas).
+- Página de programar: **Versões** guarda as últimas 30 versões do programa no navegador e deixa voltar para
+  qualquer uma. Simular e Enviar ficam na barra do editor, e o que é de arquivo fica no menu **Arquivo**.
+- A página do projeto mostra fotos de tela da ferramenta e o passo a passo para começar pelo navegador ou
+  pelo VS Code.
+
 ## 0.1.6 (04/11/2026)
 
 - Na aba **Blocos** da página de programar, o botão **Trazer do Python** faz o caminho de volta: o programa

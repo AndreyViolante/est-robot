@@ -8,8 +8,9 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
 
 - Instale tudo em cada computador seguindo o [INSTALAR.md](../INSTALAR.md). Onde não dá para instalar
   programas, use o `est-robot-windows.zip`, que já traz o Python: copie para cada computador (pode ser
-  por pendrive), use **Extrair Tudo** e abra a pasta no VS Code. Dica: prepare um computador, meça o
-  robô no `calibracao.py` e copie a pasta inteira para os outros.
+  por pendrive), use **Extrair Tudo** e dê dois cliques em **Abrir o EST-LAB**: o VS Code abre já com o
+  `meu_programa.py`. A pasta mostra só o que o aluno usa; o resto fica em `sistema`. Dica: prepare um
+  computador, meça o robô no `calibracao.py` e copie a pasta inteira para os outros.
 - De tempos em tempos, rode a tarefa **Atualizar o projeto**. Ela troca só os arquivos do projeto e
   nunca mexe no `calibracao.py`, no `meu_programa.py` nem em programas criados por vocês; a versão
   antiga do que foi trocado fica em `copias_de_seguranca`. Peça a cada aluno que salve o programa num

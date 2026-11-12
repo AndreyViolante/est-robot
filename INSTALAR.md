@@ -26,9 +26,13 @@ Funciona no **Windows**. Há dois jeitos:
    Se essa opção não aparecer, pule este passo.
 3. Clique com o botão direito no zip → **Extrair Tudo…** e escolha uma pasta fácil de achar, por
    exemplo `Documentos\robotica`. Extraia tudo antes de usar: não abra os arquivos de dentro do zip.
-4. Pronto: o Python está na pasta `python` do projeto, já com o que precisa para falar com o robô, e o
-   VS Code já vem configurado para usar esse Python. Não precisa rodar o `instalar.bat` (se rodar, ele
-   só confere).
+4. Na pasta extraída, dê **dois cliques em `Abrir o EST-LAB`**: o VS Code abre nesta pasta, já com o
+   `meu_programa.py`. Se o Windows perguntar se pode executar, clique em **Executar**. Depois siga do
+   passo 2 de "Abrir no VS Code", logo abaixo.
+
+A pasta tem só o que o aluno usa: `Abrir o EST-LAB`, `LEIA-ME.txt`, `meu_programa.py`, `calibracao.py` e
+`exemplos`. O EST-LAB e o Python ficam na pasta `sistema`, que o VS Code esconde: não precisa abrir nem
+rodar nada lá.
 
 Para conferir que o zip é o original (opcional): a página da versão em Releases mostra o código
 SHA-256 do arquivo. No PowerShell, na pasta do download, `Get-FileHash est-robot-windows.zip` tem que
@@ -45,7 +49,8 @@ mostrar o mesmo código.
 
 ## 3. Abrir no VS Code
 
-1. No VS Code: **Arquivo → Abrir Pasta…** e escolha a pasta do projeto (a que tem o `meu_programa.py`).
+1. Jeito A: dois cliques em **Abrir o EST-LAB**. Jeito B: no VS Code, **Arquivo → Abrir Pasta…** e
+   escolha a pasta do projeto (a que tem o `meu_programa.py`).
 2. Se aparecer *"Do you trust the authors?"*, clique em **Yes, I trust**.
 3. Se o VS Code sugerir instalar a extensão Python, aceite.
 

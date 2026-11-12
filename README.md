@@ -77,9 +77,10 @@ Funciona no **Windows**, com Python 3.10+ ou com o pacote que já traz o Python,
 
 **Computador da escola que não deixa instalar programas?** Use o pacote para Windows com o Python
 dentro: [baixe o `est-robot-windows.zip`](https://github.com/AndreyViolante/est-robot/releases/latest/download/est-robot-windows.zip) (o link baixa direto o arquivo certo),
-clique com o botão direito → **Extrair Tudo** e abra a pasta no VS Code. Não instala o Python e não
-precisa de administrador nem de internet: as tarefas do VS Code usam sozinhas o Python da pasta
-`python`. Para receber as novidades, use **Terminal → Executar Tarefa… → Atualizar o projeto**: ela
+clique com o botão direito → **Extrair Tudo** e, na pasta extraída, dê dois cliques em **Abrir o EST-LAB**:
+o VS Code abre já com o `meu_programa.py`. A pasta tem só o que o aluno usa (`meu_programa.py`,
+`calibracao.py`, `exemplos`, um `LEIA-ME.txt`); o resto, e o Python, fica na pasta `sistema`, que o VS Code
+esconde. Não instala o Python e não precisa de administrador nem de internet. Para receber as novidades, use **Terminal → Executar Tarefa… → Atualizar o projeto**: ela
 baixa a versão nova do GitHub e não mexe no `calibracao.py`, no `meu_programa.py` nem nos programas
 dos alunos.
 
