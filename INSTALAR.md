@@ -17,8 +17,10 @@ Funciona no **Windows**. Há dois jeitos:
 
 ## 2A. Este projeto, com o Python dentro (jeito A)
 
-1. Baixe o **est-robot-windows.zip** na página
-   [Releases do projeto](https://github.com/AndreyViolante/est-robot/releases/latest) no GitHub.
+1. Baixe o **est-robot-windows.zip** por este link, que baixa direto o arquivo certo:
+   [https://github.com/AndreyViolante/est-robot/releases/latest/download/est-robot-windows.zip](https://github.com/AndreyViolante/est-robot/releases/latest/download/est-robot-windows.zip).
+   Na página Releases do GitHub aparecem outros arquivos (contadores de visitas e o código-fonte): não
+   são para instalar.
 2. Antes de extrair: botão direito no zip → **Propriedades**, marque **Desbloquear** (embaixo, em
    *Segurança*) e clique em **OK**. Assim o Windows não mostra avisos ao abrir os arquivos de dentro.
    Se essa opção não aparecer, pule este passo.

@@ -8,6 +8,10 @@ do projeto pelos novos. Nunca apaga nada e nunca troca:
   - a pasta python/ (o Python do pacote para Windows).
 A versão antiga de cada arquivo trocado fica guardada num zip em copias_de_seguranca/.
 
+Funciona nos dois jeitos de pasta: a do git (tudo junto, como no GitHub) e a do pacote para Windows desde a
+0.1.7, em que a pasta que o aluno abre tem só o que ele usa (meu_programa.py, calibracao.py, exemplos/ e o
+.vscode/) e o resto fica em sistema/ (caminho()).
+
 Uso: no VS Code, Terminal > Executar Tarefa > Atualizar o projeto.
     ferramentas\\rodar.cmd ferramentas\\atualizar.py --desfazer   volta os arquivos da última atualização
                                                                   (tarefa "Voltar para a versão anterior")
@@ -34,7 +38,52 @@ NAO_MEXER = {'.git', 'python', 'dist', COPIAS}           # pastas que a atualiza
 NAO_PROCURAR = NAO_MEXER | {'__pycache__', '_investigacao', '_legado', '.venv', 'venv'}
 # no pacote para Windows, o VS Code usa o Python da pasta python/ (autocompletar, erros sublinhados)
 CONFIG_VSCODE = '.vscode/settings.json'
+TAREFAS_VSCODE = '.vscode/tasks.json'
 PYTHON_DO_PACOTE = {'python.defaultInterpreterPath': '${workspaceFolder}/python/python.exe'}
+
+# Pacote para Windows desde a 0.1.7: a pasta que o aluno abre tem só o que ele usa, e o projeto fica em sistema/
+SISTEMA = 'sistema'
+ABRIR = 'Abrir o EST-LAB.cmd'
+DO_ALUNO = ('exemplos/', '.vscode/')                  # além do DO_PROFESSOR, ficam na pasta do aluno
+SEPARADO = RAIZ.name == SISTEMA and (RAIZ.parent / ABRIR).is_file()
+
+
+def caminho(nome):
+    """Onde fica no disco um arquivo do projeto oficial (nome com '/', como no GitHub)."""
+    if SEPARADO and (nome in DO_PROFESSOR or nome.startswith(DO_ALUNO)):
+        return RAIZ.parent / nome
+    return RAIZ / nome
+
+
+def _no_sistema(valor):
+    """Os caminhos ${workspaceFolder}/... das tarefas passam a apontar para dentro de sistema/."""
+    if isinstance(valor, dict):
+        return {k: _no_sistema(v) for k, v in valor.items()}
+    if isinstance(valor, list):
+        return [_no_sistema(v) for v in valor]
+    if isinstance(valor, str):
+        for barra in ('/', '\\'):
+            valor = valor.replace('${workspaceFolder}' + barra, '${workspaceFolder}' + barra + SISTEMA + barra)
+    return valor
+
+
+def para_o_aluno(nome, dados):
+    """O arquivo do .vscode/ como fica na pasta do aluno do pacote separado: as tarefas e o Python apontam para
+    sistema/, e o VS Code esconde o que o aluno não precisa ver. Usado pelo empacotar.py e aqui."""
+    try:
+        config = json.loads(dados.decode('utf-8'))
+    except ValueError:
+        return dados
+    if nome == CONFIG_VSCODE:
+        config['python.defaultInterpreterPath'] = f'${{workspaceFolder}}/{SISTEMA}/python/python.exe'
+        config['python.analysis.extraPaths'] = [f'${{workspaceFolder}}/{SISTEMA}']
+        config['files.exclude'] = dict(config.get('files.exclude', {}), **{SISTEMA: True, '.vscode': True, ABRIR: True})
+    elif nome == TAREFAS_VSCODE:
+        config = _no_sistema(config)
+    else:
+        return dados
+    return (json.dumps(config, indent=4, ensure_ascii=False) + '\n').encode('utf-8')
+
 
 SEM_INTERNET = """Não foi possível baixar a versão nova: o computador está sem internet
 (ou a rede bloqueou o GitHub). Confira a conexão e rode a tarefa de novo. Nada foi mudado.
@@ -193,12 +242,12 @@ def guardar_copia(nomes):
     copia = pasta / time.strftime('antes-de-atualizar-%Y-%m-%d_%H-%M-%S.zip')
     with zipfile.ZipFile(copia, 'w', zipfile.ZIP_DEFLATED) as z:
         for nome in nomes:
-            z.write(RAIZ / nome, nome)
+            z.write(caminho(nome), nome)
     return copia
 
 
 def gravar(nome, dados):
-    destino = RAIZ / nome
+    destino = caminho(nome)
     destino.parent.mkdir(parents=True, exist_ok=True)
     temporario = destino.with_name(destino.name + '.atualizando')
     temporario.write_bytes(dados)
@@ -259,7 +308,11 @@ def main():
         print(f'Versão instalada: {instalada or "desconhecida"}  ->  nova: {nova}')
         dados = baixar(ZIP_DA_VERSAO.format(tag=nome))
     oficial, commit = ler_projeto(dados)
-    if CONFIG_VSCODE in oficial and (RAIZ / 'python' / 'python.exe').is_file():
+    if SEPARADO:                                      # pacote com a pasta do aluno separada do sistema/
+        for nome in (CONFIG_VSCODE, TAREFAS_VSCODE):
+            if nome in oficial:
+                oficial[nome] = para_o_aluno(nome, oficial[nome])
+    elif CONFIG_VSCODE in oficial and (RAIZ / 'python' / 'python.exe').is_file():
         oficial[CONFIG_VSCODE] = com_python_do_pacote(oficial[CONFIG_VSCODE])
 
     if 'NOVIDADES.md' in oficial:
@@ -270,7 +323,7 @@ def main():
 
     trocar, novos, em_dia = [], [], 0
     for nome, novo in sorted(oficial.items()):
-        destino = RAIZ / nome
+        destino = caminho(nome)
         if nome.split('/')[0] in NAO_MEXER or (nome in DO_PROFESSOR and destino.exists()):
             continue
         if destino.is_dir():
@@ -281,22 +334,22 @@ def main():
             em_dia += 1
         else:
             trocar.append(nome)
-    mantidos = [n for n in DO_PROFESSOR if (RAIZ / n).exists()]
+    mantidos = [n for n in DO_PROFESSOR if caminho(n).exists()]
     seus = programas_do_professor(oficial)
 
     # calibracao.py: só acrescenta os campos que a versão nova trouxe, com o valor padrão
     campos, trechos = [], []
-    if 'calibracao.py' in oficial and (RAIZ / 'calibracao.py').exists():
-        local = (RAIZ / 'calibracao.py').read_text(encoding='utf-8')
+    if 'calibracao.py' in oficial and caminho('calibracao.py').exists():
+        local = caminho('calibracao.py').read_text(encoding='utf-8')
         campos, trechos = campos_novos_da_calibracao(local, oficial['calibracao.py'].decode('utf-8', 'replace'))
 
-    sair = [n for n in REMOVIDOS if n not in oficial and (RAIZ / n).is_file()]
+    sair = [n for n in REMOVIDOS if n not in oficial and caminho(n).is_file()]
     guardar = trocar + (['calibracao.py'] if campos else []) + sair
     copia = guardar_copia(guardar) if guardar else None
     falhas = {}
     for nome in sair:
         try:
-            (RAIZ / nome).unlink()
+            caminho(nome).unlink()
         except OSError as e:
             falhas[nome] = e.strerror or str(e)
     for nome in trocar + novos:
@@ -308,7 +361,7 @@ def main():
         aviso = (f'\n\n# Acrescentado pela atualização (valor padrão; ajuste para o seu robô):\n'
                  + '\n'.join(trechos) + '\n')
         try:
-            with open(RAIZ / 'calibracao.py', 'a', encoding='utf-8', newline='\n') as f:
+            with open(caminho('calibracao.py'), 'a', encoding='utf-8', newline='\n') as f:
                 f.write(aviso)
         except OSError as e:
             falhas['calibracao.py'] = e.strerror or str(e)

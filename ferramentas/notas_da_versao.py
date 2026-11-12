@@ -15,10 +15,13 @@ CONFERIR = """**Conferir o arquivo (opcional):** o código SHA-256 do est-robot-
 No PowerShell, na pasta onde o zip foi baixado: `Get-FileHash est-robot-windows.zip`. Se o código for
 igual, o arquivo é exatamente o que foi publicado aqui."""
 
-COMO_INSTALAR = """**est-robot-windows.zip**: o projeto com o Python dentro. Não instala o Python e não precisa de administrador.
+COMO_INSTALAR = """**Para instalar no Windows, baixe só o `est-robot-windows.zip`** (em *Assets*, logo abaixo). Os outros
+arquivos da lista são contadores de visitas e o código-fonte: não são para instalar.
+
+O zip já traz o Python: não precisa de administrador.
 1. Clique com o botão direito no zip → **Extrair Tudo**.
-2. Abra a pasta no VS Code (Arquivo → Abrir Pasta).
-3. Abra o `meu_programa.py` e aperte **Ctrl+Shift+B**: o robô acende a luz, apita e escreve "Funcionou!".
+2. Na pasta extraída, dê dois cliques em **Abrir o EST-LAB** (precisa do VS Code instalado).
+3. Ligue o robô no cabo USB e aperte **Ctrl+Shift+B**: o robô acende a luz, apita e escreve "Funcionou!".
 
 Já tem o projeto? Use **Terminal → Executar Tarefa → Atualizar o projeto**: ele pega esta versão e não mexe
 no `calibracao.py` nem nos programas dos alunos.

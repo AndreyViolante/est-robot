@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 
 PASTA = '/vscode/'
 NOMES_NIVEL = ['muito fraca', 'fraca', 'média', 'boa', 'cheia']
-BAIXADOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'do_robo')
+BAIXADOS = os.path.abspath('do_robo')          # na pasta em que a tarefa roda (a do aluno, no pacote para Windows)
 
 
 def _nome(caminho):

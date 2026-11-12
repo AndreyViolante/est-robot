@@ -5,6 +5,9 @@ rem ele existe; se nao existe, usa o Python instalado no computador.
 setlocal
 rem volta para a pasta do projeto: um "AutoRun" do cmd no registro pode ter mudado de pasta
 cd /d "%~dp0.."
+rem no pacote para Windows (desde a 0.1.7) o projeto fica em sistema\ e a pasta do aluno e a de cima:
+rem e la que ficam os programas baixados do robo (do_robo) e os da IDE (da_ide e para_ide)
+if exist "%~dp0..\..\Abrir o EST-LAB.cmd" cd /d "%~dp0..\.."
 set "PY=%~dp0..\python\python.exe"
 if not exist "%PY%" set "PY=python"
 rem O "goto" fica na mesma linha porque o "Atualizar o projeto" pode trocar este arquivo enquanto ele roda.

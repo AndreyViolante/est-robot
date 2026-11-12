@@ -47,5 +47,7 @@ jobs:
           versao=$(grep -o "const VERSAO = '[^']*'" docs/programar/modo_blocos.js | cut -d"'" -f2)
           npm install --no-audit --no-fund --no-save --prefix "$RUNNER_TEMP/blockly" "blockly@$versao"
           BLOCKLY_DIR="$RUNNER_TEMP/blockly/node_modules/blockly" python ferramentas/teste_blocos.py
+      - name: Pacote para Windows (pasta do aluno limpa, Python dentro, Atualizar o projeto)
+        run: python ferramentas/empacotar.py --testar
       - name: O tasks.json do VS Code é válido
         run: python -c "import json; json.load(open('.vscode/tasks.json', encoding='utf-8'))"

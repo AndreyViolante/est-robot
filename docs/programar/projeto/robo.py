@@ -143,7 +143,10 @@ _BOTOES = ('BOTAO_ESQUERDA', 'BOTAO_CENTRO', 'BOTAO_DIREITA', 'BOTAO_CIMA', 'BOT
 
 def _carregar_calibracao():
     """Lê o calibracao.py da pasta do projeto, se existir: as medidas do robô valem para todos os programas."""
-    arquivo = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'calibracao.py')
+    pasta = _os.path.dirname(_os.path.abspath(__file__))
+    arquivo = _os.path.join(pasta, 'calibracao.py')
+    if not _os.path.exists(arquivo):                # pacote para Windows: o projeto fica em sistema/, e o
+        arquivo = _os.path.join(pasta, '..', 'calibracao.py')     # calibracao.py na pasta do aluno, em cima
     if not _os.path.exists(arquivo):
         return
     try:

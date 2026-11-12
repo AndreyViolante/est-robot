@@ -76,7 +76,7 @@ Funciona no **Windows**, com Python 3.10+ ou com o pacote que já traz o Python,
 [INSTALAR.md](INSTALAR.md)).
 
 **Computador da escola que não deixa instalar programas?** Use o pacote para Windows com o Python
-dentro: baixe o `est-robot-windows.zip` em [Releases](https://github.com/AndreyViolante/est-robot/releases/latest),
+dentro: [baixe o `est-robot-windows.zip`](https://github.com/AndreyViolante/est-robot/releases/latest/download/est-robot-windows.zip) (o link baixa direto o arquivo certo),
 clique com o botão direito → **Extrair Tudo** e abra a pasta no VS Code. Não instala o Python e não
 precisa de administrador nem de internet: as tarefas do VS Code usam sozinhas o Python da pasta
 `python`. Para receber as novidades, use **Terminal → Executar Tarefa… → Atualizar o projeto**: ela

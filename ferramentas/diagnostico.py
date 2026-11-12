@@ -41,7 +41,10 @@ def python():
 def calibracao():
     """Os valores do calibracao.py (só números, textos e True/False)."""
     try:
-        arvore = ast.parse(open(os.path.join(RAIZ, 'calibracao.py'), encoding='utf-8').read())
+        arquivo = os.path.join(RAIZ, 'calibracao.py')
+        if not os.path.exists(arquivo):             # pacote para Windows: na pasta do aluno, em cima de sistema/
+            arquivo = os.path.join(RAIZ, '..', 'calibracao.py')
+        arvore = ast.parse(open(arquivo, encoding='utf-8').read())
     except (OSError, SyntaxError) as e:
         return f'não deu para ler o calibracao.py ({type(e).__name__})'
     valores = []

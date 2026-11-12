@@ -624,6 +624,8 @@ def verificar_sintaxe():
     raiz = os.path.dirname(os.path.abspath(__file__))
     ruins = []
     for pasta in ('', 'ferramentas', 'exemplos'):
+        if not os.path.isdir(os.path.join(raiz, pasta)):      # pacote para Windows: exemplos/ fica fora de sistema/
+            continue
         for nome in sorted(os.listdir(os.path.join(raiz, pasta))):
             if nome.endswith('.py'):
                 arq = os.path.join(raiz, pasta, nome)
@@ -651,7 +653,7 @@ def verificar_atalhos():
     import json, tempfile
     from enviar import carregar
     raiz = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(raiz, '.vscode', 'robo.code-snippets'), encoding='utf-8') as f:
+    with open(os.path.join(pasta_do_aluno(raiz), '.vscode', 'robo.code-snippets'), encoding='utf-8') as f:
         atalhos = json.load(f)
     ok = True
     with tempfile.TemporaryDirectory() as pasta:
@@ -721,6 +723,12 @@ AVISOS = [
 ]
 
 
+def pasta_do_aluno(raiz):
+    """Onde ficam o meu_programa.py e os exemplos: na pasta do projeto, ou, no pacote para Windows, na de cima
+    (o projeto fica em sistema/)."""
+    return raiz if os.path.isfile(os.path.join(raiz, 'meu_programa.py')) else os.path.join(raiz, '..')
+
+
 def verificar_avisos():
     """Os avisos antes de enviar: variável sem uso, laço sem fim sem espera e motor ligado no fim, com a linha
     certa; nenhum aviso nos programas que vêm com o projeto e nos dos guias (aviso falso ensina a ignorar)."""
@@ -745,8 +753,9 @@ def verificar_avisos():
             ok &= certo
             print(f'  {"OK   " if certo else "FALHA"} aviso: {nome}'
                   + ('' if certo else f' -> {[(a["linha"], a["texto"]) for a in obtidos]}'))
-        programas = [os.path.join(raiz, 'meu_programa.py')] + [
-            os.path.join(raiz, 'exemplos', n) for n in sorted(os.listdir(os.path.join(raiz, 'exemplos'))) if n.endswith('.py')]
+        aluno = pasta_do_aluno(raiz)
+        programas = [os.path.join(aluno, 'meu_programa.py')] + [
+            os.path.join(aluno, 'exemplos', n) for n in sorted(os.listdir(os.path.join(aluno, 'exemplos'))) if n.endswith('.py')]
         falsos = [f'{os.path.basename(p)} linha {a["linha"]}' for p in programas for a in avisos_de(open(p, encoding='utf-8').read())]
         for guia in ('guia-obr.md', 'guia-do-professor.md'):
             texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
@@ -859,8 +868,9 @@ def verificar_exportar():
         ok &= certo
         print(f'  {"OK   " if certo else "FALHA"} salvar para a IDE {arq} ({detalhe})')
 
-    programas = {n: open(os.path.join(raiz, n), encoding='utf-8').read() for n in
-                 ['meu_programa.py'] + [f'exemplos/{a}' for a in sorted(os.listdir(os.path.join(raiz, 'exemplos')))
+    aluno = pasta_do_aluno(raiz)
+    programas = {n: open(os.path.join(aluno, n), encoding='utf-8').read() for n in
+                 ['meu_programa.py'] + [f'exemplos/{a}' for a in sorted(os.listdir(os.path.join(aluno, 'exemplos')))
                                         if a.endswith('.py')]}
     for guia in ('guia-obr.md', 'guia-do-professor.md'):
         texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
@@ -869,7 +879,7 @@ def verificar_exportar():
                 programas[f'{guia} programa {n}'] = codigo
     for nome, com_if, _ in IF_WHILE:
         programas[f'if/while: {nome}'] = 'from robo import *\n\n' + com_if + '\n'
-    with open(os.path.join(raiz, '.vscode', 'robo.code-snippets'), encoding='utf-8') as f:
+    with open(os.path.join(pasta_do_aluno(raiz), '.vscode', 'robo.code-snippets'), encoding='utf-8') as f:
         for atalho in json.load(f).values():
             codigo = expandir_atalho(atalho['body'])
             programas[f'atalho {atalho["prefix"]}'] = (codigo if codigo.startswith('from robo import')
