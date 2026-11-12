@@ -21,6 +21,7 @@ from __future__ import annotations
 import importlib.util as _imp
 import math as _m
 import os as _os
+import sys as _sys
 from typing import Callable, Literal
 
 import blocos as _b
@@ -152,7 +153,11 @@ def _carregar_calibracao():
     try:
         spec = _imp.spec_from_file_location('calibracao', arquivo)
         cal = _imp.module_from_spec(spec)
-        spec.loader.exec_module(cal)
+        guardava, _sys.dont_write_bytecode = _sys.dont_write_bytecode, True    # sem __pycache__ na pasta do aluno
+        try:
+            spec.loader.exec_module(cal)
+        finally:
+            _sys.dont_write_bytecode = guardava
     except SyntaxError as e:
         raise SyntaxError(f'erro no calibracao.py, linha {e.lineno}: confira o que foi mudado lá') from None
     configurar(esquerdo=getattr(cal, 'MOTOR_ESQUERDO', None), direito=getattr(cal, 'MOTOR_DIREITO', None),

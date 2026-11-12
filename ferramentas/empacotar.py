@@ -241,6 +241,7 @@ def testar(projeto):
         py = str(pasta / SISTEMA / 'python' / 'python.exe')
         rodar = str(pasta / SISTEMA / 'ferramentas' / 'rodar.cmd')
         env = dict(os.environ, PYTHONIOENCODING='utf-8')
+        env.pop('PYTHONDONTWRITEBYTECODE', None)          # como no computador do aluno: o Python grava __pycache__
         projeto_zip = pasta.parent / (pasta.name + '-projeto.zip')
         zip_do_projeto(projeto, projeto_zip)
 
@@ -279,7 +280,9 @@ def testar(projeto):
                     resumo = [l for l in r.stdout.splitlines() if 'gabaritos identicos' in l or 'linguagem em' in l]
                     titulo += ' (' + '; '.join(resumo) + ')'
                 if 'Atualizar' in titulo:
-                    ok &= 'já estava em dia' in r.stdout and sorted(os.listdir(pasta)) == sorted(ESPERADO_EM_CIMA)
+                    em_cima = sorted(os.listdir(pasta))
+                    ok &= 'já estava em dia' in r.stdout and em_cima == sorted(ESPERADO_EM_CIMA)
+                    saida += '\nna pasta de cima: ' + ', '.join(em_cima)
             elif 'tarefas' in titulo and faltam:
                 saida = 'faltam: ' + ', '.join(faltam)
             elif 'cima' in titulo:
