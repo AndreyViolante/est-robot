@@ -80,7 +80,7 @@ então os erros de lógica aparecem do mesmo jeito. Use para:
 - conferir a ideia antes de gastar bateria: o quadrado fecha? o seguidor faz a curva de 90°?
 
 Arraste o robô para a largada (a bolinha azul gira) e escolha a pista. Antes, meça o robô da turma
-(roda, distância entre as rodas, posição dos sensores) e ajuste em **Medidas do robô**. O simulador
+(roda, distância entre as rodas, posição dos sensores) e ajuste na aba **Medidas** do simulador. O simulador
 não tem escorregão, bateria fraca nem variação de luz: o teste final é sempre no robô.
 
 **Desafios:** escolha um desafio no campo "Desafio": o robô sai sempre da largada marcada e a página
@@ -98,7 +98,7 @@ roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou
 - **Sem internet:** depois da primeira visita, a página funciona sem internet naquele navegador
   (editor, blocos, simulador e envio). Num laboratório com internet ruim, abra a página uma vez em cada
   computador antes da aula.
-- **Compartilhar link:** o botão copia um link com o programa dentro. O aluno manda pelo WhatsApp e o
+- **Compartilhar link** (menu **Arquivo**): copia um link com o programa dentro. O aluno manda pelo WhatsApp e o
   professor abre e já vê o programa rodando no simulador, sem baixar arquivo. Serve também para o
   professor mandar o programa da aula para a turma. O programa vai no próprio link e não fica guardado
   em nenhum servidor.
@@ -367,7 +367,7 @@ programa.
 
 ## Da IDE para o Python
 
-A tarefa **Abrir programa da IDE (.est)** (ou o botão **Abrir .py / .est** da página de programar)
+A tarefa **Abrir programa da IDE (.est)** (ou **Arquivo → Abrir .py ou .est** na página de programar)
 transforma um projeto feito em blocos na IDE EST no mesmo programa em Python, com os Meus Blocos como
 funções. É uma boa ponte para a turma que já programa em blocos: abra um programa que eles mesmos fizeram e
 mostre, lado a lado, que bloco virou qual linha. O EST-LAB diz se a tradução é exata (os mesmos bytes que

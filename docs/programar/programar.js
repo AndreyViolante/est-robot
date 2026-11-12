@@ -627,7 +627,9 @@ if (temBluetooth) {
   $('btBluetooth').addEventListener('click', () => enviarPorBluetooth(true));
   $('btGravarBluetooth').addEventListener('click', () => enviarPorBluetooth(false));
   if (temUsb) {          // no computador o USB vem primeiro: o Bluetooth fica como segunda opção, mais discreto
-    $('btBluetooth').classList.remove('principal', 'azul');
+    $('btBluetooth').classList.remove('principal', 'azul', 'grande');
+    $('btBluetooth').textContent = 'ᛒ Enviar';
+    $('blocoBluetooth').classList.add('secundario');
   }
 }
 if (!temUsb && !temBluetooth) $('semUsb').hidden = false;
@@ -1049,10 +1051,24 @@ guardarVersao('ao abrir a página', {fonte: editor.valor(), nome: limparNome($('
 
 // ---------------------------------------------------------------- celular: arquivos e Python dos blocos recolhidos
 
+// menu Arquivo: abre e fecha no botão; fecha ao escolher, ao clicar fora e no Esc
+function menuArquivo(abrir) {
+  $('extras').classList.toggle('aberto', abrir);
+  $('btExtras').setAttribute('aria-expanded', String(abrir));
+  $('btExtras').textContent = abrir ? 'Arquivo ▴' : 'Arquivo ▾';
+}
 $('btExtras').addEventListener('click', () => {
-  const aberto = $('extras').classList.toggle('aberto');
-  $('btExtras').setAttribute('aria-expanded', String(aberto));
-  $('btExtras').textContent = aberto ? 'Arquivos ▴' : 'Arquivos ▾';
+  const abrir = !$('extras').classList.contains('aberto');
+  menuArquivo(abrir);
+  if (abrir) ($('extras').querySelector('select, button') || $('extras')).focus();
+});
+for (const item of $('extras').querySelectorAll('button')) item.addEventListener('click', () => menuArquivo(false));
+$('exemplo').addEventListener('change', () => menuArquivo(false));
+document.addEventListener('click', e => {
+  if ($('extras').classList.contains('aberto') && !e.target.closest('.menu-arquivo')) menuArquivo(false);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('extras').classList.contains('aberto')) { menuArquivo(false); $('btExtras').focus(); }
 });
 $('btVerPython').addEventListener('click', () => {
   const aberto = $('btVerPython').closest('.espelho').classList.toggle('aberto');

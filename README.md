@@ -24,7 +24,7 @@ com a linha como está, e o programa continua fazendo o mesmo). A página compil
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
 portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
-navegador, e o botão **Compartilhar link** copia um link com o programa dentro (quem abre já vê o
+navegador, e **Arquivo → Compartilhar link** copia um link com o programa dentro (quem abre já vê o
 programa no simulador; nada fica guardado em servidor). O botão **Versões** mostra as versões do programa
 guardadas no navegador (a cada simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5
 minutos enquanto o aluno escreve; ficam as últimas 30) e deixa voltar para qualquer uma.
@@ -159,7 +159,7 @@ Apagar, rodar e copiar usam os mesmos comandos que a IDE manda, mas **ainda não
 **Terminal → Executar Tarefa → Abrir programa da IDE (.est)** abre a janela para escolher um projeto
 feito na IDE EST e escreve o mesmo programa em Python, com os comandos do EST-LAB, na pasta `da_ide`. Os
 Meus Blocos viram funções do Python. Depois é só simular ou mandar para o robô como qualquer programa. Na
-página de programar, o botão **Abrir .py / .est** faz o mesmo no navegador.
+página de programar, **Arquivo → Abrir .py ou .est** faz o mesmo no navegador.
 
 O EST-LAB confere a tradução: se o Python compila para os mesmos bytes que a IDE manda para o robô, ela
 é **exata**; quando algum bloco ficou diferente (uma conta só com números, um bloco ainda sem comando), ele
@@ -167,7 +167,7 @@ avisa o que mudou e deixa um comentário no programa. Pelo terminal: `python imp
 
 O caminho de volta também existe: **Terminal → Executar Tarefa → Salvar para a IDE EST (.est)** grava o
 programa aberto no formato da IDE, na pasta `para_ide`, para abrir na IDE EST (na página de programar, o
-botão **Salvar .est**). Os blocos, os fios e as variáveis vão iguais, e o EST-LAB confere que o `.est` lido de
+menu **Arquivo → Salvar para a IDE EST**). Os blocos, os fios e as variáveis vão iguais, e o EST-LAB confere que o `.est` lido de
 volta dá os mesmos bytes. As partes ao mesmo tempo (`ao_mesmo_tempo`, `ajustes`) só vão para a IDE quando são a
 última coisa do programa. Pelo terminal: `python exportar_est.py programa.py`.
 
@@ -190,7 +190,7 @@ e o som. Funciona sem internet e sem instalar nada. O exemplo do projeto está n
   linha, e uma arena com uma caixa.
 - Arraste o robô para escolher a largada; a bolinha azul na frente gira o robô. A caixa da arena
   também pode ser arrastada.
-- Em **Medidas do robô** ficam a roda, a distância entre as rodas e a posição de cada sensor. O padrão
+- Na aba **Medidas** ficam a roda, a distância entre as rodas e a posição de cada sensor. O padrão
   é o robô do laboratório (S1 e S2 um de cada lado da linha, S3 no meio e mais à frente, ultrassom na
   porta 4); meça o seu e ajuste.
 
@@ -207,11 +207,12 @@ traz 8 desafios, do "andar 30 cm" ao "desviar do obstáculo", com verificação 
 cumprido destrava o próximo. Os botões da controladora aparecem na tela do robô simulado quando o
 programa usa `botao_apertado()`.
 
-O cartão **Sensores no tempo** desenha a leitura de cada sensor enquanto o robô anda: a luz refletida dos
-sensores de cor (0 a 100) num gráfico e a distância do ultrassom (em cm) em outro, nos últimos 5, 10 ou 30
-segundos ou desde o começo. Passando o mouse (ou usando as setas do teclado no gráfico) aparecem os valores
-de cada sensor naquele instante: bom para ver o seguidor oscilando e escolher o limite entre o preto e o
-branco.
+Na coluna da direita, as abas **Programa**, **Sensores**, **Variáveis** e **Medidas** mostram uma coisa de
+cada vez. A aba **Sensores** tem as leituras de agora e o gráfico de cada sensor enquanto o robô anda: a luz
+refletida dos sensores de cor (0 a 100) num gráfico e a distância do ultrassom (em cm) em outro, nos últimos
+5, 10 ou 30 segundos ou desde o começo. Passando o mouse (ou usando as setas do teclado no gráfico) aparecem
+os valores de cada sensor naquele instante: bom para ver o seguidor oscilando e escolher o limite entre o
+preto e o branco.
 
 **Arena da OBR.** Duas arenas prontas e a "Minha arena OBR" montam o percurso com linha da prova prática
 com ladrilhos de 30 cm, como no manual da OBR 2026: curvas, gap, obstáculo, interseções com e sem verde,

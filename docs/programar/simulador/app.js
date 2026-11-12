@@ -302,6 +302,7 @@ function executarOuPausar() {
 // executa até o programa chegar numa linha (a próxima, ou a mesma de novo num laço) e pausa
 function proximaLinha() {
   if (!vm || !marcas.length) return;
+  if (estado !== 'pausado') mostrarAba('programa');
   if (estado === 'terminou' || estado === 'erro') reiniciar();
   passoAPasso = true;
   motivoParada = null;
@@ -1365,13 +1366,13 @@ function desenharGrafico(g, canvas, dica) {
   c.textBaseline = 'top';
   const passo = passoDoTempo(t1 - t0);
   for (let k = Math.ceil(t0 / passo - 1e-9); k * passo <= t1 + 1e-9; k++) {
-    const t = k * passo, x = Math.round(X(t)) + 0.5;
+    const t = k * passo || 0, x = Math.round(X(t)) + 0.5;          // || 0: sem o "-0 s"
     c.beginPath(); c.moveTo(x, M.cima + A); c.lineTo(x, M.cima + A + 3); c.stroke();
     c.fillText(`${num(t, passo < 1 ? 1 : 0)} s`, Math.min(Math.max(x, M.esq + 12), M.esq + L - 4), M.cima + A + 5);
   }
   if (!registro.amostras.length) {
     c.textBaseline = 'middle';
-    c.fillText('as leituras aparecem aqui quando o robô anda', M.esq + L / 2, M.cima + A / 2);
+    c.fillText('as leituras aparecem aqui quando o robô anda', M.esq + L / 2, M.cima + A / 4);   // longe da linha do meio
   }
 
   // as linhas: 2 px, cantos redondos; um buraco (null) interrompe a linha
@@ -1461,7 +1462,7 @@ function atualizarMotores() {
 function atualizarVariaveis() {
   const nomes = P && vm ? Object.keys(P.variaveis || {}) : [];
   const mensagens = Object.entries(robo.mensagens);          // enviar_mensagem: o último valor de cada título
-  $('cartaoVariaveis').hidden = !nomes.length && !mensagens.length;
+  mostrarAbaVariaveis(nomes.length > 0 || mensagens.length > 0);
   if (!nomes.length && !mensagens.length) return;
   const texto = v => (typeof v === 'number' ? EST.numeroParaTexto(v).replace('.', ',') : String(v));
   $('variaveis').innerHTML = nomes.map(n => {
@@ -1473,6 +1474,40 @@ function atualizarVariaveis() {
 
 function escapar(s) {
   return String(s).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
+}
+
+// ---------------------------------------------------------------- abas do painel
+
+let abaAtual = 'programa';
+function mostrarAba(nome, guardar = false) {
+  const botao = document.querySelector(`.abas-painel [data-aba="${nome}"]`);
+  if (!botao || botao.hidden) return;
+  abaAtual = nome;
+  for (const b of document.querySelectorAll('.abas-painel [role="tab"]')) {
+    const sim = b === botao;
+    b.setAttribute('aria-selected', String(sim));
+    b.tabIndex = sim ? 0 : -1;
+    $(b.getAttribute('aria-controls')).hidden = !sim;
+  }
+  // o gráfico se redesenha sozinho quando a aba aparece (ResizeObserver do #graficos)
+  if (guardar) { salvo.abaPainel = nome; salvar(); }
+}
+function mostrarAbaVariaveis(sim) {
+  if ($('abaVariaveis').hidden === !sim) return;
+  $('abaVariaveis').hidden = !sim;
+  if (!sim && abaAtual === 'variaveis') mostrarAba('programa');
+}
+for (const b of document.querySelectorAll('.abas-painel [role="tab"]')) {
+  b.addEventListener('click', () => mostrarAba(b.dataset.aba, true));
+  b.addEventListener('keydown', ev => {                  // setas trocam de aba, como nas abas do sistema
+    if (ev.key !== 'ArrowRight' && ev.key !== 'ArrowLeft') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const abas = [...document.querySelectorAll('.abas-painel [role="tab"]')].filter(x => !x.hidden);
+    const i = (abas.indexOf(b) + (ev.key === 'ArrowRight' ? 1 : abas.length - 1)) % abas.length;
+    mostrarAba(abas[i].dataset.aba, true);
+    abas[i].focus();
+  });
 }
 
 function montarFonte() {
@@ -2252,6 +2287,7 @@ if (typeof salvo.som === 'boolean') $('somLigado').checked = salvo.som;
 if (typeof salvo.lupa === 'boolean') $('lupa').checked = salvo.lupa;
 if (typeof salvo.ruido === 'boolean') $('ruido').checked = salvo.ruido;
 aplicarRuido();
+mostrarAba(['programa', 'sensores', 'medidas'].includes(salvo.abaPainel) ? salvo.abaPainel : P && P.fonte ? 'programa' : 'sensores');
 if ([5, 10, 30, 0].includes(salvo.janelaGrafico)) { janelaGrafico = salvo.janelaGrafico; $('janelaGrafico').value = String(janelaGrafico); }
 $('janelaGrafico').addEventListener('change', ev => {
   janelaGrafico = +ev.target.value;

@@ -67,8 +67,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .led.azul { background: var(--led-azul); }
 .led.roxo { background: var(--led-roxo); }
 .led.vermelho { background: var(--led-vermelho); }
-.bar a.gh { font: 600 0.9rem var(--mono); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
-.bar a.gh:hover { border-color: var(--fg); }
+.nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 22px; font: 600 0.88rem var(--mono); }
+.nav a { text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; }
+.nav a:hover { border-color: var(--fg); }
+.nav a.gh { border-color: var(--line); }
+.nav a.abrir { border: 2px solid var(--fg); border-radius: 999px; padding: 6px 14px; }
+.nav a.abrir:hover { background: var(--fg); color: var(--bg); }
+@media (max-width: 760px) { .nav .secao { display: none; } }
 
 /* ---- hero ---- */
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(20px, 3vw, 36px) clamp(28px, 5vw, 72px);
@@ -143,10 +148,28 @@ h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: upp
 .status li { list-style: none; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 14px; align-items: baseline;
              padding-block: 14px; border-bottom: 1px solid var(--line); }
 .status li .led { transform: translateY(1px); }
-.status li b { display: block; font-weight: 700; }
+.status li > span > b { display: block; font-weight: 700; }
+.status li small b { font-weight: 700; color: var(--fg); }
 .status li small { color: var(--muted); font-size: 0.9rem; }
 .status ul { padding: 0; margin: 0; display: contents; }
 
+/* recursos em grupos, na ordem em que o aluno usa: escrever, testar, enviar; e o que é do professor */
+.grupos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 36px; }
+@media (max-width: 1100px) { .grupos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .grupos { grid-template-columns: minmax(0, 1fr); } }
+.grupo h3 { display: flex; align-items: center; gap: 10px; margin: 0; padding-bottom: 12px; border-bottom: 2px solid var(--fg);
+            font: 600 0.8rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; }
+.grupo h3 .num { font: 900 2rem/1 var(--display); letter-spacing: 0; color: var(--led-azul); }
+.grupo .status { display: block; margin: 0; padding: 0; }
+.grupo .status li { padding-block: 12px; }
+
+/* como começar: dois caminhos lado a lado */
+.trilhas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 40px clamp(28px, 4vw, 56px); }
+.trilha > h3 { font: 600 0.8rem var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.trilha > h3 b { color: var(--fg); }
+.trilha .ctas { margin-top: 22px; }
+.trilha .step { padding-block: 16px 20px; }
+.trilha .step::before { font-size: 2.6rem; margin-bottom: 6px; }
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 0; counter-reset: passo;
          border-top: 2px solid var(--fg); }
 .step { counter-increment: passo; padding: 22px 22px 26px 0; border-bottom: 1px solid var(--line); }
@@ -188,7 +211,7 @@ h2 { font: 800 clamp(2.2rem, 5vw, 4rem)/0.95 var(--display); text-transform: upp
 footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 8px; }
 
 @media (max-width: 860px) {
-  .hero, .anuncio, .sec-head { grid-template-columns: minmax(0, 1fr); }
+  .hero, .anuncio, .sec-head, .trilhas { grid-template-columns: minmax(0, 1fr); }
   h1 { font-size: clamp(2.2rem, 12cqi, 6rem); }
 }
 @media (max-width: 460px) {
@@ -207,7 +230,13 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
 <div class="wrap">
   <header class="bar">
     <a class="mark" href="#topo" id="topo"><span class="leds"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>EST-LAB</a>
-    <a class="gh" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub ↗</a>
+    <nav class="nav" aria-label="Seções">
+      <a class="secao" href="#recursos">Recursos</a>
+      <a class="secao" href="#como">Como começar</a>
+      <a class="secao" href="#perguntas">Perguntas</a>
+      <a class="gh" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub ↗</a>
+      <a class="abrir" href="programar/">Programar</a>
+    </nav>
   </header>
 
   <div class="hero">
@@ -254,32 +283,74 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var
   <section id="recursos">
     <div class="sec-head">
       <div><div class="eyebrow">Recursos</div><h2>O que a ferramenta faz</h2></div>
-      <p>O compilador gera, byte a byte, os mesmos programas que a IDE oficial. Tudo em português, com mensagens de erro que explicam o que corrigir.</p>
+      <p>Do primeiro programa à prova da OBR: escrever, testar no simulador e mandar para o robô, tudo em português. O compilador gera, byte a byte, os mesmos programas que a IDE oficial.</p>
     </div>
-    <ul class="status">
-      <li><i class="led azul"></i><span><b>Python de verdade, em português</b><small><code>andar_cm(30)</code>, <code>virar_direita(90)</code> e o <code>if</code>, o <code>while</code> e o <code>for</code> do Python com os sensores</small></span></li>
-      <li><i class="led roxo"></i><span><b>No VS Code ou no navegador</b><small><code>Ctrl+Shift+B</code> manda para o robô; no navegador, sem instalar nada, até em Chromebook</small></span></li>
-      <li><i class="led vermelho"></i><span><b>Blocos e Python lado a lado</b><small>A ponte para quem vem da programação em blocos: monta com blocos e vê o Python</small></span></li>
-      <li><i class="led azul"></i><span><b>Simulador com desafios</b><small>Pista vista de cima, 8 desafios com correção automática e execução linha por linha</small></span></li>
-      <li><i class="led roxo"></i><span><b>Sensores, motores, tela e som</b><small>Cor, luz refletida, ultrassom e toque; motores em cm, graus e segundos; notas musicais pelo nome</small></span></li>
-      <li><i class="led vermelho"></i><span><b>Erros explicados</b><small>"não conheço andr. Você quis dizer andar?", com o número da linha</small></span></li>
-      <li><i class="led azul"></i><span><b>Calibração por robô</b><small>As medidas de cada robô num arquivo só, usado por todos os programas</small></span></li>
-      <li><i class="led roxo"></i><span><b>Material para o professor</b><small>Guia com 8 aulas, cola de comandos para imprimir e trilha de desafios</small></span></li>
-      <li><i class="led vermelho"></i><span><b>Instala sem administrador</b><small>Pacote para Windows com o Python dentro e atualização com um clique</small></span></li>
-    </ul>
+    <div class="grupos">
+      <div class="grupo">
+        <h3><span class="num">1</span>Escrever</h3>
+        <ul class="status">
+          <li><i class="led azul"></i><span><b>Python de verdade, em português</b><small><code>andar_cm(30)</code>, <code>virar_direita(90)</code> e o <code>if</code>, o <code>while</code> e o <code>for</code> do Python com os sensores</small></span></li>
+          <li><i class="led azul"></i><span><b>Blocos e Python lado a lado</b><small>Monta com blocos e vê o Python ao lado; <b>Trazer do Python</b> faz o caminho de volta</small></span></li>
+          <li><i class="led azul"></i><span><b>Erros e avisos explicados</b><small>"não conheço andr. Você quis dizer andar?", com a linha; e, antes de enviar, variável sem uso, laço sem espera e motor ligado no fim</small></span></li>
+          <li><i class="led azul"></i><span><b>Versões guardadas</b><small>O navegador guarda as últimas 30 versões do programa, e dá para voltar para qualquer uma</small></span></li>
+        </ul>
+      </div>
+      <div class="grupo">
+        <h3><span class="num">2</span>Testar</h3>
+        <ul class="status">
+          <li><i class="led roxo"></i><span><b>Simulador com desafios</b><small>Pista vista de cima, 8 desafios com correção automática e a arena da OBR com a pontuação da rodada</small></span></li>
+          <li><i class="led roxo"></i><span><b>Linha por linha</b><small><b>Próxima linha</b> e pontos de parada, com a linha do Python que está rodando em destaque</small></span></li>
+          <li><i class="led roxo"></i><span><b>Gráfico dos sensores</b><small>A luz refletida e a distância ao longo do tempo, enquanto o robô anda: dá para ver o seguidor oscilando</small></span></li>
+          <li><i class="led roxo"></i><span><b>Dirigir</b><small>O aluno leva o robô pelas setas e o programa se escreve sozinho, com <code>andar_cm</code> e <code>virar_direita</code></small></span></li>
+        </ul>
+      </div>
+      <div class="grupo">
+        <h3><span class="num">3</span>Enviar</h3>
+        <ul class="status">
+          <li><i class="led vermelho"></i><span><b>No VS Code ou no navegador</b><small><code>Ctrl+Shift+B</code> manda pelo cabo USB; no navegador, sem instalar nada, até em Chromebook</small></span></li>
+          <li><i class="led vermelho"></i><span><b>Celular e tablet Android</b><small>A página vai para a tela inicial e funciona sem internet; o envio pelo Bluetooth ainda está sendo conferido no robô</small></span></li>
+          <li><i class="led vermelho"></i><span><b>Quanto o programa ocupa</b><small>Depois de compilar, a porcentagem do espaço do robô que o programa usa</small></span></li>
+          <li><i class="led vermelho"></i><span><b>Sem estragar nada</b><small>O programa vai numa pasta própria do robô; o firmware não muda e a IDE oficial continua funcionando</small></span></li>
+        </ul>
+      </div>
+      <div class="grupo">
+        <h3><span class="num">4</span>Ensinar</h3>
+        <ul class="status">
+          <li><i class="led azul"></i><span><b>Material para o professor</b><small>Guia com 8 aulas, cola de comandos para imprimir, trilha de desafios e guia da OBR</small></span></li>
+          <li><i class="led azul"></i><span><b>Projetos da IDE EST, ida e volta</b><small>Abre um <code>.est</code> como Python e salva o Python como <code>.est</code>, com os mesmos bytes</small></span></li>
+          <li><i class="led azul"></i><span><b>Calibração por robô</b><small>As medidas de cada robô num arquivo só, usado por todos os programas</small></span></li>
+          <li><i class="led azul"></i><span><b>Instala sem administrador</b><small>Pacote para Windows com o Python dentro e atualização com um clique</small></span></li>
+        </ul>
+      </div>
+    </div>
   </section>
 
   <section id="como">
     <div class="sec-head">
       <div><div class="eyebrow">Passo a passo</div><h2>Como começar</h2></div>
-      <p>Uns 10 minutos, com um computador com Windows e o robô carregado. Sem instalar nada? Use a página <a href="programar/">Programar no navegador</a>.</p>
+      <p>Dois caminhos, e o mesmo arquivo <code>.py</code> funciona nos dois. Pelo navegador começa em um minuto; pelo VS Code leva uns 10, com um computador com Windows e o robô carregado.</p>
     </div>
-    <div class="steps">
-      <div class="step"><h3>Baixe</h3><p>O <code>est-robot-windows.zip</code> em <a href="https://github.com/AndreyViolante/est-robot/releases/latest">Releases</a>, que já traz o Python, e use <b>Extrair Tudo</b>.</p></div>
-      <div class="step"><h3>Abra no VS Code</h3><p>Arquivo → Abrir Pasta, com a extensão Python instalada.</p></div>
-      <div class="step"><h3>Primeiro programa</h3><p>Abra o <code>meu_programa.py</code> e aperte <code>Ctrl+Shift+B</code>: luz, som e "Funcionou!" na tela do robô.</p></div>
-      <div class="step"><h3>Meça o robô</h3><p>Anote no <code>calibracao.py</code> as medidas e o preto e o branco de cada sensor.</p></div>
-      <div class="step"><h3>Dê a aula</h3><p>Siga o <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>, com 8 aulas, e use os desafios do simulador.</p></div>
+    <div class="trilhas">
+      <div class="trilha">
+        <h3><b>No navegador</b> · sem instalar nada</h3>
+        <div class="steps">
+          <div class="step"><h3>Abra a página</h3><p><a href="programar/">Programar</a>, no Chrome ou no Edge (no Android, no Chrome).</p></div>
+          <div class="step"><h3>Escreva e simule</h3><p>Em Python ou com blocos; aperte <b>Simular</b> para ver o robô andando.</p></div>
+          <div class="step"><h3>Envie</h3><p>Robô no cabo USB e <b>Enviar ao robô</b>: na primeira vez, escolha o robô na lista.</p></div>
+        </div>
+        <div class="ctas"><a class="btn solid" href="programar/">Programar no navegador</a></div>
+      </div>
+      <div class="trilha">
+        <h3><b>No VS Code</b> · Windows</h3>
+        <div class="steps">
+          <div class="step"><h3>Baixe</h3><p>O <code>est-robot-windows.zip</code> em <a href="https://github.com/AndreyViolante/est-robot/releases/latest">Releases</a>, que já traz o Python, e use <b>Extrair Tudo</b>.</p></div>
+          <div class="step"><h3>Abra no VS Code</h3><p>Arquivo → Abrir Pasta, com a extensão Python instalada.</p></div>
+          <div class="step"><h3>Primeiro programa</h3><p>Abra o <code>meu_programa.py</code> e aperte <code>Ctrl+Shift+B</code>: luz, som e "Funcionou!" na tela do robô.</p></div>
+          <div class="step"><h3>Meça o robô</h3><p>Anote no <code>calibracao.py</code> as medidas e o preto e o branco de cada sensor.</p></div>
+          <div class="step"><h3>Dê a aula</h3><p>Siga o <a href="https://github.com/AndreyViolante/est-robot/blob/master/docs/guia-do-professor.md">guia do professor</a>, com 8 aulas, e use os desafios do simulador.</p></div>
+        </div>
+        <div class="ctas"><a class="btn line" href="https://github.com/AndreyViolante/est-robot/releases/latest" target="_blank" rel="noopener">Baixar para Windows</a></div>
+      </div>
     </div>
   </section>
 

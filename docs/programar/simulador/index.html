@@ -169,6 +169,7 @@
         <span id="luzNome">luz apagada</span>
         <span class="som" id="som" aria-live="off"></span>
       </div>
+      <div id="motores" class="motores" aria-label="Motores"></div>
       <button id="btToque" class="bt toque" type="button" hidden>Sensor de toque (segure)</button>
       <div class="botoes" id="botoes" hidden>
         <p class="nota">Botões da controladora (segure):</p>
@@ -182,49 +183,51 @@
       </div>
     </section>
 
-    <section class="cartao">
-      <h2>Sensores <span class="etiqueta" id="etiquetaRuido" hidden>com ruído</span></h2>
-      <table class="tabela" id="sensores"></table>
-    </section>
-
-    <section class="cartao" id="cartaoGrafico" aria-labelledby="graficoTitulo">
-      <div class="grafico-topo">
-        <h2 id="graficoTitulo">Sensores no tempo</h2>
-        <label class="campo">Mostrar <select id="janelaGrafico">
-          <option value="5">últimos 5 s</option>
-          <option value="10" selected>últimos 10 s</option>
-          <option value="30">últimos 30 s</option>
-          <option value="0">tudo</option>
-        </select></label>
+    <section class="cartao abas-painel">
+      <div class="abas" role="tablist" aria-label="O que ver do robô">
+        <button type="button" role="tab" id="abaPrograma" data-aba="programa" aria-controls="painelPrograma" aria-selected="true">Programa</button>
+        <button type="button" role="tab" id="abaSensores" data-aba="sensores" aria-controls="painelSensores" aria-selected="false">Sensores</button>
+        <button type="button" role="tab" id="abaVariaveis" data-aba="variaveis" aria-controls="cartaoVariaveis" aria-selected="false" hidden>Variáveis</button>
+        <button type="button" role="tab" id="abaMedidas" data-aba="medidas" aria-controls="medidas" aria-selected="false">Medidas</button>
       </div>
-      <div class="graficos" id="graficos"></div>
-      <p class="nota">A leitura de cada sensor enquanto o robô anda. Passe o mouse (ou use as setas do teclado) no
-        gráfico para ver os valores de um instante.</p>
-    </section>
 
-    <section class="cartao">
-      <h2>Motores</h2>
-      <div id="motores" class="motores"></div>
-    </section>
+      <div class="aba-painel" role="tabpanel" id="painelPrograma" aria-labelledby="abaPrograma">
+        <p class="nota">A linha que está rodando fica em azul. Clique no número de uma linha para pôr um ponto de
+          parada: o programa pausa quando chegar nela.</p>
+        <pre class="fonte" id="fonte"></pre>
+      </div>
 
-    <section class="cartao" id="cartaoVariaveis" hidden>
-      <h2>Variáveis</h2>
-      <table class="tabela" id="variaveis"></table>
-    </section>
+      <div class="aba-painel" role="tabpanel" id="painelSensores" aria-labelledby="abaSensores" hidden>
+        <h2>Agora <span class="etiqueta" id="etiquetaRuido" hidden>com ruído</span></h2>
+        <table class="tabela" id="sensores"></table>
+        <div class="grafico-bloco" id="cartaoGrafico">
+          <div class="grafico-topo">
+            <h2 id="graficoTitulo">No tempo</h2>
+            <label class="campo">Mostrar <select id="janelaGrafico">
+              <option value="5">últimos 5 s</option>
+              <option value="10" selected>últimos 10 s</option>
+              <option value="30">últimos 30 s</option>
+              <option value="0">tudo</option>
+            </select></label>
+          </div>
+          <div class="graficos" id="graficos"></div>
+          <p class="nota">A leitura de cada sensor enquanto o robô anda. Passe o mouse (ou use as setas do teclado) no
+            gráfico para ver os valores de um instante.</p>
+        </div>
+      </div>
 
-    <section class="cartao">
-      <h2>Programa</h2>
-      <p class="nota">Clique no número de uma linha para pôr um ponto de parada: o programa pausa quando chegar nela.</p>
-      <pre class="fonte" id="fonte"></pre>
-    </section>
+      <div class="aba-painel" role="tabpanel" id="cartaoVariaveis" aria-labelledby="abaVariaveis" hidden>
+        <p class="nota">As variáveis do robô (guardar e ler) e as mensagens enviadas pelo Bluetooth.</p>
+        <table class="tabela" id="variaveis"></table>
+      </div>
 
-    <details class="cartao" id="medidas">
-      <summary>Medidas do robô</summary>
-      <p class="nota">Em centímetros, a partir do meio entre as duas rodas. Meça o seu robô e ajuste aqui:
-        fica guardado neste navegador.</p>
-      <div id="formMedidas"></div>
-      <button id="btPadrao" class="bt pequeno" type="button">Voltar ao padrão</button>
-    </details>
+      <div class="aba-painel" role="tabpanel" id="medidas" aria-labelledby="abaMedidas" hidden>
+        <p class="nota">Em centímetros, a partir do meio entre as duas rodas. Meça o seu robô e ajuste aqui:
+          fica guardado neste navegador.</p>
+        <div id="formMedidas"></div>
+        <button id="btPadrao" class="bt pequeno" type="button">Voltar ao padrão</button>
+      </div>
+    </section>
   </aside>
 </main>
 

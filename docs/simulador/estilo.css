@@ -240,6 +240,20 @@ details.cartao[open] summary { margin-bottom: 8px; }
 .vazio code { font-family: var(--mono); font-size: 0.85rem; }
 
 .nota { margin: 0 0 8px; font-size: 0.85rem; color: var(--muted); }
+
+/* ---- abas do painel: Programa, Sensores, Variáveis, Medidas (em vez de uma pilha comprida de cartões) ---- */
+.abas-painel { display: grid; gap: 12px; }
+.abas-painel .abas { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 999px; background: var(--bg);
+                     border: 1px solid var(--line); }
+.abas-painel .abas button { flex: 1 1 auto; border: 0; background: transparent; border-radius: 999px; padding: 5px 10px;
+                            font: 600 0.82rem var(--body); color: var(--muted); cursor: pointer; }
+.abas-painel .abas button:hover { color: var(--fg); }
+.abas-painel .abas button[aria-selected="true"] { background: var(--fg); color: var(--bg); }
+.abas-painel h2 { margin: 0 0 6px; }
+.aba-painel { min-width: 0; }
+.aba-painel .fonte { max-height: min(62vh, 640px); }
+.grafico-bloco { margin-top: 14px; }
+.motores { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
 .medidas { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 10px; }
 .medidas th { text-align: left; font-weight: 600; color: var(--muted); font-size: 0.75rem; padding: 4px 3px; }
 .medidas td { padding: 3px; }
