@@ -97,22 +97,21 @@ def _programa(nome, corpo, com_inicio=True):
         anterior[post] = pre
         seguintes.setdefault(pre, []).append(post)
     avisos = []
-    fios = []
+    # como a IDE (decompilada: o carregador faz mapa[out_module_id] = fios do <line_info>): um <line_info> repetido
+    # do mesmo bloco de origem apaga o anterior. A IDE grava um <line_info> por bloco, com todos os fios dele dentro;
+    # arquivos que gravam um <line_info> por fio perdem os outros fios do bloco (estc.compilar(compat_ide_fios=True)).
+    grupos = {}
     for li in re.finditer(r'<line_info ([^>]*)>(.*?)</line_info>', corpo, re.S):
         origem = int(_atributos(li.group(1)).get('out_module_id', -1))
-        for o in re.finditer(r'<line_info_other ([^/]*)/>', li.group(2)):
-            a = _atributos(o.group(1))
-            fios.append((origem, int(a['out_para_id']), int(a['in_module_id']), int(a['in_para_id'])))
-    # como a IDE: de cada bloco, só o último fio gravado no .est vale (estc.compilar(compat_ide_fios=True))
-    ultimo = {f[0]: i for i, f in enumerate(fios)}
-    for i, (om, op, im, ip) in enumerate(fios):
-        if om not in blocos or im not in blocos:
-            continue
-        if ultimo[om] != i:
-            avisos.append(f'um bloco {NOMES_DE_BLOCO.get(blocos[om].t, blocos[om].t)} tinha mais de um fio saindo; '
-                          'a IDE só usa o último, e a tradução faz igual')
-            continue
-        blocos[im].wires.append((ip, blocos[om], op))
+        outros = [_atributos(o.group(1)) for o in re.finditer(r'<line_info_other ([^/]*)/>', li.group(2))]
+        if origem in grupos and origem in blocos:
+            avisos.append(f'um bloco {NOMES_DE_BLOCO.get(blocos[origem].t, blocos[origem].t)} tinha mais de um fio '
+                          'saindo, gravados separados; a IDE só usa o último, e a tradução faz igual')
+        grupos[origem] = [(int(a['out_para_id']), int(a['in_module_id']), int(a['in_para_id'])) for a in outros]
+    for om, lista in grupos.items():
+        for op, im, ip in lista:
+            if om in blocos and im in blocos:
+                blocos[im].wires.append((ip, blocos[om], op))
 
     filhos = {}
     for i in sorted(blocos):

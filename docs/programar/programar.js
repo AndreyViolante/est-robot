@@ -76,6 +76,12 @@ function criarEditor(caixa, somenteLeitura = false) {
         caixa.setSelectionRange(ini, ini + (linhas[n - 1] || '').length);
       },
       limparErro: () => {},
+      irPara: n => {
+        const linhas = caixa.value.split('\n');
+        const ini = linhas.slice(0, n - 1).join('\n').length + (n > 1 ? 1 : 0);
+        caixa.focus();
+        caixa.setSelectionRange(ini, ini + (linhas[n - 1] || '').length);
+      },
       focar: () => caixa.focus(),
       atualizar: () => {},
       inserir,
@@ -118,6 +124,12 @@ function criarEditor(caixa, somenteLeitura = false) {
       cm.focus();
     },
     limparErro,
+    irPara: n => {                      // leva o cursor para a linha (de um aviso), sem marcar como erro
+      const i = Math.min(Math.max(n - 1, 0), cm.lineCount() - 1);
+      cm.scrollIntoView({line: i, ch: 0}, 80);
+      cm.setSelection({line: i, ch: cm.getLine(i).match(/^\s*/)[0].length}, {line: i, ch: cm.getLine(i).length});
+      cm.focus();
+    },
     focar: () => cm.focus(),
     atualizar: () => cm.refresh(),
     inserir: modelo => {
@@ -140,6 +152,7 @@ function criarEditor(caixa, somenteLeitura = false) {
 }
 
 const salvo = lerSalvo();
+const versoes = globalThis.ESTVersoes.criar();          // versões do programa (versoes.js, mais abaixo)
 let modo = 'python';                    // aba aberta: 'python' ou 'blocos'
 const editor = criarEditor($('codigo'));
 editor.trocar(typeof salvo.fonte === 'string' ? salvo.fonte : INICIAL);
@@ -149,7 +162,7 @@ let espera = null;
 editor.aoMudar(() => {
   editor.limparErro();
   clearTimeout(espera);
-  espera = setTimeout(salvar, 400);
+  espera = setTimeout(() => { salvar(); versaoEnquantoEscreve(); }, 400);
 });
 
 // o nome vira o nome do arquivo no robô (vscode/<nome>): só letras, números e _, até 20, como no enviar.py
@@ -186,6 +199,21 @@ function mostrarErro(r, arquivo) {
   }
   div.scrollIntoView({block: 'nearest'});
 }
+/** Um aviso do avisos.py (variável sem uso, laço sem espera, motor ligado no fim): não impede de enviar. */
+function mostrarAviso(a, r) {
+  const dosBlocos = r.modo === 'blocos' && blocos;
+  const div = mensagem('aviso', `AVISO${a.linha ? ` na linha ${a.linha}` : ''}`,
+    (a.codigo ? `<pre>${escapar(a.codigo)}</pre>` : '') + `<p>${escapar(a.texto)}</p>` +
+    `<p><b>Como arrumar:</b> ${escapar(a.arrumar)}</p>` +
+    (a.linha ? `<button class="bt pequeno" type="button">${dosBlocos ? 'Mostrar o bloco' : `Ir para a linha ${a.linha}`}</button>` : ''));
+  if (a.linha) {
+    div.querySelector('button').addEventListener('click', dosBlocos
+      ? () => blocos.mostrarLinha(a.linha, a.texto) : () => editor.irPara(a.linha));
+  }
+}
+/** Os avisos numa linha de texto cada um, como o simulador mostra (avisos.como_texto). */
+const avisosEmTexto = r => [...(r.avisos || []), ...(r.avisos_do_codigo || []).map(a =>
+  `${a.linha ? `linha ${a.linha}: ` : ''}${a.texto} Como arrumar: ${a.arrumar}`)];
 
 // ---------------------------------------------------------------- compilador (Python do navegador num worker)
 
@@ -275,7 +303,7 @@ function avisosDePortas(ligadas) {
 }
 
 /** Compila e mostra erros, avisos e o tamanho, como o enviar.py no terminal. Devolve o resultado ou null. */
-async function compilarComMensagens() {
+async function compilarComMensagens(motivo = 'compilou') {
   if (modo === 'blocos') {
     try {
       await abrirBlocos();
@@ -317,7 +345,10 @@ async function compilarComMensagens() {
   editor.limparErro();
   if (espelho) espelho.limparErro();
   for (const aviso of r.avisos || []) mensagem('aviso', 'AVISO', `<p>${escapar(aviso)}</p>`);
-  mensagem('ok', `${escapar(r.nome)}: ${r.bytes.length / 2} bytes`);
+  for (const aviso of r.avisos_do_codigo || []) mostrarAviso(aviso, r);
+  guardarVersao(motivo, {fonte: r.fonte, nome: limparNome(r.nome), modo: r.modo,
+                         blocos: r.modo === 'blocos' && blocos ? blocos.estado() : null});
+  mensagem('ok', `${escapar(r.nome)}: ${r.bytes.length / 2} bytes`, r.espaco ? `<p>${escapar(r.espaco)}</p>` : '');
   return r;
 }
 
@@ -341,7 +372,7 @@ quadro.addEventListener('load', () => {
 
 function abrirSimulador(r) {
   window.ESTPROGRAMA = {nome: r.nome, gerado: agora(), bytes: r.bytes, fonte: r.fonte, linhas: r.linhas,
-                        variaveis: r.variaveis, avisos: r.avisos};
+                        variaveis: r.variaveis, avisos: avisosEmTexto(r)};
   mostrarTeclado(false);
   $('sim').hidden = false;
   document.documentElement.classList.add('travado');
@@ -426,7 +457,7 @@ async function enviarAoRobo(executar) {
     limparMensagens();
     let r = null;
     if (pythonPronto) {          // compila antes de abrir a lista do navegador (ela precisa vir logo depois do clique)
-      r = await compilarComMensagens();
+      r = await compilarComMensagens(executar ? 'enviou ao robô' : 'gravou no robô');
       if (!r) return;
     }
     let robo = await P.roboPermitido();
@@ -447,7 +478,7 @@ async function enviarAoRobo(executar) {
       atualizarRobo();
     }
     if (!r) {
-      r = await compilarComMensagens();
+      r = await compilarComMensagens(executar ? 'enviou ao robô' : 'gravou no robô');
       if (!r) return;
     }
 
@@ -512,7 +543,7 @@ async function enviarPorBluetooth(executar) {
     limparMensagens();
     let r = null;
     if (pythonPronto) {          // compila antes de abrir a lista do navegador (ela precisa vir logo depois do clique)
-      r = await compilarComMensagens();
+      r = await compilarComMensagens(executar ? 'enviou pelo Bluetooth' : 'gravou pelo Bluetooth');
       if (!r) return;
     }
     let porta = await P.portaBluetoothPermitida();
@@ -528,7 +559,7 @@ async function enviarPorBluetooth(executar) {
       }
     }
     if (!r) {
-      r = await compilarComMensagens();
+      r = await compilarComMensagens(executar ? 'enviou pelo Bluetooth' : 'gravou pelo Bluetooth');
       if (!r) return;
     }
     const caixa = mensagem('info', 'Conectando pelo Bluetooth…', '<div class="progresso"><i></i></div>');
@@ -574,7 +605,7 @@ async function simular() {
   if (ocupado) return;
   travar(true);
   try {
-    const r = await compilarComMensagens();
+    const r = await compilarComMensagens('simulou');
     if (r) abrirSimulador(r);
   } finally {
     travar(false);
@@ -603,6 +634,7 @@ if (!temUsb && !temBluetooth) $('semUsb').hidden = false;
 
 function guardarAgora() {
   if (blocos) blocos.salvar();
+  guardarVersao('Ctrl+S');
   $('guardado').textContent = salvar() ? 'Guardado neste navegador.' : 'Este navegador não deixa guardar: use Baixar .py.';
 }
 document.addEventListener('keydown', e => {           // Ctrl+S guarda; Ctrl+Shift+B envia, como no VS Code
@@ -630,8 +662,8 @@ $('arquivo').addEventListener('change', async () => {
   trocarPrograma(await arq.text(), arq.name);
 });
 
-/** Traduz um projeto da IDE EST (.est) para Python, com o Python do navegador (importar_est.py). */
-async function importarEst(texto, nome) {
+/** Um pedido ao Python do navegador (o worker do compilador.js) que não é a compilação de sempre. */
+async function pedirAoPython(mensagemDoPedido) {
   if (!worker) iniciarCompilador();
   if (!pythonPronto) mensagem('info', 'Preparando o Python do navegador…', '<p>Na primeira vez demora alguns segundos.</p>');
   await workerPronto;
@@ -639,9 +671,39 @@ async function importarEst(texto, nome) {
     const id = proximoId++;
     const relogio = setTimeout(() => { pedidos.delete(id); falha(new Error('o Python do navegador demorou demais')); }, LIMITE_MS);
     pedidos.set(id, {ok, falha, relogio});
-    worker.postMessage({id, est: texto, nome});
+    worker.postMessage(Object.assign({id}, mensagemDoPedido));
   });
 }
+
+/** Traduz um projeto da IDE EST (.est) para Python, com o Python do navegador (importar_est.py). */
+const importarEst = (texto, nome) => pedirAoPython({est: texto, nome});
+
+// o programa no formato da IDE EST (exportar_est.py): baixa um .est para abrir na IDE
+$('btSalvarEst').addEventListener('click', async () => {
+  limparMensagens();
+  let r;
+  try {
+    r = await pedirAoPython({paraEst: fonteAtual(), nome: nomeDoArquivo()});
+  } catch (e) {
+    r = {erro: e.message};
+  }
+  if (r.erro) {
+    mensagem('erro', `Não deu para salvar para a IDE${r.linha ? ` (linha ${r.linha})` : ''}`,
+      (r.codigo && r.codigo.trim() ? `<pre>${escapar(r.codigo.trim())}</pre>` : '') + `<p>${escapar(r.erro)}</p>`);
+    return;
+  }
+  const nome = nomeDoArquivo().replace(/\.py$/, '.est');
+  const url = URL.createObjectURL(new Blob([r.est], {type: 'application/octet-stream'}));
+  const a = Object.assign(document.createElement('a'), {href: url, download: nome});
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  mensagem(r.iguais ? 'ok' : 'aviso', `Salvo para a IDE EST: ${escapar(nome)}`,
+    (r.iguais ? '<p>Lido de volta, o .est tem os mesmos blocos e dá os mesmos bytes que o EST-LAB manda para o robô.</p>'
+              : '<p>Lido de volta, o .est não deu os mesmos bytes: confira o programa na IDE antes de enviar.</p>') +
+    '<p>Na IDE EST: Arquivo → Abrir e escolha o arquivo. Ao enviar, a IDE grava por cima do arquivo aberto.</p>');
+});
 
 async function abrirEst(arq) {
   limparMensagens();
@@ -672,6 +734,7 @@ async function abrirEst(arq) {
 }
 
 function trocarPrograma(texto, nome) {
+  guardarVersao('antes de abrir outro programa', {fonte: editor.valor(), nome: limparNome($('nome').value), modo: 'python'});
   editor.trocar(texto.replace(/\r\n?/g, '\n'));
   $('nome').value = limparNome(nome);
   trocarModo('python');
@@ -787,7 +850,10 @@ function abrirBlocos() {
   if (!abrindo) {
     espelho = espelho || criarEditor($('pythonBlocos'), true);
     $('blockly').innerHTML = '<p class="carregando">Carregando os blocos…</p>';
-    abrindo = globalThis.ESTBlocos.criar($('blockly'), codigo => espelho.trocar(codigo)).then(api => { blocos = api; });
+    abrindo = globalThis.ESTBlocos.criar($('blockly'), codigo => {
+      espelho.trocar(codigo);
+      if (blocos && modo === 'blocos') versaoEnquantoEscreve();
+    }).then(api => { blocos = api; });
     abrindo.catch(e => {
       console.error(e);
       abrindo = null;
@@ -850,6 +916,8 @@ $('btTrazer').addEventListener('click', async () => {
   const atual = blocos.codigo().trim();
   if (atual !== 'from robo import *' && atual !== editor.valor().trim() &&
       !confirm('Os blocos vão ser trocados pelo programa da aba Python. Continuar?')) return;
+  guardarVersao('antes de trazer do Python', {fonte: blocos.codigo(), nome: limparNome($('nome').value), modo: 'blocos',
+                                               blocos: blocos.estado()});
   blocos.carregar(r.estado);
   mensagem(r.python ? 'aviso' : 'ok', 'O programa da aba Python agora está em blocos',
     r.python ? `<p>${r.python === 1 ? '1 linha ainda não tem bloco e ficou' : `${r.python} linhas ainda não têm bloco e ficaram`} ` +
@@ -862,6 +930,8 @@ $('btLevar').addEventListener('click', () => {
   const codigo = blocos.codigo(), atual = editor.valor().trim();
   if (atual && atual !== INICIAL.trim() && atual !== codigo.trim() &&
       !confirm('O programa da aba Python vai ser trocado pelo Python dos blocos. Continuar?')) return;
+  guardarVersao('antes de levar os blocos para o Python', {fonte: editor.valor(), nome: limparNome($('nome').value),
+                                                         modo: 'python'});
   editor.trocar(codigo);
   trocarModo('python');
   editor.focar();
@@ -870,6 +940,112 @@ $('btLevar').addEventListener('click', () => {
 // no celular, quem abre a página pela primeira vez começa nos blocos (digitar Python na tela pequena é difícil)
 const telaPequena = () => window.matchMedia('(max-width: 600px)').matches;
 if (salvo.modo === 'blocos' || (!salvo.modo && typeof salvo.fonte !== 'string' && telaPequena())) trocarModo('blocos');
+
+// ---------------------------------------------------------------- versões do programa (versoes.js)
+// Guardadas neste navegador: quando simula ou envia, no Ctrl+S, antes de abrir outro programa e, enquanto o aluno
+// escreve, de tempos em tempos. A lista deixa ver cada uma e voltar para ela.
+
+const ENQUANTO_ESCREVE_MS = 5 * 60 * 1000;      // escrevendo: uma versão nova a cada 5 minutos, no máximo
+const NOMES_MOTIVO = {'Ctrl+S': 'guardou (Ctrl+S)'};
+
+/** O programa de agora: o Python do editor, ou os blocos (com o Python deles) na aba Blocos. */
+function estadoAtual() {
+  const nome = limparNome($('nome').value);
+  if (modo === 'blocos' && blocos) return {fonte: blocos.codigo(), nome, modo: 'blocos', blocos: blocos.estado()};
+  return {fonte: editor.valor(), nome, modo: 'python'};
+}
+
+function guardarVersao(motivo, estado = estadoAtual()) {
+  try { return versoes.guardar(Object.assign({motivo}, estado)); } catch (e) { return null; }
+}
+
+/** Escrevendo: guarda uma versão se a mais nova já tem mais de 5 minutos. */
+function versaoEnquantoEscreve() {
+  if (versoes.idadeDaMaisNova() > ENQUANTO_ESCREVE_MS) guardarVersao('enquanto escrevia');
+}
+
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+function montarVersoes() {
+  const lista = $('listaVersoes'), agora = estadoAtual(), todas = versoes.lista();
+  lista.textContent = '';
+  $('semVersoes').hidden = todas.length > 0;
+  for (const v of todas) {
+    const li = document.createElement('li');
+    const topo = document.createElement('div');
+    topo.className = 'v-topo';
+    const quando = document.createElement('b');
+    quando.textContent = globalThis.ESTVersoes.quando(v.quando);
+    const motivo = document.createElement('span');
+    motivo.className = 'v-motivo';
+    motivo.textContent = NOMES_MOTIVO[v.motivo] || v.motivo || '';
+    topo.append(quando, motivo);
+    const {mais, menos} = globalThis.ESTVersoes.diferenca(v.fonte, agora.fonte);
+    const linhas = v.fonte.replace(/\n+$/, '').split('\n').length;
+    const igual = !mais && !menos;
+    const info = document.createElement('div');
+    info.className = 'v-info';
+    info.textContent = [`${v.nome || 'programa'}.py`, v.modo === 'blocos' ? 'blocos' : 'Python', plural(linhas, 'linha', 'linhas'),
+      igual ? 'igual ao programa de agora'
+            : `${plural(Math.max(mais, menos), 'linha diferente', 'linhas diferentes')} do programa de agora`].join(' · ');
+    if (igual) li.classList.add('igual');
+    const ver = document.createElement('details');
+    const resumo = document.createElement('summary');
+    resumo.textContent = 'Ver o programa';
+    const codigo = document.createElement('pre');
+    codigo.textContent = v.fonte;
+    ver.append(resumo, codigo);
+    const voltar = document.createElement('button');
+    voltar.className = 'bt pequeno';
+    voltar.type = 'button';
+    voltar.textContent = 'Voltar para esta versão';
+    voltar.disabled = igual && v.modo === agora.modo;
+    voltar.addEventListener('click', () => voltarPara(v.id));
+    li.append(topo, info, ver, voltar);
+    lista.append(li);
+  }
+}
+
+function abrirVersoes() {
+  montarVersoes();
+  const caixa = $('versoes');
+  if (caixa.showModal) caixa.showModal(); else caixa.setAttribute('open', '');
+}
+function fecharVersoes() {
+  const caixa = $('versoes');
+  if (caixa.close) caixa.close(); else caixa.removeAttribute('open');
+}
+
+async function voltarPara(id) {
+  const v = versoes.achar(id);
+  if (!v) return;
+  guardarVersao('antes de voltar para uma versão');      // o programa de agora não se perde
+  fecharVersoes();
+  if (v.modo === 'blocos' && v.blocos) {
+    $('nome').value = limparNome(v.nome || $('nome').value);
+    await trocarModo('blocos');
+    if (!blocos) return;
+    blocos.carregar(v.blocos);
+  } else {
+    trocarPrograma(v.fonte, v.nome || $('nome').value);
+  }
+  salvar();
+  limparMensagens();
+  mensagem('ok', `Voltou para a versão guardada ${escapar(globalThis.ESTVersoes.quando(v.quando))}`,
+    '<p>O programa que estava antes também ficou guardado nas versões.</p>');
+}
+
+$('btVersoes').addEventListener('click', abrirVersoes);
+$('btFecharVersoes').addEventListener('click', fecharVersoes);
+$('versoes').addEventListener('click', e => { if (e.target === $('versoes')) fecharVersoes(); });    // clique fora
+$('btGuardarVersao').addEventListener('click', () => {
+  const v = guardarVersao('guardou nas versões');
+  montarVersoes();
+  $('avisoVersoes').textContent = v ? 'Versão guardada.' : 'Nada mudou desde a última versão guardada.';
+});
+
+// o programa que estava na página quando ela abriu também vira uma versão (se mudou desde a última)
+guardarVersao('ao abrir a página', {fonte: editor.valor(), nome: limparNome($('nome').value), modo: 'python'});
 
 // ---------------------------------------------------------------- celular: arquivos e Python dos blocos recolhidos
 

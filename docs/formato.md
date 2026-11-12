@@ -56,6 +56,15 @@ thread 2               ...                                      ... 21 02 00
   inteira e depois cada thread, na ordem em que foram numeradas (em largura).
 - Todo bloco começa com o marcador `48`, seguido das inicializações dos seus parâmetros, dos passos
   do bloco e das cópias para os blocos ligados por fio.
+- **Espaço** (o que o envio mostra em porcentagem, `estc.espaco`): o programa vai em no máximo 255
+  pedaços de 1014 bytes (o total de pedaços é um byte), ou seja, até 258.570 bytes; os registradores vão
+  do endereço 0 até o começo da área de textos (`0xD7FF`), ou seja, até 55.295 bytes, constantes
+  incluídas. São limites do formato: a memória de verdade da controladora ainda não foi medida.
+
+No projeto da IDE (`.est`), os fios ficam em `<line_info out_module_id="origem">`, com um
+`<line_info_other>` por fio. Ao abrir, a IDE guarda os fios num mapa pelo bloco de origem: um segundo
+`<line_info>` do mesmo bloco **apaga** o primeiro (visto no código da IDE e no gabarito `t9`). Por isso
+o `exportar_est.py` grava todos os fios de um bloco num `<line_info>` só, como a própria IDE grava.
 
 ## 3. Instruções conhecidas
 

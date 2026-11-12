@@ -557,6 +557,8 @@ async function criar(div, aoMudar) {
     limparAvisos,
     redimensionar: () => Blockly.svgResize(ws),
     salvar,
+    /** A área de blocos como dados (para guardar uma versão e voltar para ela depois com carregar). */
+    estado: () => Blockly.serialization.workspaces.save(ws),
     /** Troca os blocos pela área estado (do "Trazer do Python", para_blocos.py). */
     carregar(estado) {
       Blockly.serialization.workspaces.load(estado, ws);

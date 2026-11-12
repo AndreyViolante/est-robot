@@ -695,6 +695,212 @@ def verificar_portas():
     return ok
 
 
+# avisos antes de enviar (avisos.py): (nome, programa, [(linha, trecho do texto do aviso)]); [] = nenhum aviso
+AVISOS = [
+    ('variável do Python criada e nunca usada', 'kp = 0.4\nvel = 30\nmotores(vel, vel)\nparar()',
+     [(3, 'variável "kp"')]),
+    ('variável só aumentada (x += 1) conta como sem uso', 'voltas = 0\nfor _ in range(3):\n    voltas += 1\n    bip()',
+     [(3, 'variável "voltas"')]),
+    ('variável do for e com _ na frente não avisam', 'for i in range(2):\n    bip()\n_x = 1', []),
+    ('guardar sem nenhum ler', "guardar('erro', 0)\nguardar('vel', 30)\nmostrar(ler('vel'))", [(3, 'robô "erro"')]),
+    ('while True sem espera e sem sensor', "guardar('n', 0)\nwhile True:\n    guardar('n', ler('n') + 1)\n"
+     "    mostrar(ler('n'))", [(4, '"while True:" repete sem nenhuma espera')]),
+    ('para_sempre vazio', 'bip()\nwith para_sempre():\n    pass', [(4, '"para_sempre()" está vazio')]),
+    ('while True com esperar: sem aviso', "while True:\n    mostrar(cronometro())\n    esperar(0.5)", []),
+    ('seguidor de linha (while True que lê sensor): sem aviso',
+     'while True:\n    if luz_refletida(1) < 50:\n        motores(10, 30)\n    else:\n        motores(30, 10)', []),
+    ('while True com movimento (andar espera acabar): sem aviso', 'while True:\n    andar_cm(10)\n    virar_direita()', []),
+    ('motores ligados no fim do programa', 'motores(30, 30)\nesperar(2)', [(3, 'motores B e C ficam ligados')]),
+    ('motor ligado numa função', "def gira():\n    ligar_motor('A', 40)\n\nbip()\ngira()", [(4, 'motor A fica ligado')]),
+    ('motor ligado só num ramo do if', "if distancia(4) < 20:\n    motores(20, 20)\nelse:\n    parar()",
+     [(4, 'motores B e C ficam ligados')]),
+    ('motores com parar() no fim: sem aviso', "motores(30, 30)\nesperar_distancia(4, '<', 20)\nparar()", []),
+    ('motores dentro de um laço sem fim: sem aviso', 'while True:\n    motores(ler("v"), 20)\n    esperar(0.1)\n'
+     'guardar("v", 1)', []),
+    ('andar(...) termina parado: sem aviso', 'motores(30, 30)\nesperar(1)\nandar(rotacoes=1)', []),
+]
+
+
+def verificar_avisos():
+    """Os avisos antes de enviar: variável sem uso, laço sem fim sem espera e motor ligado no fim, com a linha
+    certa; nenhum aviso nos programas que vêm com o projeto e nos dos guias (aviso falso ensina a ignorar)."""
+    import tempfile
+    from enviar import avisos_do_codigo, carregar
+    raiz = os.path.dirname(os.path.abspath(__file__))
+    ok = True
+    with tempfile.TemporaryDirectory() as pasta:
+        def avisos_de(codigo):
+            arq = os.path.join(pasta, 'aviso.py')
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write('from robo import *\n\n' + codigo + '\n')
+            programa = carregar(arq)
+            compilar(programa)                  # aviso não impede de compilar
+            return avisos_do_codigo(arq, programa)
+
+        for nome, codigo, esperados in AVISOS:
+            obtidos = avisos_de(codigo)
+            certo = (len(obtidos) == len(esperados) and all(
+                a['linha'] == linha and trecho in a['texto'] and a['arrumar'] and a['codigo']
+                for a, (linha, trecho) in zip(obtidos, esperados)))
+            ok &= certo
+            print(f'  {"OK   " if certo else "FALHA"} aviso: {nome}'
+                  + ('' if certo else f' -> {[(a["linha"], a["texto"]) for a in obtidos]}'))
+        programas = [os.path.join(raiz, 'meu_programa.py')] + [
+            os.path.join(raiz, 'exemplos', n) for n in sorted(os.listdir(os.path.join(raiz, 'exemplos'))) if n.endswith('.py')]
+        falsos = [f'{os.path.basename(p)} linha {a["linha"]}' for p in programas for a in avisos_de(open(p, encoding='utf-8').read())]
+        for guia in ('guia-obr.md', 'guia-do-professor.md'):
+            texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
+            for n, codigo in enumerate(re.findall(r'```python\n(.*?)```', texto, re.S), 1):
+                if 'from robo import' in codigo:
+                    falsos += [f'{guia} programa {n} linha {a["linha"]}' for a in avisos_de(codigo.replace('from robo import *', ''))]
+    ok &= not falsos
+    print(f'  {"OK   " if not falsos else "FALHA"} nenhum aviso nos exemplos, no meu_programa.py e nos guias'
+          + (f' -> {falsos}' if falsos else ''))
+    return ok
+
+
+def verificar_espaco():
+    """O espaço do robô que o programa usa: a memória dos registradores bate com os programas da IDE (as constantes
+    são os últimos registradores, e o 1º comando do programa grava a 1ª delas), e o limite do código é o do envio
+    pelo USB (255 pedaços de 1014 bytes)."""
+    import estc
+    ok = True
+    for fn in TESTES:
+        ide = bytes.fromhex(open(os.path.join(PASTA, fn.__name__ + '.hex')).read().strip())
+        e = estc.espaco(fn(), ide, compat_ide_fios=fn.__name__ in COMPAT_FIOS)
+        primeira_constante = int.from_bytes(ide[1:5], 'big')          # 02 [endereço] 0.0
+        certo = ide[0] == 0x02 and e['memoria'] == primeira_constante + 32 and e['codigo'] == len(ide)
+        ok &= certo
+        if not certo:
+            print(f'  FALHA espaço de {fn.__name__}: memória {e["memoria"]}, a IDE pôs as constantes em {primeira_constante}')
+    print(f'  {"OK   " if ok else "FALHA"} espaço: memória dos {len(TESTES)} programas da IDE')
+    casos = [('pequeno', {'codigo': 231, 'memoria': 69}, '0,1%', None),
+             ('código grande', {'codigo': estc.LIMITE_CODIGO + 1, 'memoria': 100}, '100%', 'não cabe no envio'),
+             ('memória cheia', {'codigo': 5000, 'memoria': estc.LIMITE_MEMORIA + 4}, '100%', 'pode funcionar errado'),
+             ('perto do limite', {'codigo': 5000, 'memoria': estc.LIMITE_MEMORIA * 9 // 10}, '90%', 'perto do limite')]
+    for nome, uso, porcento, aviso in casos:
+        pc_c, pc_m = 100 * uso['codigo'] / estc.LIMITE_CODIGO, 100 * uso['memoria'] / estc.LIMITE_MEMORIA
+        e = dict(uso, limite_codigo=estc.LIMITE_CODIGO, limite_memoria=estc.LIMITE_MEMORIA,
+                 porcentagem=max(pc_c, pc_m), acaba_antes='codigo' if pc_c >= pc_m else 'memoria')
+        texto, obtido = estc.texto_do_espaco(e), estc.aviso_do_espaco(e)
+        certo = porcento in texto and (obtido is None if aviso is None else aviso in obtido)
+        ok &= certo
+        print(f'  {"OK   " if certo else "FALHA"} espaço: {nome}' + ('' if certo else f' -> {texto} / {obtido}'))
+    try:
+        import est_protocol
+    except (ImportError, AttributeError, OSError):                  # fora do Windows: sem o protocolo USB
+        return ok
+    cabe = len(est_protocol.pacotes_de_dados(bytes(estc.LIMITE_CODIGO))) == 255
+    try:
+        est_protocol.pacotes_de_dados(bytes(estc.LIMITE_CODIGO + 1))
+        recusa = False
+    except RuntimeError:
+        recusa = True
+    certo = est_protocol.PEDACO == estc.PEDACO and cabe and recusa
+    ok &= certo
+    print(f'  {"OK   " if certo else "FALHA"} espaço: o limite do código é o do envio ({estc.LIMITE_CODIGO} bytes)')
+    return ok
+
+
+def _estrutura_est(dados):
+    """O que importa para a IDE abrir um .est, sem o desenho na tela: os blocos (tipo, modo, parâmetros, porta,
+    pai, containers), a ordem (head/tear), as cadeias dos containers e as variáveis do projeto."""
+    import base64, html, json
+    xml = base64.b64decode(dados).decode('utf-8')
+    corpo = re.search(r'<top [^>]*>(.*?)</top>', xml, re.S).group(1)
+    modulos = json.loads(html.unescape(re.search(r'<modulesInfos info="([^"]*)"', corpo).group(1)))
+    desenho = ('moduleposx', 'moduleposy', 'str1', 'str2', 'str3')
+    modulos = {k: ({c: v[c] for c in v if c not in desenho} if isinstance(v, dict) else v) for k, v in modulos.items()}
+    return (modulos, re.findall(r'<head_relation [^/]*/>', corpo), re.findall(r'<tear_relation [^>]*/>', corpo),
+            re.search(r'<special_info special="([^"]*)"', corpo).group(1),
+            re.search(r'my_varieties&quot;:(\[.*?\])', xml).group(1), '\r\n' in xml)
+
+
+def _invariantes_est(dados):
+    """As regras que o carregador da IDE exige (sem elas a IDE dá erro ao abrir): o "pre" de cada head_relation já
+    apareceu como "post" antes, os pais existem e cada bloco de origem tem um <line_info> só."""
+    import base64
+    xml = base64.b64decode(dados).decode('utf-8')
+    vistos, problemas = {-1}, []
+    for pre, post in re.findall(r'<head_relation pre="(-?\d+)" post="(\d+)"/>', xml):
+        if int(pre) not in vistos:
+            problemas.append(f'head_relation {post} antes do {pre}')
+        vistos.add(int(post))
+    origens = re.findall(r'<line_info out_module_id="(\d+)">', xml)
+    if len(origens) != len(set(origens)):
+        problemas.append('<line_info> repetido (a IDE apaga o anterior)')
+    return problemas
+
+
+def verificar_exportar():
+    """Python -> .est da IDE (exportar_est.py). Os gabaritos (projetos que a IDE abriu): lidos e salvos de novo,
+    têm a mesma estrutura do arquivo da IDE e, lidos de volta, compilam para os mesmos bytes que a IDE gerou.
+    Os programas do projeto (exemplos, guias, atalhos, if/while): o .est lido de volta dá os mesmos bytes."""
+    import json, tempfile
+    import exportar_est, importar_est
+    from enviar import carregar
+    raiz = os.path.dirname(os.path.abspath(__file__))
+    ok = True
+    for arq in sorted(os.listdir(PASTA)):
+        if not arq.endswith('.est'):
+            continue
+        with open(os.path.join(PASTA, arq), 'rb') as f:
+            dados = f.read()
+        try:
+            est = exportar_est.para_est(importar_est.ler(dados)[0][0].blocos, arq[:-4])
+            ide = bytes.fromhex(open(os.path.join(PASTA, arq[:-4] + '.hex')).read().strip())
+            iguais = compilar(importar_est.ler(est)[0][0].blocos) == ide
+            mesma = _estrutura_est(est) == _estrutura_est(dados)
+            problemas = _invariantes_est(est)
+            certo, detalhe = iguais and mesma and not problemas, f'bytes da IDE: {iguais}; estrutura igual: {mesma}'
+            detalhe += f'; {problemas}' if problemas else ''
+        except Exception as e:
+            certo, detalhe = False, f'{type(e).__name__}: {e}'
+        ok &= certo
+        print(f'  {"OK   " if certo else "FALHA"} salvar para a IDE {arq} ({detalhe})')
+
+    programas = {n: open(os.path.join(raiz, n), encoding='utf-8').read() for n in
+                 ['meu_programa.py'] + [f'exemplos/{a}' for a in sorted(os.listdir(os.path.join(raiz, 'exemplos')))
+                                        if a.endswith('.py')]}
+    for guia in ('guia-obr.md', 'guia-do-professor.md'):
+        texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
+        for n, codigo in enumerate(re.findall(r'```python\n(.*?)```', texto, re.S), 1):
+            if 'from robo import' in codigo:
+                programas[f'{guia} programa {n}'] = codigo
+    for nome, com_if, _ in IF_WHILE:
+        programas[f'if/while: {nome}'] = 'from robo import *\n\n' + com_if + '\n'
+    with open(os.path.join(raiz, '.vscode', 'robo.code-snippets'), encoding='utf-8') as f:
+        for atalho in json.load(f).values():
+            codigo = expandir_atalho(atalho['body'])
+            programas[f'atalho {atalho["prefix"]}'] = (codigo if codigo.startswith('from robo import')
+                                                       else 'from robo import *\n\n' + codigo) + '\n'
+    # um valor que vai para dois lugares (o erro do seguidor proporcional): os dois fios no mesmo <line_info>
+    programas['fio para dois blocos'] = ('from robo import *\n\nwhile True:\n    erro = luz_refletida(1) - luz_refletida(2)\n'
+                                         '    motores(25 + erro * 0.4, 25 - erro * 0.4)\n')
+    recusados_esperados = {'atalho medir_laco'}         # continua depois das partes ao mesmo tempo
+    falhas, recusados = [], set()
+    with tempfile.TemporaryDirectory() as pasta:
+        for nome, codigo in programas.items():
+            arq = os.path.join(pasta, 'p.py')
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write(codigo)
+            try:
+                cadeia = carregar(arq)
+                est = exportar_est.para_est(cadeia, 'p')
+                if not exportar_est.conferir_bytes(cadeia, est) or _invariantes_est(est):
+                    falhas.append(f'{nome} {_invariantes_est(est)}')
+            except exportar_est.NaoCabeNaIde:
+                recusados.add(nome)
+            except Exception as e:
+                falhas.append(f'{nome}: {type(e).__name__}: {e}')
+    if recusados != recusados_esperados:
+        falhas.append(f'recusados {sorted(recusados)}, esperados {sorted(recusados_esperados)}')
+    ok &= not falhas
+    print(f'  {"OK   " if not falhas else "FALHA"} salvar para a IDE: {len(programas) - len(recusados)} programas do '
+          'projeto voltam com os mesmos bytes' + (f' -> {falhas}' if falhas else ''))
+    return ok
+
+
 # traduções da IDE que não dão os mesmos bytes (o programa faz o mesmo): Mover com Direção com curva (l2),
 # conta só com números (l5) e o fio duplicado que a IDE descarta (t9)
 IMPORTAR_APROXIMADOS = {'l2_motores', 'l5_variaveis_logica', 't9_proporcional'}
@@ -802,6 +1008,9 @@ def main():
     robo_ok &= verificar_guias()
     robo_ok &= verificar_importar()
     robo_ok &= verificar_portas()
+    robo_ok &= verificar_avisos()
+    robo_ok &= verificar_espaco()
+    robo_ok &= verificar_exportar()
     print('\nlinguagem em portugues: ' + ('OK' if robo_ok else 'COM FALHAS'))
     sys.exit(0 if ok == len(TESTES) and robo_ok else 1)
 

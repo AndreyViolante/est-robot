@@ -101,6 +101,7 @@ class _IfWhileDoRobo(ast.NodeTransformer):
             if tem_break:
                 return no                               # while True com break: lógica do Python
             sempre = ast.Call(ast.Attribute(ast.Name('__robo__', ast.Load()), 'para_sempre', ast.Load()), [], [])
+            _na_linha(sempre, no)               # só a linha do while (o bloco do laço fica marcado nela)
             return ast.copy_location(ast.With([ast.withitem(sempre)], no.body), no)
         teste, negar = self._teste(no)
         var = self._nome()
@@ -129,11 +130,32 @@ def _sem_lacos_internos(corpo):
                 yield from _sem_lacos_internos(getattr(no, campo, []) or [])
 
 
+def anotar_linhas(arquivo):
+    """Faz cada bloco criado guardar em .linha a linha do arquivo do aluno que o criou (a de dentro da função,
+    quando o comando está numa função dele). Devolve o __init__ original, para desfazer depois."""
+    import blocos
+    alvo = os.path.normcase(os.path.abspath(arquivo))
+    original = blocos.Blk.__init__
+
+    def __init__(self, *args, **kw):
+        original(self, *args, **kw)
+        quadro = sys._getframe(1)
+        while quadro is not None:
+            if os.path.normcase(os.path.abspath(quadro.f_code.co_filename)) == alvo:
+                self.linha = quadro.f_lineno
+                break
+            quadro = quadro.f_back
+
+    blocos.Blk.__init__ = __init__
+    return original
+
+
 def carregar(arquivo):
+    """Roda o programa do aluno e devolve a lista de blocos (cada um com a linha que o criou em .linha)."""
     pasta = os.path.dirname(os.path.abspath(arquivo))
     if pasta not in sys.path:
         sys.path.insert(0, pasta)
-    import robo
+    import blocos, robo
     robo.novo_programa()
     with tokenize.open(arquivo) as f:
         arvore = ast.parse(f.read(), filename=arquivo)
@@ -141,7 +163,11 @@ def carregar(arquivo):
     mod = types.ModuleType('programa_usuario')
     mod.__file__ = arquivo
     mod.__robo__ = robo
-    exec(compile(arvore, arquivo, 'exec'), mod.__dict__)
+    original = anotar_linhas(arquivo)
+    try:
+        exec(compile(arvore, arquivo, 'exec'), mod.__dict__)
+    finally:
+        blocos.Blk.__init__ = original
     if hasattr(mod, 'PROGRAMA'):
         return mod.PROGRAMA
     feito = robo.programa()
@@ -317,6 +343,30 @@ def _mostrar_erro(erro, arquivo):
     print(f'  {texto}\n')
 
 
+def ler_fonte(arquivo):
+    """O texto do programa do aluno (com o encoding que o Python usaria para rodar o arquivo)."""
+    try:
+        with tokenize.open(arquivo) as f:
+            return f.read()
+    except (OSError, SyntaxError, UnicodeDecodeError):
+        return ''
+
+
+def avisos_do_codigo(arquivo, programa):
+    """Os avisos do avisos.py (variável sem uso, laço sem espera, motor ligado no fim) para este programa."""
+    import avisos
+    return avisos.do_programa(ler_fonte(arquivo), programa)
+
+
+def mostrar_aviso(aviso, arquivo):
+    onde = f' na linha {aviso["linha"]}' if aviso['linha'] else ''
+    print(f'\nAVISO{onde} de {os.path.basename(arquivo)}:')
+    if aviso['codigo']:
+        print(f'    {aviso["codigo"]}')
+    print(f'  {aviso["texto"]}')
+    print(f'  Como arrumar: {aviso["arrumar"]}\n')
+
+
 def ide_est_aberta():
     """True se a IDE EST (maintest.exe) estiver aberta: ela conversa com o robô junto e atrapalha o envio."""
     if os.name != 'nt':
@@ -462,7 +512,14 @@ def main():
         print()
         print(f'AVISO: {aviso}')
         print()
+    for aviso in avisos_do_codigo(arquivo, programa):
+        mostrar_aviso(aviso, arquivo)
+    import estc
+    ocupa = estc.espaco(programa, dados)
+    if estc.aviso_do_espaco(ocupa):
+        print(f'\nAVISO: {estc.aviso_do_espaco(ocupa)}\n')
     print(f'[OK] {os.path.basename(arquivo)}: {len(dados)} bytes')
+    print(f'     {estc.texto_do_espaco(ocupa)}')
 
     if '--so-compilar' in sys.argv:
         return

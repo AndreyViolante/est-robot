@@ -55,6 +55,14 @@ virar_direita(90)""", 8, 'livre',
     ('seguidor do exemplo 11 anda pela pista', open(os.path.join(RAIZ, 'exemplos', '11_seguidor_dois_sensores.py'),
                                                     encoding='utf-8').read(), 10, 'quadrado',
      lambda r: r['andou'] > 100),
+    # o gráfico dos sensores no tempo: anota 50 vezes por segundo a leitura de cada sensor enquanto o robô anda; o
+    # seguidor passa os sensores 1 e 2 pela borda da linha (escuro) e pelo chão (claro); o desenho reduzido não perde picos
+    ('gráfico dos sensores: o seguidor vê a linha e o chão', open(os.path.join(RAIZ, 'exemplos', '11_seguidor_dois_sensores.py'),
+                                                               encoding='utf-8').read(), 10, 'quadrado',
+     lambda r: (abs(r['grafico']['anotacoes'] - 10 / 0.02) <= 2 and perto(r['grafico']['fim'], 10, 0.03)
+                and all(r['grafico']['portas'][p]['min'] < 50 and r['grafico']['portas'][p]['max'] > 90 for p in '12')
+                and set(r['grafico']['portas']) == {'1', '2', '3', '4'} and r['grafico']['reduzidoOk']
+                and r['grafico']['maiorReduzido'] <= 4 * 150)),
 ]
 
 

@@ -19,6 +19,13 @@ FIO_VAZIO = b'\xff\xff\xff\xff'
 TEXTO_BASE, TEXTO_PASSO = 0xD7FF, 50       # area de textos: uma vaga de 50 bytes por parametro de texto
 TEXTO_VAZIO = b'\x0d\x0d\x00'
 
+# Espaco do robo, pelo formato (docs/formato.md); o tamanho real da memoria da controladora nao e conhecido:
+#  - o programa vai pelo USB em pedacos de 1014 bytes e cada pacote diz o total de pedacos num byte: ate 255
+#  - os registradores ficam do endereco 0 ate o comeco da area de textos (0xD7FF)
+PEDACO = 1014                              # bytes de programa por pacote (est_protocol.PEDACO)
+LIMITE_CODIGO = 255 * PEDACO
+LIMITE_MEMORIA = TEXTO_BASE
+
 # tipos de registrador: (tamanho, tipo do dado) e como inicializar
 PORTA, FLOAT, BYTE, LOGICO, MASCARA, TEXTO, ZERO_F, ZERO_B = (
     'porta', 'float', 'byte', 'logico', 'mascara', 'texto', 'zero_f', 'zero_b')
@@ -317,6 +324,47 @@ def _e(end): return struct.pack('>I', end)
 
 def _texto(s):
     return str(s).encode('latin-1', 'replace') + b'\x00'
+
+
+def espaco(cadeia, codigo, compat_ide_fios=False):
+    """Quanto do espaco do robo o programa compilado usa: o codigo (bytes enviados, ate LIMITE_CODIGO) e a memoria
+    dos registradores (ate LIMITE_MEMORIA). porcentagem = a maior das duas (o que acaba primeiro)."""
+    p = _Programa(cadeia, compat_ide_fios)
+    memoria = p.base_const + 4 * len(CONSTANTES)
+    pc_codigo = 100 * len(codigo) / LIMITE_CODIGO
+    pc_memoria = 100 * memoria / LIMITE_MEMORIA
+    return {'codigo': len(codigo), 'limite_codigo': LIMITE_CODIGO, 'memoria': memoria,
+            'limite_memoria': LIMITE_MEMORIA, 'porcentagem': max(pc_codigo, pc_memoria),
+            'acaba_antes': 'codigo' if pc_codigo >= pc_memoria else 'memoria'}
+
+
+def _milhar(n):
+    return f'{n:,}'.replace(',', '.')
+
+
+def _porcento(v):
+    if v < 0.1:
+        return 'menos de 0,1%'
+    return (f'{v:.1f}' if v < 10 else f'{v:.0f}').replace('.', ',') + '%'
+
+
+def texto_do_espaco(e):
+    """O espaco em portugues, numa linha: 'usa 0,5% do espaço do robô (programa 1.223 de 258.570 bytes; ...)'."""
+    return (f'usa {_porcento(e["porcentagem"])} do espaço do robô (programa: {_milhar(e["codigo"])} de '
+            f'{_milhar(e["limite_codigo"])} bytes; memória: {_milhar(e["memoria"])} de {_milhar(e["limite_memoria"])} bytes)')
+
+
+def aviso_do_espaco(e):
+    """Texto de aviso quando o programa nao cabe (ou quase nao cabe) no robo; None se esta tudo bem."""
+    if e['porcentagem'] > 100:
+        if e['acaba_antes'] == 'codigo':
+            return (f'o programa tem {_milhar(e["codigo"])} bytes e não cabe no envio para o robô (no máximo '
+                    f'{_milhar(e["limite_codigo"])}). Use funções e laços no lugar de comandos repetidos.')
+        return (f'o programa usa {_milhar(e["memoria"])} bytes de memória do robô e só cabem '
+                f'{_milhar(e["limite_memoria"])}: ele pode funcionar errado. Use menos variáveis e blocos.')
+    if e['porcentagem'] > 80:
+        return f'o programa já {texto_do_espaco(e)}: está perto do limite.'
+    return None
 
 
 def compilar(cadeia, compat_ide_fios=False):

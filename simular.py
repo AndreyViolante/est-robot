@@ -9,28 +9,10 @@ import json, os, sys, time, webbrowser
 from pathlib import Path
 
 import blocos
-from enviar import carregar, _mostrar_erro
+from enviar import anotar_linhas as _anotar_linhas, avisos_do_codigo, carregar, mostrar_aviso, _mostrar_erro
 from estc import compilar, _Programa
 
 PASTA = Path(__file__).resolve().parent / 'simulador'
-
-
-def _anotar_linhas(arquivo):
-    """Faz cada bloco criado guardar a linha do arquivo do aluno que o criou. Devolve o __init__ original."""
-    alvo = os.path.normcase(os.path.abspath(arquivo))
-    original = blocos.Blk.__init__
-
-    def __init__(self, *args, **kw):
-        original(self, *args, **kw)
-        quadro = sys._getframe(1)
-        while quadro is not None:
-            if os.path.normcase(os.path.abspath(quadro.f_code.co_filename)) == alvo:
-                self.linha = quadro.f_lineno
-                break
-            quadro = quadro.f_back
-
-    blocos.Blk.__init__ = __init__
-    return original
 
 
 def _ler_fonte(arquivo):
@@ -44,26 +26,34 @@ def _ler_fonte(arquivo):
 
 def montar(arquivo):
     """Compila o arquivo e devolve o programa no formato que o simulador lê (um dicionário).
-    Erros do aluno: mostra e sai, como o enviar.py."""
-    original = _anotar_linhas(arquivo)
+    Erros do aluno: mostra e sai, como o enviar.py. carregar() marca a linha de cada bloco (.linha)."""
     try:
         programa = carregar(arquivo)
         codigo = compilar(programa)
     except Exception as e:                      # o programa do aluno pode ter qualquer erro
         _mostrar_erro(e, arquivo)
         sys.exit(1)
-    finally:
-        blocos.Blk.__init__ = original
 
-    import robo
+    import avisos as _avisos, robo
     avisos = robo.avisos(programa)
     for aviso in avisos:
         print()
         print(f'AVISO: {aviso}')
         print()
+    do_codigo = avisos_do_codigo(arquivo, programa)
+    for aviso in do_codigo:
+        mostrar_aviso(aviso, arquivo)
+    avisos += [_avisos.como_texto(a) for a in do_codigo]
+
+    import estc
+    ocupa = estc.espaco(programa, codigo)
+    if estc.aviso_do_espaco(ocupa):
+        print(f'\nAVISO: {estc.aviso_do_espaco(ocupa)}\n')
+        avisos.append(estc.aviso_do_espaco(ocupa))
 
     p = _Programa(programa, False)              # a mesma alocação que o compilar acabou de fazer
     return {
+        'espaco': estc.texto_do_espaco(ocupa),
         'nome': os.path.basename(arquivo),
         'gerado': time.strftime('%d/%m/%Y %H:%M:%S'),
         'bytes': codigo.hex(),
@@ -93,10 +83,11 @@ def montar_dbf(arquivo):
 
 
 def preparar(arquivo):
-    """Compila o arquivo (ou lê o .dbf baixado do robô) e grava simulador/programa.js. Devolve os bytes."""
+    """Compila o arquivo (ou lê o .dbf baixado do robô) e grava simulador/programa.js. Devolve o programa
+    (dicionário de montar)."""
     dados = montar_dbf(arquivo) if arquivo.lower().endswith('.dbf') else montar(arquivo)
     gravar(dados)
-    return bytes.fromhex(dados['bytes'])
+    return dados
 
 
 def main():
@@ -105,8 +96,10 @@ def main():
     arquivo = sys.argv[1]
     if not arquivo.lower().endswith(('.py', '.dbf')):
         sys.exit('ERRO: abra um arquivo de programa (.py, ou um .dbf baixado do robô) antes de simular.')
-    codigo = preparar(arquivo)
-    print(f'[OK] {os.path.basename(arquivo)}: {len(codigo)} bytes')
+    dados = preparar(arquivo)
+    print(f'[OK] {os.path.basename(arquivo)}: {len(dados["bytes"]) // 2} bytes')
+    if dados.get('espaco'):
+        print(f'     {dados["espaco"]}')
     if '--sem-abrir' in sys.argv:
         return
     pagina = (PASTA / 'index.html').as_uri()

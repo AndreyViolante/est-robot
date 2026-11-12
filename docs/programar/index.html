@@ -46,7 +46,9 @@
         <span class="arquivos">
           <button id="btAbrir" class="bt pequeno" type="button" title="Abrir um arquivo .py do computador, ou um projeto .est da IDE EST (vira Python)">Abrir .py / .est</button>
           <button id="btBaixar" class="bt pequeno" type="button" title="Baixar o programa como arquivo .py">Baixar .py</button>
+          <button id="btSalvarEst" class="bt pequeno" type="button" title="Baixar o programa como projeto da IDE EST (.est), para abrir na IDE">Salvar .est</button>
           <button id="btLink" class="bt pequeno" type="button" title="Copia um link com o programa dentro, para mandar a outra pessoa">Compartilhar link</button>
+          <button id="btVersoes" class="bt pequeno" type="button" title="As versões do programa guardadas neste navegador: veja e volte para qualquer uma">Versões</button>
         </span>
       </div>
       <input id="arquivo" type="file" accept=".py,.est,text/x-python,text/plain" hidden>
@@ -140,6 +142,19 @@
   </aside>
 </main>
 
+<dialog class="versoes" id="versoes" aria-labelledby="versoesTitulo">
+  <div class="versoes-topo">
+    <h2 id="versoesTitulo">Versões do programa</h2>
+    <button id="btFecharVersoes" class="bt pequeno" type="button">Fechar</button>
+  </div>
+  <p class="nota">Guardadas só neste navegador: quando você simula ou envia, aperta Ctrl+S ou abre outro programa e,
+    enquanto escreve, a cada 5 minutos. Ficam as últimas 30. Voltar para uma versão guarda antes o programa de agora.</p>
+  <p class="versoes-acoes"><button id="btGuardarVersao" class="bt pequeno" type="button">Guardar uma versão agora</button>
+    <span id="avisoVersoes" class="nota" role="status"></span></p>
+  <p class="nota" id="semVersoes" hidden>Nenhuma versão guardada ainda.</p>
+  <ol class="lista-versoes" id="listaVersoes"></ol>
+</dialog>
+
 <div class="sim" id="sim" hidden role="dialog" aria-modal="true" aria-label="Simulador">
   <div class="sim-barra">
     <button id="btFecharSim" class="bt" type="button">← Voltar ao código</button>
@@ -158,6 +173,7 @@
         integrity="sha512-GSYCbN/le5gNmfAWVEjg1tKnOH7ilK6xCLgA7c48IReoIR2g2vldxTM6kZlN6o3VtWIe6fHu/qhwxIt11J8EBA==" crossorigin="anonymous"></script>
 <script src="protocolo.js"></script>
 <script src="modo_blocos.js"></script>
+<script src="versoes.js"></script>
 <script src="programar.js"></script>
 <script>
 /* contagem anônima de visitas: o GitHub conta os downloads de um arquivinho; sem cookies, sem saber quem visitou */

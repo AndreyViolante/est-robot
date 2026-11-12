@@ -25,7 +25,7 @@ jobs:
           python-version: '3.13'
       - name: Todos os arquivos Python compilam
         run: python -m compileall -q .
-      - name: Conferência com os programas da IDE e testes da linguagem
+      - name: Conferência com os programas da IDE e testes da linguagem (avisos, espaço do robô, salvar .est)
         run: python verificar_gabaritos.py
       - name: Os programas do teste geral compilam
         run: python ferramentas/teste_geral.py --sem-robo
@@ -36,7 +36,9 @@ jobs:
         run: node ferramentas/teste_obr.js
       - name: Protocolo da página de programar (USB e Bluetooth)
         run: node ferramentas/teste_protocolo.js
-      - name: Simulador (giroscópio, motor, cronômetro, mensagens, caminho do Dirigir, seguidor)
+      - name: Versões do programa guardadas na página de programar
+        run: node ferramentas/teste_versoes.js
+      - name: Simulador (giroscópio, motor, cronômetro, mensagens, caminho do Dirigir, seguidor, gráfico dos sensores)
         run: python ferramentas/teste_simulador.py
       - name: Ida e volta Python -> blocos -> Python (mesmos bytes)
         shell: bash

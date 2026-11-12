@@ -26,6 +26,8 @@ simulador/programa.js
 /do_robo/
 # programas da IDE traduzidos pela tarefa "Abrir programa da IDE (.est)" (são de cada escola/equipe)
 /da_ide/
+# programas salvos para a IDE EST pela tarefa "Salvar para a IDE EST (.est)"
+/para_ide/
 # relatório da tarefa "Teste geral no robô"
 /resultado_teste_geral.txt
 # programas pessoais de quem desenvolve o projeto (não vão para o GitHub)

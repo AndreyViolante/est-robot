@@ -1,8 +1,10 @@
 {
  "arquivos": [
+  "avisos.py",
   "blocos.py",
   "enviar.py",
   "estc.py",
+  "exportar_est.py",
   "importar_est.py",
   "robo.py",
   "simular.py",
@@ -30,10 +32,12 @@
   "programar.css",
   "programar.js",
   "projeto/arquivos.json",
+  "projeto/avisos.py",
   "projeto/blocos.py",
   "projeto/calibracao.py",
   "projeto/enviar.py",
   "projeto/estc.py",
+  "projeto/exportar_est.py",
   "projeto/importar_est.py",
   "projeto/robo.py",
   "projeto/simular.py",
@@ -41,11 +45,13 @@
   "simulador/app.js",
   "simulador/desafios.js",
   "simulador/estilo.css",
+  "simulador/grafico.js",
   "simulador/index.html",
   "simulador/mundo.js",
   "simulador/obr.js",
   "simulador/programa.js",
   "simulador/robo.js",
-  "simulador/vm.js"
+  "simulador/vm.js",
+  "versoes.js"
  ]
 }

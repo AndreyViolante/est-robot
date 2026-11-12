@@ -25,7 +25,9 @@ navegador, com os mesmos arquivos do projeto, mostra os erros em português, sim
 portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
 navegador, e o botão **Compartilhar link** copia um link com o programa dentro (quem abre já vê o
-programa no simulador; nada fica guardado em servidor).
+programa no simulador; nada fica guardado em servidor). O botão **Versões** mostra as versões do programa
+guardadas no navegador (a cada simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5
+minutos enquanto o aluno escreve; ficam as últimas 30) e deixa voltar para qualquer uma.
 
 **No celular e no tablet Android** (Chrome), a mesma página:
 - **📲 Instalar** põe a página na tela inicial, como um aplicativo, e ela abre sem internet;
@@ -97,6 +99,23 @@ ERRO na linha 3 de quadrado.py:
   não conheço "andr". Você quis dizer "andar"?
 ```
 
+Antes de enviar, o EST-LAB também avisa (sem impedir o envio) o que quase sempre é engano: uma variável
+criada e nunca usada, um `while True:` que repete sem nenhuma espera e sem ler nenhum sensor, e um motor
+que fica ligado quando o programa termina. Cada aviso diz a linha e como arrumar:
+
+```
+AVISO na linha 3 de quadrado.py:
+    motores(30, 30)
+  os motores B e C ficam ligados quando o programa termina: nada desliga eles depois.
+  Como arrumar: ponha parar() no fim do programa (ou depois do laço que usa os motores).
+```
+
+Depois de compilar, ele mostra quanto do espaço do robô o programa usa: o tamanho do programa (até
+258.570 bytes, o máximo que o envio pelo USB consegue mandar: 255 pedaços de 1014 bytes) e a memória das
+variáveis e dos blocos (até 55.295 bytes, onde começa a área de textos do robô). São os limites do
+formato do programa ([docs/formato.md](docs/formato.md)); a memória de verdade da controladora ainda não
+foi medida.
+
 Para conferir se o computador fala com o robô: **Terminal → Executar Tarefa → Testar conexão com o
 robô** (ele apita, acende a luz e escreve "Funcionou!").
 
@@ -146,6 +165,12 @@ O EST-LAB confere a tradução: se o Python compila para os mesmos bytes que a I
 é **exata**; quando algum bloco ficou diferente (uma conta só com números, um bloco ainda sem comando), ele
 avisa o que mudou e deixa um comentário no programa. Pelo terminal: `python importar_est.py projeto.est`.
 
+O caminho de volta também existe: **Terminal → Executar Tarefa → Salvar para a IDE EST (.est)** grava o
+programa aberto no formato da IDE, na pasta `para_ide`, para abrir na IDE EST (na página de programar, o
+botão **Salvar .est**). Os blocos, os fios e as variáveis vão iguais, e o EST-LAB confere que o `.est` lido de
+volta dá os mesmos bytes. As partes ao mesmo tempo (`ao_mesmo_tempo`, `ajustes`) só vão para a IDE quando são a
+última coisa do programa. Pelo terminal: `python exportar_est.py programa.py`.
+
 ### Pedir ajuda
 
 **Terminal → Executar Tarefa → Diagnóstico (para pedir ajuda)** junta num texto curto a versão do
@@ -181,6 +206,12 @@ programa linha por linha, e clicar no número de uma linha põe um ponto de para
 traz 8 desafios, do "andar 30 cm" ao "desviar do obstáculo", com verificação automática; cada um
 cumprido destrava o próximo. Os botões da controladora aparecem na tela do robô simulado quando o
 programa usa `botao_apertado()`.
+
+O cartão **Sensores no tempo** desenha a leitura de cada sensor enquanto o robô anda: a luz refletida dos
+sensores de cor (0 a 100) num gráfico e a distância do ultrassom (em cm) em outro, nos últimos 5, 10 ou 30
+segundos ou desde o começo. Passando o mouse (ou usando as setas do teclado no gráfico) aparecem os valores
+de cada sensor naquele instante: bom para ver o seguidor oscilando e escolher o limite entre o preto e o
+branco.
 
 **Arena da OBR.** Duas arenas prontas e a "Minha arena OBR" montam o percurso com linha da prova prática
 com ladrilhos de 30 cm, como no manual da OBR 2026: curvas, gap, obstáculo, interseções com e sem verde,
@@ -349,6 +380,11 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/teste_simulador.py](ferramentas/teste_simulador.py) | roda programas no simulador (pelo node) e confere giroscópio, motor, cronômetro, mensagens, o caminho do Dirigir e o seguidor |
 | [ferramentas/teste_blocos.py](ferramentas/teste_blocos.py) | ida e volta Python → blocos → Python da página: os dois têm que compilar para os mesmos bytes (precisa do Blockly do npm) |
 | [docs/programar/para_blocos.py](docs/programar/para_blocos.py) | o "Trazer do Python" da página: lê o programa com o `ast` e monta os blocos |
+| [avisos.py](avisos.py) | os avisos antes de enviar: variável sem uso, laço sem fim sem espera, motor ligado no fim |
+| [importar_est.py](importar_est.py) / [exportar_est.py](exportar_est.py) | abre um projeto da IDE EST em Python / salva o programa no formato da IDE |
+| [simulador/grafico.js](simulador/grafico.js) | guarda a leitura dos sensores no tempo e prepara os pontos do gráfico do simulador |
+| [docs/programar/versoes.js](docs/programar/versoes.js) | as versões do programa guardadas no navegador (página de programar) |
+| [ferramentas/teste_versoes.js](ferramentas/teste_versoes.js) | testa as versões do programa sem navegador |
 | [ferramentas/icones.py](ferramentas/icones.py) | desenha os ícones da página instalável (precisa do Pillow) |
 | [ferramentas/rodar.cmd](ferramentas/rodar.cmd) | as tarefas do VS Code usam o Python do pacote, se houver, ou o do computador |
 | [ferramentas/atualizar.py](ferramentas/atualizar.py) | tarefa "Atualizar o projeto" (baixa a versão nova sem mexer nos arquivos do professor) |

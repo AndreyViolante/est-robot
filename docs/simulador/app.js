@@ -11,7 +11,7 @@ const MAX_PASSOS = 2500;          // passos por quadro de animação, no máximo
 const MARGEM = 8;                 // cm de mesa em volta da pista
 const LUPA = 3;                   // aumento da lupa
 const CHAVE = 'est-simulador-v1';
-const CORES_SENSOR = {1: '#2f8cff', 2: '#ff8a1f', 3: '#18b07a', 4: '#b27cff'};
+const CORES_SENSOR = {1: '#2f8cff', 2: '#ff8a1f', 3: '#18b07a', 4: '#b27cff'};     // as do tema claro (--s1...)
 const NOMES_LUZ = ['azul', 'roxo', 'vermelho'];
 const MINHA = 'minha';            // id da pista que o aluno desenha (fica guardada no navegador)
 const MINHA_OBR = 'obr-minha';    // id da arena da OBR que o aluno monta com ladrilhos (também fica guardada)
@@ -268,6 +268,8 @@ function reiniciar() {
   colocarNaLargada();
   if (vm) vm.reiniciar();
   tSim = 0; tFim = 0; acumulado = 0; somAte = -1;
+  registro.limpar();
+  apontado = null;
   passoAPasso = false; motivoParada = null;
   estado = vm ? 'pronto' : 'sem';
   novaProva();
@@ -327,6 +329,7 @@ function passo() {
   }
   robo.avancar(DT, tSim + DT, arraste !== null && (arraste.tipo === 'mover' || arraste.tipo === 'girar'));
   tSim += DT;
+  if (estado === 'rodando') anotarSensores();
   if (soltarPendente && tSim >= soltarPendente.t) { const f = soltarPendente.soltar; soltarPendente = null; f(); }
   if (estado !== 'rodando' && estado !== 'terminou') return;
   if ((prova && !prova.resultado) || (placar && !placar.fim)) contarParado();
@@ -351,7 +354,7 @@ let vista = {escala: 4, x0: 0, y0: 0, base: 4};      // px (do canvas) por cm e 
 
 function lerCores() {
   const s = getComputedStyle(document.documentElement);
-  for (const nome of ['mesa', 'fg', 'muted', 'led-azul', 'led-roxo', 'led-vermelho', 'panel', 'line']) {
+  for (const nome of ['mesa', 'fg', 'muted', 'led-azul', 'led-roxo', 'led-vermelho', 'panel', 'line', 's1', 's2', 's3', 's4']) {
     cores[nome] = s.getPropertyValue('--' + nome).trim();
   }
 }
@@ -584,7 +587,7 @@ function desenharRobo(c) {
 
   // sensores
   for (const [p, s] of Object.entries(cfg.portas)) {
-    const cor = CORES_SENSOR[p];
+    const cor = corDoSensor(p);
     const px = s.frente, py = -s.esquerda;
     if (s.tipo === 'cor') {
       const l = robo.sensorCor(p);
@@ -1179,7 +1182,7 @@ function desenharLcd(forcar) {
 }
 
 function linhaSensor(p, s) {
-  const bola = `<span class="amostra" style="background:${CORES_SENSOR[p]}"></span>`;
+  const bola = `<span class="amostra" style="background:${corDoSensor(p)}"></span>`;
   const lido = `<span class="lido${tSim - (robo.lidas[p] ?? -9) < 0.25 && estado !== 'pronto' ? ' sim' : ''}" title="lido pelo programa agora"></span>`;
   if (s.tipo === 'cor') {
     const l = robo.sensorCor(p);
@@ -1194,6 +1197,252 @@ function linhaSensor(p, s) {
 
 function atualizarSensores() {
   $('sensores').innerHTML = Object.entries(robo.config.portas).map(([p, s]) => linhaSensor(p, s)).join('');
+}
+
+// ---------------------------------------------------------------- gráfico dos sensores no tempo
+
+const corDoSensor = p => cores['s' + p] || CORES_SENSOR[p];
+const registro = new EST.Grafico.Registro();
+// um gráfico por grandeza, cada um com um eixo só: a luz refletida dos sensores de cor e a distância do ultrassom
+const GRAFICOS = [
+  {id: 'luz', tipo: 'cor', titulo: 'Luz refletida', explica: '0 = escuro, 100 = claro', unidade: ''},
+  {id: 'dist', tipo: 'ultrassom', titulo: 'Distância', explica: 'em cm', unidade: ' cm'},
+];
+const MARGEM_G = {esq: 30, dir: 30, cima: 7, baixo: 18};
+let janelaGrafico = 10;           // segundos mostrados (0 = desde o começo)
+let apontado = null;              // {g: id do gráfico, t}: o instante apontado pelo mouse ou pelo teclado
+let montados = '';                // quais gráficos e portas estão montados na página
+let desenhado = -1;               // versão do registro já desenhada
+
+function leiturasDosSensores() {
+  const v = {};
+  for (const [p, s] of Object.entries(robo.config.portas)) {
+    if (s.tipo === 'cor') v[p] = robo.sensorCor(p).luz;
+    else if (s.tipo === 'ultrassom') v[p] = robo.sensorUltrassom(p).cm;
+  }
+  return v;
+}
+
+function anotarSensores() { registro.anotar(tSim, leiturasDosSensores()); }
+
+function portasDo(g) {
+  return Object.entries(robo.config.portas).filter(([, s]) => s.tipo === g.tipo).map(([p]) => p);
+}
+
+/* monta (ou remonta, se as portas mudaram em "Medidas do robô") um <figure> por gráfico que tem sensor */
+function montarGraficos() {
+  const chave = GRAFICOS.map(g => g.id + portasDo(g).join('')).join('|');
+  if (chave === montados) return;
+  montados = chave;
+  const caixa = $('graficos');
+  caixa.textContent = '';
+  for (const g of GRAFICOS) {
+    const portas = portasDo(g);
+    if (!portas.length) continue;
+    const fig = document.createElement('figure');
+    fig.className = 'grafico';
+    fig.dataset.g = g.id;
+    const cap = document.createElement('figcaption');
+    const titulo = document.createElement('b');
+    titulo.textContent = portas.length > 1 ? g.titulo : `${g.titulo} do S${portas[0]}`;
+    const explica = document.createElement('span');
+    explica.textContent = g.explica;
+    cap.append(titulo, explica);
+    if (portas.length > 1) {                          // legenda: a mesma linha colorida do gráfico e o nome
+      const leg = document.createElement('span');
+      leg.className = 'legenda';
+      for (const p of portas) {
+        const item = document.createElement('span');
+        const chave = document.createElement('i');
+        chave.className = 'chave';
+        chave.dataset.porta = p;
+        item.append(chave, `S${p}`);
+        leg.append(item);
+      }
+      cap.append(leg);
+    }
+    const area = document.createElement('div');
+    area.className = 'area';
+    const canvas = document.createElement('canvas');
+    canvas.tabIndex = 0;
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `${g.titulo} (${g.explica}) de ${portas.map(p => 'S' + p).join(', ')} ao longo do ` +
+      'tempo. Use as setas para ler os valores de cada instante.');
+    const dica = document.createElement('div');
+    dica.className = 'dica-grafico';
+    dica.hidden = true;
+    area.append(canvas, dica);
+    fig.append(cap, area);
+    caixa.append(fig);
+    ligarMira(canvas, g);
+  }
+  $('cartaoGrafico').hidden = !caixa.children.length;
+  desenhado = -1;
+}
+
+/* o instante apontado: o mouse acha o tempo pela posição; o teclado anda pelas anotações */
+function ligarMira(canvas, g) {
+  const tempoDoX = x => {
+    const {t0, t1} = registro.janela(janelaGrafico);
+    const L = canvas.clientWidth - MARGEM_G.esq - MARGEM_G.dir;
+    return t0 + Math.max(0, Math.min(1, (x - MARGEM_G.esq) / L)) * (t1 - t0);
+  };
+  const apontar = t => {
+    const i = registro.perto(t);
+    apontado = i < 0 ? null : {g: g.id, t: registro.amostras[i].t};
+    desenharGraficos(true);
+  };
+  const xDoPonteiro = ev => ev.clientX - canvas.getBoundingClientRect().left;
+  canvas.addEventListener('pointermove', ev => apontar(tempoDoX(xDoPonteiro(ev))));
+  canvas.addEventListener('pointerdown', ev => apontar(tempoDoX(xDoPonteiro(ev))));
+  canvas.addEventListener('pointerleave', () => {
+    if (apontado && apontado.g === g.id && document.activeElement !== canvas) { apontado = null; desenharGraficos(true); }
+  });
+  canvas.addEventListener('focus', () => apontar(apontado && apontado.g === g.id ? apontado.t : registro.fim));
+  canvas.addEventListener('blur', () => { apontado = null; desenharGraficos(true); });
+  canvas.addEventListener('keydown', ev => {
+    const {t0, t1} = registro.janela(janelaGrafico);
+    const passo = Math.max(registro.intervalo, (t1 - t0) / 50) * (ev.shiftKey ? 5 : 1);
+    const agora = apontado && apontado.g === g.id ? apontado.t : registro.fim;
+    const novo = {ArrowLeft: agora - passo, ArrowRight: agora + passo, Home: t0, End: registro.fim}[ev.key];
+    if (novo === undefined) return;
+    ev.preventDefault();
+    ev.stopPropagation();                            // com o gráfico em foco, as setas não dirigem o robô
+    apontar(Math.max(t0, Math.min(t1, novo)));
+  });
+}
+
+function desenharGraficos(forcar = false) {
+  montarGraficos();
+  if (!forcar && desenhado === registro.versao) return;
+  desenhado = registro.versao;
+  for (const fig of $('graficos').children) {
+    const g = GRAFICOS.find(x => x.id === fig.dataset.g);
+    for (const chave of fig.querySelectorAll('.chave')) chave.style.borderColor = corDoSensor(chave.dataset.porta);
+    desenharGrafico(g, fig.querySelector('canvas'), fig.querySelector('.dica-grafico'));
+  }
+}
+
+// marcas do eixo do tempo: um passo redondo que dá no máximo 6 marcas
+function passoDoTempo(duracao) {
+  return [0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300].find(p => duracao / p <= 6) || 600;
+}
+
+function desenharGrafico(g, canvas, dica) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+  const c = canvas.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, w, h);
+  const M = MARGEM_G, L = w - M.esq - M.dir, A = h - M.cima - M.baixo;
+  const {t0, t1} = registro.janela(janelaGrafico);
+  const series = portasDo(g).map(p => ({p, pts: EST.Grafico.pontos(registro, p, t0, t1, L)}));
+  let maior = 0;
+  for (const s of series) for (const pt of s.pts) if (pt && pt[1] > maior) maior = pt[1];
+  const ymax = g.tipo === 'cor' ? 100 : EST.Grafico.teto(maior);
+  const X = t => M.esq + (t - t0) / (t1 - t0) * L;
+  const Y = v => M.cima + A - Math.max(0, Math.min(ymax, v)) / ymax * A;
+  const mono = getComputedStyle(document.documentElement).getPropertyValue('--mono');
+
+  // grade e eixos: linhas finas e textos apagados (os dados ficam na frente)
+  c.font = `11px ${mono}`;
+  c.lineWidth = 1;
+  c.strokeStyle = cores.line;
+  c.fillStyle = cores.muted;
+  c.textAlign = 'right';
+  c.textBaseline = 'middle';
+  for (const v of [0, ymax / 2, ymax]) {
+    const y = Math.round(Y(v)) + 0.5;
+    c.beginPath(); c.moveTo(M.esq, y); c.lineTo(M.esq + L, y); c.stroke();
+    c.fillText(String(v), M.esq - 5, y);
+  }
+  c.textAlign = 'center';
+  c.textBaseline = 'top';
+  const passo = passoDoTempo(t1 - t0);
+  for (let k = Math.ceil(t0 / passo - 1e-9); k * passo <= t1 + 1e-9; k++) {
+    const t = k * passo, x = Math.round(X(t)) + 0.5;
+    c.beginPath(); c.moveTo(x, M.cima + A); c.lineTo(x, M.cima + A + 3); c.stroke();
+    c.fillText(`${num(t, passo < 1 ? 1 : 0)} s`, Math.min(Math.max(x, M.esq + 12), M.esq + L - 4), M.cima + A + 5);
+  }
+  if (!registro.amostras.length) {
+    c.textBaseline = 'middle';
+    c.fillText('as leituras aparecem aqui quando o robô anda', M.esq + L / 2, M.cima + A / 2);
+  }
+
+  // as linhas: 2 px, cantos redondos; um buraco (null) interrompe a linha
+  c.lineWidth = 2;
+  c.lineJoin = 'round';
+  c.lineCap = 'round';
+  const pontas = [];
+  for (const s of series) {
+    c.strokeStyle = corDoSensor(s.p);
+    c.beginPath();
+    let solto = true, ultimo = null;
+    for (const pt of s.pts) {
+      if (!pt) { solto = true; continue; }
+      if (solto) c.moveTo(X(pt[0]), Y(pt[1])); else c.lineTo(X(pt[0]), Y(pt[1]));
+      solto = false;
+      ultimo = pt;
+    }
+    c.stroke();
+    if (ultimo) pontas.push({p: s.p, y: Y(ultimo[1])});
+  }
+
+  // o nome de cada linha na ponta direita: texto na cor do texto, e uma marquinha colorida diz qual linha é
+  pontas.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < pontas.length; i++) pontas[i].y = Math.max(pontas[i].y, pontas[i - 1].y + 11);
+  const sobra = pontas.length ? pontas[pontas.length - 1].y - (M.cima + A) : 0;
+  if (sobra > 0) for (const f of pontas) f.y -= sobra;
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+  c.font = `600 10px ${mono}`;
+  for (const f of pontas) {
+    c.strokeStyle = corDoSensor(f.p);
+    c.beginPath(); c.moveTo(M.esq + L + 3, f.y); c.lineTo(M.esq + L + 8, f.y); c.stroke();
+    c.fillStyle = cores.fg;
+    c.fillText(`S${f.p}`, M.esq + L + 11, f.y);
+  }
+
+  // a mira: uma linha no instante apontado, um ponto em cada linha e a caixinha com os valores
+  const i = apontado && apontado.g === g.id ? registro.perto(apontado.t) : -1;
+  const amostra = i >= 0 ? registro.amostras[i] : null;
+  if (!amostra || amostra.t < t0 - 1e-9 || amostra.t > t1 + 1e-9) { dica.hidden = true; return; }
+  const x = Math.round(X(amostra.t)) + 0.5;
+  c.strokeStyle = cores.muted;
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(x, M.cima); c.lineTo(x, M.cima + A); c.stroke();
+  dica.textContent = '';
+  const quando = document.createElement('div');
+  quando.className = 'quando';
+  quando.textContent = `${num(amostra.t, 2)} s`;
+  dica.append(quando);
+  for (const s of series) {
+    const v = amostra.v[s.p];
+    if (v === undefined) continue;
+    c.fillStyle = corDoSensor(s.p);
+    c.strokeStyle = cores.panel;
+    c.lineWidth = 2;
+    c.beginPath(); c.arc(x, Y(v), 4, 0, 2 * Math.PI); c.fill(); c.stroke();
+    const linha = document.createElement('div');
+    const chave = document.createElement('i');
+    chave.className = 'chave';
+    chave.style.borderColor = corDoSensor(s.p);
+    const valor = document.createElement('strong');
+    valor.textContent = `${g.tipo === 'cor' ? v : num(v)}${g.unidade}`;
+    const nome = document.createElement('span');
+    nome.className = 'nome';
+    nome.textContent = `S${s.p}`;
+    linha.append(chave, valor, nome);
+    dica.append(linha);
+  }
+  dica.hidden = false;
+  const larg = dica.offsetWidth;
+  dica.style.left = `${x + 10 + larg <= w ? x + 10 : Math.max(0, x - 10 - larg)}px`;
 }
 
 function atualizarMotores() {
@@ -1328,6 +1577,7 @@ function atualizarLuzSom() {
 
 function atualizarPainel() {
   atualizarSensores();
+  desenharGraficos();
   atualizarMotores();
   atualizarVariaveis();
   atualizarLuzSom();
@@ -1365,7 +1615,7 @@ function montarMedidas() {
   html += '</tbody></table><table class="medidas"><thead><tr><th>Porta</th><th>Sensor</th><th>à frente</th><th>à esquerda</th><th>preto</th></tr></thead><tbody>';
   for (const [p, s] of Object.entries(cfg.portas)) {
     const tipo = ['cor', 'ultrassom', 'nenhum'].map(t => `<option value="${t}"${s.tipo === t ? ' selected' : ''}>${t}</option>`).join('');
-    html += `<tr><td><span class="amostra" style="background:${CORES_SENSOR[p]}"></span>S${p}</td>
+    html += `<tr><td><span class="amostra" style="background:${corDoSensor(p)}"></span>S${p}</td>
       <td><select data-porta="${p}" data-chave="tipo">${tipo}</select></td>
       <td><input type="number" data-porta="${p}" data-chave="frente" min="-30" max="40" step="0.1" value="${s.frente}"></td>
       <td><input type="number" data-porta="${p}" data-chave="esquerda" min="-20" max="20" step="0.1" value="${s.esquerda}"></td>
@@ -2002,6 +2252,14 @@ if (typeof salvo.som === 'boolean') $('somLigado').checked = salvo.som;
 if (typeof salvo.lupa === 'boolean') $('lupa').checked = salvo.lupa;
 if (typeof salvo.ruido === 'boolean') $('ruido').checked = salvo.ruido;
 aplicarRuido();
+if ([5, 10, 30, 0].includes(salvo.janelaGrafico)) { janelaGrafico = salvo.janelaGrafico; $('janelaGrafico').value = String(janelaGrafico); }
+$('janelaGrafico').addEventListener('change', ev => {
+  janelaGrafico = +ev.target.value;
+  salvo.janelaGrafico = janelaGrafico;
+  salvar();
+  desenharGraficos(true);
+});
+new ResizeObserver(() => desenharGraficos(true)).observe($('graficos'));
 
 if (Array.isArray(globalThis.PROGRAMAS)) $('notaDemo').hidden = false;    // demonstração da página do projeto
 if (PROGRAMAS.length > 1) {
@@ -2015,7 +2273,7 @@ if (PROGRAMAS.length > 1) {
   $('campoExemplo').hidden = false;
 }
 lerCores();
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { lerCores(); desenharLcd(true); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { lerCores(); desenharLcd(true); desenharGraficos(true); });
 mostrarPrograma();
 montarMedidas();
 new ResizeObserver(dimensionar).observe($('quadro'));
@@ -2038,7 +2296,7 @@ function quadro(agora) {
   } else if (dirigir.ativo && !motoresParados()) {     // dirigindo: só a física, sem programa
     acumulado += real * velocidade;
     let n = 0;
-    while (acumulado >= DT && n < MAX_PASSOS) { robo.avancar(DT, tSim + DT); tSim += DT; acumulado -= DT; n++; }
+    while (acumulado >= DT && n < MAX_PASSOS) { robo.avancar(DT, tSim + DT); tSim += DT; anotarSensores(); acumulado -= DT; n++; }
     if (motoresParados()) acumulado = 0;
   }
   desenhar();

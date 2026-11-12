@@ -86,6 +86,16 @@
             "problemMatcher": []
         },
         {
+            "label": "Salvar para a IDE EST (.est)",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/exportar_est.py", "${file}"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true},
+            "problemMatcher": []
+        },
+        {
             "label": "Diagnóstico (para pedir ajuda)",
             "type": "shell",
             "command": "python",

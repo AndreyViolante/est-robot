@@ -32,35 +32,37 @@ def compilar(fonte, nome='meu_programa.py'):
     """Devolve um dicionário: bytes (hex), linhas, variaveis, avisos e saida (o que o programa imprimiu),
     ou erro = {linha, codigo, texto}."""
     _esquecer_projeto()
-    import enviar, estc, simular
+    import enviar, estc
 
     os.makedirs(PASTA_ALUNO, exist_ok=True)
     with open(ARQUIVO, 'w', encoding='utf-8') as f:
         f.write(fonte)
 
     saida = io.StringIO()
-    original = simular._anotar_linhas(ARQUIVO)
     try:
         with contextlib.redirect_stdout(saida), contextlib.redirect_stderr(saida):
-            programa = enviar.carregar(ARQUIVO)
+            programa = enviar.carregar(ARQUIVO)     # também marca a linha de cada bloco (.linha)
             codigo = estc.compilar(programa)
     except Exception as e:                      # o programa do aluno pode ter qualquer erro
         linha, trecho, texto = enviar.explicar(e, ARQUIVO)
         return {'erro': {'linha': linha, 'codigo': trecho, 'texto': texto}, 'saida': saida.getvalue()}
-    finally:
-        simular.blocos.Blk.__init__ = original
 
     global _ultimo
     _ultimo = (enviar, programa)
     import robo
     p = estc._Programa(programa, False)         # a mesma alocação que o compilar acabou de fazer
+    ocupa = estc.espaco(programa, codigo)
+    aviso_espaco = estc.aviso_do_espaco(ocupa)
     return {
         'nome': nome,
         'nome_no_robo': nome_no_robo(nome),
         'bytes': codigo.hex(),
         'linhas': [getattr(b, 'linha', 0) for b in p.blocos()],
         'variaveis': p.var,
-        'avisos': robo.avisos(programa),
+        'espaco': estc.texto_do_espaco(ocupa),
+        'avisos': robo.avisos(programa) + ([aviso_espaco] if aviso_espaco else []),
+        # variável sem uso, laço sem espera, motor ligado no fim: {linha, codigo, texto, arrumar} (avisos.py)
+        'avisos_do_codigo': enviar.avisos_do_codigo(ARQUIVO, programa),
         'saida': saida.getvalue(),
     }
 
@@ -74,6 +76,18 @@ def importar_est_json(texto, arquivo=''):
     _esquecer_projeto()
     import importar_est
     return importar_est.traduzir_json(texto, arquivo)
+
+
+def para_est_json(fonte, nome='meu_programa.py'):
+    """O programa como projeto da IDE EST (.est, em base64), como o exportar_est.py do computador:
+    {est, iguais} ou {erro, linha, codigo}."""
+    _esquecer_projeto()
+    import exportar_est
+    os.makedirs(PASTA_ALUNO, exist_ok=True)
+    with open(ARQUIVO, 'w', encoding='utf-8') as f:
+        f.write(fonte)
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        return exportar_est.para_est_json(ARQUIVO, nome_no_robo(nome))
 
 
 def para_blocos_json(fonte):

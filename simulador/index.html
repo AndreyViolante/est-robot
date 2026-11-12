@@ -187,6 +187,21 @@
       <table class="tabela" id="sensores"></table>
     </section>
 
+    <section class="cartao" id="cartaoGrafico" aria-labelledby="graficoTitulo">
+      <div class="grafico-topo">
+        <h2 id="graficoTitulo">Sensores no tempo</h2>
+        <label class="campo">Mostrar <select id="janelaGrafico">
+          <option value="5">últimos 5 s</option>
+          <option value="10" selected>últimos 10 s</option>
+          <option value="30">últimos 30 s</option>
+          <option value="0">tudo</option>
+        </select></label>
+      </div>
+      <div class="graficos" id="graficos"></div>
+      <p class="nota">A leitura de cada sensor enquanto o robô anda. Passe o mouse (ou use as setas do teclado) no
+        gráfico para ver os valores de um instante.</p>
+    </section>
+
     <section class="cartao">
       <h2>Motores</h2>
       <div id="motores" class="motores"></div>
@@ -226,6 +241,7 @@
 <script src="vm.js"></script>
 <script src="mundo.js"></script>
 <script src="robo.js"></script>
+<script src="grafico.js"></script>
 <script src="desafios.js"></script>
 <script src="obr.js"></script>
 <script src="programa.js"></script>
