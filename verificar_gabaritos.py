@@ -490,11 +490,13 @@ def verificar_novidades():
     with tarefa():
         melodia('do re mi')""",
          lambda d: re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00\x20\x01\x00\x20\x02\x00', d, re.S) is not None),
-        ('botões da controladora (leitura interna 0x32)',
+        # como a IDE: lê 5 bytes e converte o 4º (o botão como máscara) no número (conferido no robô em 13/11/2026)
+        ('botões da controladora (leitura interna 0x32 de 5 bytes, o 4º convertido)',
          """esperar_botao()
 if botao_apertado() == 2:
     bip()""",
-         lambda d: b'\x32\x03\x00\x01' in d),
+         lambda d: (m := re.search(rb'\x32\x03\x00\x05(.{4})\x0d\x15(.{4})(.{4})', d, re.S)) is not None
+                   and m.group(2) == m.group(3) and int.from_bytes(m.group(2), 'big') == int.from_bytes(m.group(1), 'big') + 3),
         ('painel mostra nome e valor em cada linha',
          """painel(erro=luz_refletida(1) - luz_refletida(2), vel=20)""",
          lambda d: b'erro:' in d and b'vel:' in d),
@@ -502,7 +504,7 @@ if botao_apertado() == 2:
          """with ajustando('kp', 0.4, 0.05):
     while True:
         motores(20 + ler('kp'), 20 - ler('kp'))""",
-         lambda d: b'\x32\x03\x00\x01' in d and re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00', d, re.S) is not None),
+         lambda d: b'\x32\x03\x00\x05' in d and re.search(rb'\x1d.{4}\x01\x00\x1d.{4}\x02\x00', d, re.S) is not None),
         ('while com and compila',
          """while luz_refletida(1) > 50 and distancia(4) > 10:
     motores(30, 30)

@@ -76,12 +76,13 @@ o `exportar_est.py` grava todos os fios de um bloco num `<line_info>` só, como 
 | `04` | 9 | `04 [dest] [orig]` | copia 4 bytes |
 | `08` | 9 | `08 [dest] [orig]` | dest = float(byte orig) |
 | `09` `0A` `0B` `0C` | 13 | `op [res] [a] [b]` | res = a + b, a − b, a × b, a ÷ b |
-| `0D` | 10 | `0D 15 [r] [r]` | converte a cor lida para o número da cor (usado antes de exportar a leitura) |
+| `0D` | 10 | `0D 15 [r] [r]` | converte a cor (ou o botão) lida no número dela (usado antes de exportar a leitura) |
 | `10` | 14 | `10 [tipo] [res] [a] [b]` | compara floats; tipo 1 =, 2 ≠, 3 >, 4 ≥, 5 <, 6 ≤ |
 | `11` | 13 | `11 [res] [leitura] [máscara]` | cor lida pertence ao conjunto da máscara |
 | `29` | 14 | `29 [tipo] [res] [a] [b]` | compara bytes (sensor de toque) |
 | `2B` | 17 | `2B [r_tipo] [res] [a] [b]` | compara floats com o tipo num registrador (0 =, 1 ≠, 2 >, 3 ≥, 4 <, 5 ≤) |
 | `2F` | 6+n | `2F [endereço] [n] [bytes]` | grava texto na área de textos |
+| `32` | 8 | `32 [tipo] [modo] [tam] [r_dados]` | lê um dispositivo interno (3 botões, 9 cronômetro) |
 | `33` | 8 | `33 [tipo] [modo] [tam] [r_dados]` | escreve num dispositivo interno (tela, som, luz) |
 | `47` | 9 | `47 [endereço_texto] [r]` | converte um número em texto |
 | `1A` | 9 | `1A [pc] [r]` | salta para pc se r ≠ 0 |
@@ -102,6 +103,12 @@ o `exportar_est.py` grava todos os fios de um bloco num `<line_info>` só, como 
 O `InstructionSet.xml` da IDE erra o tamanho de algumas instruções (`2D`, `20`, `21`, `37`), e a IDE
 traduz alguns opcodes dos modelos `compile_xml` antes de gravar (o "comparar" `0x37` vira `0x10`, o
 "multiplicar" `0x0C` vira `0x0B`). A tabela acima é a do bytecode real.
+
+Os modelos de cada bloco são os de `compileconfig_file/compile_xml/`, a pasta que o `config.xml` da IDE
+manda usar. A `compile_xml/` da raiz da IDE é mais antiga e diverge em vários blocos: os botões, por
+exemplo, lá leem só 1 byte (`32 03 00 01`), que é sempre 0. O certo lê 5 bytes (`32 03 00 05`): o 4º é o
+botão apertado e o 5º vale 1 enquanto há algum apertado, e o `0D 15` troca o 4º pelo número do botão (como
+no EV3: 1 esquerda, 2 OK, 3 direita, 4 cima, 5 baixo; conferido no robô em 13/11/2026).
 
 ### Dispositivos (`30`/`31`)
 

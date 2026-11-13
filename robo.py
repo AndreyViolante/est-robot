@@ -136,8 +136,8 @@ def configurar(esquerdo: PortaMotor | None = None, direito: PortaMotor | None = 
 # luz refletida de cada sensor no preto e no branco, do calibracao.py (para limite())
 _PRETO, _BRANCO = {}, {}
 AVISO_DE_VERSAO = True        # calibracao.py: False desliga o aviso diário de versão nova (enviar.py)
-# números dos botões no bloco "Botões da controladora" da IDE (como no EV3: 1 esquerda, 2 centro, 3 direita,
-# 4 cima, 5 baixo). Ainda não conferidos no robô: a tarefa Teste geral descobre, e o calibracao.py pode trocar.
+# números dos botões, os do EV3: a controladora converte a leitura neles (OK 2, cima 4 e baixo 5 vistos no robô do
+# lab em 13/11/2026). O de voltar termina o programa.
 BOTAO_ESQUERDA, BOTAO_CENTRO, BOTAO_DIREITA, BOTAO_CIMA, BOTAO_BAIXO = 1, 2, 3, 4, 5
 _BOTOES = ('BOTAO_ESQUERDA', 'BOTAO_CENTRO', 'BOTAO_DIREITA', 'BOTAO_CIMA', 'BOTAO_BAIXO')
 
@@ -437,7 +437,8 @@ def tocado(porta: PortaSensor) -> Valor:
 
 
 def botao_apertado() -> Valor:
-    """Número do botão da controladora que está apertado (0 = nenhum). Ainda não conferido no robô."""
+    """Número do botão da controladora que está apertado: 0 = nenhum, BOTAO_ESQUERDA = 1, BOTAO_CENTRO = 2 (o OK),
+    BOTAO_DIREITA = 3, BOTAO_CIMA = 4, BOTAO_BAIXO = 5. Um botão por vez. O de voltar termina o programa."""
     return Valor(_adiciona(_b.Blk(3001, 1, '2|1|0|0', ' ')), 3, byte=True)
 
 

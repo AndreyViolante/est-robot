@@ -16,7 +16,7 @@ def perto(valor, alvo, folga):
     return valor is not None and abs(float(str(valor).replace(',', '.')) - alvo) <= folga
 
 
-# (nome, programa, segundos, pista, confere(resultado) -> True/False)
+# (nome, programa, segundos, pista, confere(resultado) -> True/False[, mais campos do caso, ex.: {'botao': 2}])
 CASOS = [
     ('giroscópio: vira até 90 graus', """zerar_giroscopio(2)
 while giroscopio(2) < 90:
@@ -63,6 +63,12 @@ virar_direita(90)""", 8, 'livre',
                 and all(r['grafico']['portas'][p]['min'] < 50 and r['grafico']['portas'][p]['max'] > 90 for p in '12')
                 and set(r['grafico']['portas']) == {'1', '2', '3', '4'} and r['grafico']['reduzidoOk']
                 and r['grafico']['maiorReduzido'] <= 4 * 150)),
+    # botões da controladora: o simulador enche os 5 bytes da leitura como o robô do lab (13/11/2026)
+    ('botão da controladora: nenhum apertado dá 0', """mostrar(botao_apertado())""", 1, 'livre',
+     lambda r: r['tela'][-1] == '0'),
+    ('botão da controladora: o de baixo dá BOTAO_BAIXO (5)', """mostrar(botao_apertado())
+if botao_apertado() == BOTAO_BAIXO:
+    mostrar('baixo', linha=2)""", 1, 'livre', lambda r: r['tela'] == ['5', 'baixo'], {'botao': 5}),
 ]
 
 
@@ -70,12 +76,13 @@ def main():
     entrada = []
     with tempfile.TemporaryDirectory() as pasta:
         arq = os.path.join(pasta, 'caso.py')
-        for nome, codigo, segundos, pista, _ in CASOS:
+        for nome, codigo, segundos, pista, _, *mais in CASOS:
             if not codigo.startswith('from robo import'):
                 codigo = 'from robo import *\n\n' + codigo
             with open(arq, 'w', encoding='utf-8') as f:
                 f.write(codigo + '\n')
-            entrada.append({'nome': nome, 'hex': compilar(carregar(arq)).hex(), 'segundos': segundos, 'pista': pista})
+            entrada.append({'nome': nome, 'hex': compilar(carregar(arq)).hex(), 'segundos': segundos, 'pista': pista,
+                            **(mais[0] if mais else {})})
         casos, saida = os.path.join(pasta, 'casos.json'), os.path.join(pasta, 'resultado.json')
         with open(casos, 'w', encoding='utf-8') as f:
             json.dump(entrada, f)
@@ -83,7 +90,7 @@ def main():
         with open(saida, encoding='utf-8') as f:
             resultados = json.load(f)
     falhas = 0
-    for (nome, _, _, _, confere), r in zip(CASOS, resultados):
+    for (nome, _, _, _, confere, *_), r in zip(CASOS, resultados):
         nao_simulado = [a for a in r.get('avisos', []) if 'ainda não simulad' in a]
         try:
             certo = not r.get('erro') and not nao_simulado and confere(r)

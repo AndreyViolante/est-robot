@@ -43,7 +43,7 @@ const reflexo = c => c.length > 3 ? c[3] : 0.299 * c[0] + 0.587 * c[1] + 0.114 *
 const sorteio = () => Math.random() + Math.random() - 1;
 
 /* botões da controladora (leitura interna 0x32, tipo 3): o número de cada um, 0 = nenhum apertado.
-   Como no robo.py (BOTAO_CIMA = 4, BOTAO_BAIXO = 5) e no EV3; ainda não conferidos no robô. */
+   Os do EV3, como no robo.py (OK 2, cima 4 e baixo 5 vistos no robô do lab em 13/11/2026). */
 const BOTOES = {1: 'esquerda', 2: 'centro', 3: 'direita', 4: 'cima', 5: 'baixo'};
 
 const NOMES_COR = ['nenhuma', 'PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM'];
@@ -301,9 +301,11 @@ class Robo {
     return {float: 0};
   }
 
-  /* leitura interna: tipo 3 = botões da controladora */
+  /* leitura interna: tipo 3 = botões da controladora. O robô enche 5 bytes: o 4º é o botão (no robô, a máscara
+     1 << número, que a conversão 0x15 troca pelo número; aqui já vem o número, como nos sensores de cor) e o 5º
+     é 1 enquanto algum botão está apertado */
   lerInterno(tipo, modo) {
-    if (tipo === 3) return {byte: this.botao};
+    if (tipo === 3) return {bytes: [0, 0, 0, this.botao, this.botao ? 1 : 0]};
     this.avisar(`Leitura interna ${tipo} (modo ${modo}) ainda não simulada: a leitura dá 0.`);
     return {byte: 0};
   }

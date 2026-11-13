@@ -303,6 +303,7 @@ class VM {
         this.confere(r, Math.max(tam, 1), pc);
         m.fill(0, r, r + tam);
         if ('float' in v) dv.setFloat32(r, v.float, true);
+        else if ('bytes' in v) v.bytes.slice(0, tam).forEach((b, i) => { m[r + i] = b & 0xFF; });
         else m[r] = v.byte & 0xFF;
         break;
       }

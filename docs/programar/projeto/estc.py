@@ -110,9 +110,13 @@ MODELOS = {
     ('3002', '2'): Modelo([_P, (7, SAIDA_F, 4)], [0], [_disp(0x30, 1, 2, 4, 7)]),
     ('3008', '1'): Modelo([_P, (2, SAIDA_B, 1)], [0], [_disp(0x30, 7, 1, 1, 2)]),
     ('3009', '3'): Modelo([_P, (4, SAIDA_F, 4)], [0], [_disp(0x30, 8, 3, 4, 4)]),
-    # ---- botoes da controladora (leitura interna 0x32, tipo 3); compile_xml/3001.xml da IDE, ainda nao conferido
-    #      contra uma captura nem no robo ----
-    ('3001', '1'): Modelo([(3, SAIDA_B, 1)], [], [(0x32, [_b(3), _b(0), _b(1), _r(3)])]),
+    # ---- botoes da controladora (leitura interna 0x32, tipo 3), como a IDE: compileconfig_file/compile_xml/3001.xml,
+    #      a tabela que o config.xml dela usa (a compile_xml/ da raiz e antiga e le so o 1o byte, que e sempre 0).
+    #      A leitura enche 5 bytes: o 4o e o botao como mascara (nenhum 1, esquerda 2, baixo 4, direita 8, cima 16)
+    #      e o 5o e 1 enquanto algum esta apertado; a conversao 0x15 (a mesma da cor) da o numero do EV3 (OK 2,
+    #      cima 4, baixo 5). Conferido no robo do lab em 13/11/2026 ----
+    ('3001', '1'): Modelo([(1, MASCARA), (2, BYTE), (3, SAIDA_B, 1), (7, SAIDA_B, 1)], [],
+                          [(0x32, [_b(3), _b(0), _b(5), _r(1)]), (0x0D, [_b(0x15), _r(3), _r(3)])]),
     # ---- tirados da tabela de compilacao da IDE (compileconfig_file/compile_xml/30xx.xml, 40xx.xml), do mesmo jeito
     #      que os de cima; ainda nao conferidos contra uma captura nem no robo ----
     # rotacao do motor (leitura 0x30 tipo 4, na porta do motor): 1 graus, 2 rotacoes, 3 potencia, modo 4 da leitura = zera
