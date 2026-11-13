@@ -69,6 +69,7 @@ reversa e é testado comparando, byte a byte, a saída dele com programas compil
 | [docs/guia-do-professor.md](docs/guia-do-professor.md) | roteiro de 8 aulas, com objetivos, desafios e erros comuns |
 | [docs/guia-obr.md](docs/guia-obr.md) | para equipes da OBR: como organizar, testar e ajustar o programa da prova prática |
 | [docs/cola-do-aluno.pdf](docs/cola-do-aluno.pdf) | todos os comandos numa folha frente e verso, para imprimir ([texto](docs/cola-do-aluno.md)) |
+| [docs/tutorial-para-ia.md](docs/tutorial-para-ia.md) | para anexar numa conversa com uma IA (ChatGPT, Claude, Gemini): ensina a IA a escrever programas do EST-LAB sem inventar comandos |
 
 ## Uso
 
@@ -303,27 +304,35 @@ Antes de enviar, o programa confere o robô e avisa:
 | `guardar('contador', 0)`, `ler('contador')` | variáveis guardadas no robô |
 | `painel(erro=..., vel=...)` | mostra até 3 valores na tela, um por linha, com o nome na frente (para ver o PID andando) |
 
-| Ainda não testados no robô (funcionam no simulador) | |
+| Mais recursos (conferidos no robô em 13/11/2026) | |
 |---|---|
 | `with ao_mesmo_tempo():` com um `with tarefa():` para cada parte | faz várias coisas ao mesmo tempo (ex.: andar e tocar uma música) e continua quando todas acabam |
-| `esperar_botao()`, `botao_apertado()` | os botões da própria controladora: esperar apertar e soltar, ou o número do botão apertado (0 = nenhum) |
+| `esperar_botao()`, `botao_apertado()` | os botões da própria controladora: esperar apertar e soltar, ou o número do botão apertado (0 nenhum, 1 esquerda, 2 OK, 3 direita, 4 cima, 5 baixo; o de voltar termina o programa) |
 | `with ajustando('kp', 0.4, 0.05):` | ajusta um número com os botões de cima e de baixo enquanto o programa roda, sem reenviar (use `ler('kp')`) |
-| `with ajustes(kp=(0.4, 0.05), vel=(25, 5)):` | vários números: esquerda e direita escolhem qual, cima e baixo mudam (para acertar o seguidor na arena, sem cabo) |
 | `calibrar_na_largada(1, 2)`, `limite_medido(1)` | o robô gira sobre a linha, mede o preto e o branco da própria pista e calcula o limite de cada sensor |
-| `with medir_laco(5):` | repete o corpo do laço por 5 s e mostra quantas voltas por segundo ele faz |
-| `graus_do_motor('B')`, `rotacoes_do_motor('B')`, `zerar_motor('B')` | quanto o motor girou (o "encoder"): para andar uma distância exata com `motores(...)` ligado |
-| `giroscopio(2)`, `velocidade_do_giro(2)`, `zerar_giroscopio(2)` | sensor giroscópio: o ângulo do robô em graus (para virar 90° certinho) |
+| `graus_do_motor('B')`, `zerar_motor('B')` | quanto o motor girou (o "encoder"): para andar uma distância exata com `motores(...)` ligado |
+| `giroscopio(2)`, `zerar_giroscopio(2)` | sensor giroscópio: o ângulo do robô em graus (para virar 90° certinho) |
 | `cronometro()`, `zerar_cronometro()` | segundos passados (8 cronômetros: `cronometro(2)`...) |
-| `aleatorio(1, 6)`, `arredondar(valor)` | número sorteado no robô; arredondar para o inteiro mais perto |
+| `aleatorio(1, 6)` | número sorteado no robô |
+
+| Falharam no robô em 13/11/2026 (em investigação; funcionam no simulador) | |
+|---|---|
+| `with ajustes(kp=(0.4, 0.05), vel=(25, 5)):` | vários números: esquerda e direita escolhem qual, cima e baixo mudam. No robô, cima e baixo não mudaram o número |
+| `with medir_laco(5):` | repete o corpo do laço por 5 s e mostra quantas voltas por segundo ele faz. No robô, ele não andou |
+
+| Ainda não testados no robô (funcionam no simulador) | |
+|---|---|
+| `rotacoes_do_motor('B')`, `potencia_do_motor('B')`, `velocidade_do_giro(2)` | voltas do motor, potência agora e graus por segundo do giroscópio |
+| `arredondar(valor)` | arredondar para o inteiro mais perto |
 | `enviar_mensagem('erro', erro)`, `mensagem_recebida('kp')` | mensagens pelo Bluetooth (o bloco Mensagens da IDE): para outro robô (`para='nome'`) ou para quem estiver conectado; no simulador as enviadas aparecem em Variáveis |
 | `ligar_bluetooth()`, `desligar_bluetooth()` | o Bluetooth do robô |
 
 Os números dos botões da controladora (`BOTAO_CIMA`, `BOTAO_ESQUERDA`...) ficam no `calibracao.py`: se a
-tarefa **Teste geral no robô** mostrar outros números, troque lá. Rotação do motor, giroscópio, cronômetro,
-aleatório, arredondar e mensagens seguem a tabela de compilação da própria IDE para esses blocos, mas ninguém
-viu ainda no robô. A controladora não manda as leituras dos sensores para o computador (nem para a IDE: o
-"monitor" dela mostra só o que está ligado em cada porta); com as mensagens, um programa no robô poderá mandar
-valores para o celular, depois que o formato delas for conferido no laboratório (`ferramentas/bluetooth.py --escutar`).
+tarefa **Teste geral no robô** mostrar outros números, troque lá. Os recursos que ainda não foram testados
+seguem a tabela de compilação da própria IDE para esses blocos. A controladora não manda as leituras dos
+sensores para o computador (nem para a IDE: o "monitor" dela mostra só o que está ligado em cada porta); com
+as mensagens, um programa no robô poderá mandar valores para o celular, depois que o formato delas for
+conferido no laboratório (`ferramentas/bluetooth.py --escutar`).
 
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
 no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura

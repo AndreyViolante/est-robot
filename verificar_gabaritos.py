@@ -307,6 +307,9 @@ def verificar_mensagens():
         ('mostrar(luz_refletida(9))', 3, 'não é de sensor'),
         ('motor(1, 50)', 3, 'não é de motor'),
         ("mostrar('Luz ' + 5)", 3, 'não dá para juntar um texto'),
+        ("mostrar('Luz ' + luz_refletida(1))", 3, 'não dá para juntar um texto'),
+        ('mostrar(int(luz_refletida(1)))', 3, 'use arredondar'),
+        ('mostrar(round(distancia(4)))', 3, 'use arredondar'),
         ("andar_cm('dez')", 3, 'precisa de um número'),
         ('x = 10 / 0', 3, 'divisão por zero'),
         ('for i in range(distancia(4)):\n    bip()', 3, 'só existe no robô'),
@@ -759,7 +762,7 @@ def verificar_avisos():
         programas = [os.path.join(aluno, 'meu_programa.py')] + [
             os.path.join(aluno, 'exemplos', n) for n in sorted(os.listdir(os.path.join(aluno, 'exemplos'))) if n.endswith('.py')]
         falsos = [f'{os.path.basename(p)} linha {a["linha"]}' for p in programas for a in avisos_de(open(p, encoding='utf-8').read())]
-        for guia in ('guia-obr.md', 'guia-do-professor.md'):
+        for guia in ('guia-obr.md', 'guia-do-professor.md', 'tutorial-para-ia.md'):
             texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
             for n, codigo in enumerate(re.findall(r'```python\n(.*?)```', texto, re.S), 1):
                 if 'from robo import' in codigo:
@@ -946,13 +949,14 @@ def verificar_importar():
 
 
 def verificar_guias():
-    """Os programas dos guias (blocos ```python) compilam: um exemplo errado no guia confunde a turma."""
+    """Os programas dos guias e do tutorial para IAs (blocos ```python) compilam: um exemplo errado
+    confunde a turma (e a IA, que copia o jeito dos exemplos)."""
     import tempfile
     from enviar import carregar
     raiz = os.path.dirname(os.path.abspath(__file__))
     ok = True
     with tempfile.TemporaryDirectory() as pasta:
-        for guia in ('guia-obr.md',):
+        for guia in ('guia-obr.md', 'tutorial-para-ia.md'):
             texto = open(os.path.join(raiz, 'docs', guia), encoding='utf-8').read()
             for n, codigo in enumerate(re.findall(r'```python\n(.*?)```', texto, re.S), 1):
                 if 'from robo import' not in codigo:

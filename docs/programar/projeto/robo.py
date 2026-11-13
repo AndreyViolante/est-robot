@@ -337,6 +337,9 @@ def esperar(segundos: float):
 # ---------------------------------------------------------------- valores e contas
 
 def _const(v):
+    if isinstance(v, str):
+        raise TypeError('não dá para juntar um texto com uma leitura de sensor usando "+": mostre o texto e o valor '
+                        'separados, ex.: mostrar("Luz:") e mostrar(valor, linha=2), ou use painel(luz=valor)')
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         raise TypeError(f'não sei fazer conta com {v!r}')
     return v
@@ -388,6 +391,12 @@ class Valor:
     def __bool__(self):
         raise TypeError('esse valor do robô não funciona aqui: use ele num "if" ou num "while" '
                         '(o "x if ... else y" numa linha só ainda não funciona com o robô)')
+
+    def _so_no_robo(self, *_):
+        raise TypeError('a leitura de um sensor só existe no robô: int(), float() e round() não funcionam com ela. '
+                        'Para arredondar no robô, use arredondar(...)')
+
+    __int__ = __float__ = __round__ = _so_no_robo
 
 
 # numero que cor_vista() devolve para cada cor. No robo (2026-10-16) o preto deu 1 e o branco oscilou entre 6 e 0:
@@ -446,7 +455,7 @@ def botao_apertado() -> Valor:
 # compilação da própria IDE, mas ainda não foram conferidos no robô.
 
 def graus_do_motor(porta: PortaMotor) -> Valor:
-    """Quantos graus o motor girou desde o começo (ou desde zerar_motor). Ainda não conferido no robô."""
+    """Quantos graus o motor girou desde o começo (ou desde zerar_motor). Conferido no robô em 13/11/2026."""
     return Valor(_adiciona(_b.motor_rotation(_motor(porta), 1)), 3)
 
 
@@ -461,13 +470,13 @@ def potencia_do_motor(porta: PortaMotor) -> Valor:
 
 
 def zerar_motor(porta: PortaMotor):
-    """Volta a contagem de graus do motor para 0. Ainda não conferido no robô."""
+    """Volta a contagem de graus do motor para 0. Conferido no robô em 13/11/2026."""
     return _adiciona(_b.motor_rotation(_motor(porta), 7))
 
 
 def giroscopio(porta: PortaSensor) -> Valor:
     """Ângulo do robô em graus, lido pelo giroscópio, desde o começo (ou desde zerar_giroscopio).
-    Ainda não conferido no robô."""
+    Conferido no robô em 13/11/2026."""
     return Valor(_adiciona(_b.gyro(_sensor(porta), 1)), 3)
 
 
@@ -477,7 +486,7 @@ def velocidade_do_giro(porta: PortaSensor) -> Valor:
 
 
 def zerar_giroscopio(porta: PortaSensor):
-    """Volta o ângulo do giroscópio para 0 (deixe o robô parado). Ainda não conferido no robô."""
+    """Volta o ângulo do giroscópio para 0 (deixe o robô parado). Conferido no robô em 13/11/2026."""
     return _adiciona(_b.gyro(_sensor(porta), 6))
 
 
@@ -489,17 +498,17 @@ def _cronometro(numero):
 
 def cronometro(numero: int = 1) -> Valor:
     """Segundos passados desde o começo do programa (ou desde zerar_cronometro). O robô tem 8 cronômetros.
-    Ainda não conferido no robô."""
+    Conferido no robô em 13/11/2026."""
     return Valor(_adiciona(_b.timer(_cronometro(numero), 1)), 4)
 
 
 def zerar_cronometro(numero: int = 1):
-    """Volta o cronômetro para 0 e ele recomeça a contar. Ainda não conferido no robô."""
+    """Volta o cronômetro para 0 e ele recomeça a contar. Conferido no robô em 13/11/2026."""
     return _adiciona(_b.timer(_cronometro(numero), 3))
 
 
 def aleatorio(minimo: int, maximo: int) -> Valor:
-    """Um número inteiro sorteado entre minimo e maximo (os dois podem sair). Ainda não conferido no robô."""
+    """Um número inteiro sorteado entre minimo e maximo (os dois podem sair). Conferido no robô em 13/11/2026."""
     if _const(minimo) > _const(maximo):
         raise ValueError(f'aleatorio({minimo}, {maximo}): o primeiro número tem que ser o menor')
     return Valor(_adiciona(_b.random_num(minimo, maximo)), 5)
@@ -568,7 +577,7 @@ def guardar(nome: str, valor: float | Valor):
 # ---------------------------------------------------------------- esperas por sensor
 
 def esperar_botao():
-    """Espera apertar e soltar um botão da controladora (bom para largar o robô). Ainda não conferido no robô."""
+    """Espera apertar e soltar um botão da controladora (bom para largar o robô). Conferido no robô em 13/11/2026."""
     with repetir_ate(lambda: botao_apertado() != 0):
         pass
     with repetir_ate(lambda: botao_apertado() == 0):
@@ -787,7 +796,7 @@ def ao_mesmo_tempo():
                 andar_cm(30)
             with tarefa():
                 melodia('do re mi')
-    Continua depois que todas as tarefas acabarem. Ainda não conferido no robô (funciona no simulador)."""
+    Continua depois que todas as tarefas acabarem. Conferido no robô em 13/11/2026."""
     blk = _adiciona(_b.Blk(9001, 1, '', ' '))
     blk.ramos = []
     return _Paralelo(blk, [])
@@ -1059,7 +1068,7 @@ def ajustando(nome: str, inicial: float, passo: float):
         with ajustando('kp', 0.4, 0.05):
             while True:
                 ... motores(20 + erro * ler('kp'), 20 - erro * ler('kp'))
-    Use ler('kp') no programa. Ainda não conferido no robô (os números dos botões podem ser outros)."""
+    Use ler('kp') no programa. Conferido no robô em 13/11/2026."""
     return _Ajustando(nome, inicial, passo)
 
 
@@ -1117,7 +1126,8 @@ def ajustes(**valores: tuple):
                 motores(ler('vel') + erro * ler('kp'), ler('vel') - erro * ler('kp'))
     Bom para acertar o seguidor na arena entre uma rodada e outra, sem cabo. Os valores voltam ao inicial
     quando o programa recomeça: anote o que funcionou e passe para o programa.
-    Ainda não conferido no robô (os números dos botões podem ser outros: veja a tarefa Teste geral)."""
+    No robô do lab, em 13/11/2026, os botões de cima e de baixo não mudaram o número: em investigação.
+    Até lá, use um ajustando(...) para o número mais importante."""
     return _Ajustes(valores)
 
 
@@ -1166,7 +1176,7 @@ def medir_laco(segundos: float = 5):
     Mais voltas por segundo = o robô corrige mais vezes e pode andar mais rápido sem perder a linha.
     Compare: tire ou ponha uma leitura, um mostrar(...), um painel(...), e veja quanto cada coisa custa.
     A conta das voltas também gasta um pouquinho: o laço de verdade é um pouco mais rápido que o número.
-    Usa o ao_mesmo_tempo (ainda não conferido no robô; funciona no simulador)."""
+    Funciona no simulador, mas no robô do lab, em 13/11/2026, o robô não andou: em investigação."""
     return _MedirLaco(segundos)
 
 
