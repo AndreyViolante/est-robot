@@ -263,13 +263,19 @@ def upload(program_data: bytes,
         print()
 
     sequence = build_upload_sequence(program_data, prog_path, executar)
+    sem_resposta = []
 
     try:
         for pkt, name, delay in sequence:
             send_report(handle, pkt)
             preview = pkt[:8].hex().upper()
 
+            ate = time.monotonic() + delay + 0.3
             resp = read_response(handle, timeout_ms=int(delay * 1000) + 300)
+            while resp and not resposta_de(pkt, resp) and time.monotonic() < ate:     # atrasada, de outro pedido
+                resp = read_response(handle, timeout_ms=max(1, int((ate - time.monotonic()) * 1000)))
+            if not resposta_de(pkt, resp) and name.startswith(PRECISA_DE_RESPOSTA):
+                sem_resposta.append(name)
 
             if verbose:
                 if resp:
@@ -280,10 +286,29 @@ def upload(program_data: bytes,
 
         if verbose:
             print()
-            print("[OK] Upload concluido!")
+            if any(n != 'RUN' for n in sem_resposta):
+                print(f"AVISO: o robô não confirmou parte do programa ({', '.join(sem_resposta)}). Envie de novo.")
+            elif sem_resposta:
+                print(f"AVISO: o programa ficou gravado como {prog_path[1:]}, mas o robô não confirmou que começou "
+                      "a rodar. Inicie pelo menu do robô ou envie de novo.")
+            else:
+                print("[OK] Upload concluido!")
 
     finally:
         k32.CloseHandle(handle)
+    return {'sem_resposta': sem_resposta, 'rodou': (not sem_resposta) if executar else None}
+
+
+# sem a resposta destes, o programa pode não ter chegado ou não ter começado a rodar (como na página de programar)
+PRECISA_DE_RESPOSTA = ('SEND FILENAME', 'SEND DATA', 'RUN')
+
+
+def resposta_de(pkt: bytes, resp) -> bool:
+    """resp é a resposta do robô a este pacote? 68 21 e o mesmo comando (o ReadFile pode trazer o report ID 00 antes)."""
+    if not resp:
+        return False
+    i = 1 if resp[:1] == b'\x00' else 0
+    return resp[i:i + 3] == bytes([0x68, 0x21, pkt[2]])
 
 
 # ── Arquivos gravados e bateria ──────────────────────────────────────────────

@@ -29,13 +29,16 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 | `cor_vista(1)` | a cor: compare com `PRETO`, `AZUL`, `VERDE`, `AMARELO`, `VERMELHO`, `BRANCO`, `MARROM` (ex.: `se(cor_vista(1) == VERDE)`) |
 | `distancia(4)` | distância em centímetros (ultrassom) |
 | `tocado(4)` | 1 se o botão de toque estiver apertado, 0 se não |
+| `botao_apertado()` | botão da controladora: 0 nenhum, 1 esquerda, 2 OK, 3 direita, 4 cima, 5 baixo |
+| `graus_do_motor('B')` | quanto o motor girou, em graus (`zerar_motor('B')` volta a 0) |
+| `giroscopio(2)` | ângulo do robô, em graus (`zerar_giroscopio(2)` volta a 0) |
+| `cronometro()` | segundos passados (`zerar_cronometro()` volta a 0) |
+| `aleatorio(1, 6)` | número sorteado |
 
-Novos, ainda não vistos no robô: `graus_do_motor('B')` (quanto o motor girou), `giroscopio(2)` (ângulo do
-robô), `cronometro()` (segundos), `aleatorio(1, 6)`, `arredondar(...)`, os `zerar_motor('B')`,
-`zerar_giroscopio(2)`, `zerar_cronometro()` e as mensagens pelo Bluetooth `enviar_mensagem('erro', erro)` e
-`mensagem_recebida('kp')`.
+Ainda não vistos no robô: `arredondar(...)` e as mensagens pelo Bluetooth.
 
-No simulador, **🎮 Dirigir**: leve o robô pelas setas e o programa se escreve sozinho.
+No simulador, **Dirigir** leva o robô pelas setas e o programa se escreve sozinho. Há 13 desafios, do
+"andar 30 cm" ao percurso completo da OBR.
 
 ## Repetir e decidir
 
@@ -79,7 +82,8 @@ for _ in range(4):               # repete 4 vezes
 ```
 
 Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<', 30)`,
-`esperar_cor(1, VERDE)`, `se_tocado(4)`, `se_luz(1, '<', 30)`, `repetir_ate_cor(1, PRETO)`.
+`esperar_cor(1, VERDE)`, `esperar_botao()`, `se_tocado(4)`, `se_luz(1, '<', 30)`, `repetir_ate_cor(1, PRETO)`.
+Duas coisas juntas: `with ao_mesmo_tempo():` com um `with tarefa():` para cada uma.
 
 ## Tela, som, luz e variáveis
 
@@ -97,8 +101,7 @@ Outros: `esperar_toque(4)`, `esperar_distancia(4, '<', 20)`, `esperar_luz(1, '<'
 | Comando | O que faz |
 |---|---|
 | `calibrar_na_largada(1, 2)` e `limite_medido(1)` | mede o preto e o branco na própria pista antes de sair |
-| `with ajustes(kp=(0.4, 0.05), vel=(25, 5)):` | muda números pelos botões do robô, sem cabo (use `ler('kp')`) |
-| `with medir_laco(5):` | mostra quantas voltas por segundo o laço faz |
+| `with ajustando('kp', 0.4, 0.05):` | muda um número com os botões de cima e de baixo, sem cabo (use `ler('kp')`) |
 
 ## Atalhos no VS Code
 
@@ -111,7 +114,7 @@ Digite o nome e aperte **Tab**: o modelo aparece pronto, é só trocar os númer
 | `quadrado`, `desviar`, `parar_na_linha` | um movimento pronto |
 | `seguidor_1_sensor`, `seguidor_2_sensores`, `seguidor_proporcional` | um seguidor de linha para ajustar |
 | `mostrar_sensor`, `painel`, `contar`, `ao_mesmo_tempo`, `esperar_botao` | tela, variáveis e outros |
-| `calibrar_na_largada`, `ajustes`, `medir_laco` | para competição: calibrar na pista, ajustar sem cabo, medir o laço |
+| `calibrar_na_largada` | para competição: calibrar na pista antes de sair |
 
 ## Regras que evitam erro
 

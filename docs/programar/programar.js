@@ -411,15 +411,29 @@ function travar(sim) {
 }
 
 const bytesDoPrograma = r => Uint8Array.from(r.bytes.match(/../g) || [], h => parseInt(h, 16));
-const detalhesDoEnvio = log => `<details class="detalhes"><summary>Detalhes do envio</summary><pre>${escapar(log.join('\n'))}</pre></details>`;
+const detalhesDoEnvio = (log, aberto = false) =>
+  `<details class="detalhes"${aberto ? ' open' : ''}><summary>Detalhes do envio</summary><pre>${escapar(log.join('\n'))}</pre></details>`;
+const linhaDoLog = p => `${p.nome.padEnd(20)} tx=${p.tx}...  rx=${p.rx || '(sem resposta)'}` +
+  (p.rx && !p.ok ? '  (não é a resposta deste pacote)' : '');
 
-/** Como o enviar.py termina: diz se o robô respondeu, se já está rodando ou onde ficou gravado. */
-function mostrarResultado(respostas, executar, r, log, via) {
-  const detalhes = detalhesDoEnvio(log);
-  if (!respostas) {
+/** Como o enviar.py termina: diz se o robô respondeu, se já está rodando ou onde ficou gravado. Quando o robô
+    não confirma um pacote que importa (nome, dados ou o RUN), diz qual e abre os detalhes para copiar. */
+function mostrarResultado(res, executar, r, log, via) {
+  const faltou = res.semResposta;
+  const detalhes = detalhesDoEnvio(log, faltou.length > 0);
+  const copiar = 'Se acontecer de novo, copie os detalhes abaixo e mande junto com o que o robô fez.';
+  if (!res.respostas) {
     mensagem('aviso', 'O robô não respondeu',
       `<p>Os pacotes foram enviados ${via}, mas o robô não respondeu nenhum. Confira se ele está ligado e se a IDE EST ` +
       'está fechada, e tente de novo.</p>' + detalhes);
+  } else if (faltou.some(n => n !== 'RUN')) {
+    mensagem('aviso', 'O robô não confirmou o programa',
+      `<p>O robô não confirmou que recebeu ${faltou.filter(n => n !== 'RUN').map(n => n === 'SEND FILENAME' ? 'o nome' :
+        'os dados').filter((v, i, a) => a.indexOf(v) === i).join(' e ')} do programa. Envie de novo. ${copiar}</p>` + detalhes);
+  } else if (executar && !res.rodou) {
+    mensagem('aviso', 'O robô não confirmou que começou a rodar',
+      `<p>O programa ficou gravado como <code>vscode/${escapar(r.nome_no_robo)}</code>, mas o robô não confirmou que ` +
+      `começou a rodar. Inicie pelo menu do robô ou envie de novo. ${copiar}</p>` + detalhes);
   } else if (executar) {
     mensagem('ok', 'Enviado!', '<p>O programa já está rodando no robô.</p>' + detalhes);
   } else {
@@ -500,7 +514,7 @@ async function enviarAoRobo(executar) {
       }
       respostas = await P.enviar(robo, bytes, caminho, executar, passo => {
         barra.style.width = `${Math.round(100 * passo.passo / passo.total)}%`;
-        log.push(`${passo.nome.padEnd(20)} tx=${passo.tx}...  rx=${passo.rx || '(sem resposta)'}`);
+        log.push(linhaDoLog(passo));
       });
     } catch (e) {
       caixa.remove();
@@ -577,7 +591,7 @@ async function enviarPorBluetooth(executar) {
       }
       respostas = await P.enviarPorCanal(canal, bytesDoPrograma(r), `/vscode/${r.nome_no_robo}`, executar, passo => {
         barra.style.width = `${Math.round(100 * passo.passo / passo.total)}%`;
-        log.push(`${passo.nome.padEnd(20)} tx=${passo.tx}...  rx=${passo.rx || '(sem resposta)'}`);
+        log.push(linhaDoLog(passo));
       });
     } catch (e) {
       caixa.remove();
@@ -588,8 +602,8 @@ async function enviarPorBluetooth(executar) {
     }
     caixa.remove();
     mostrarResultado(respostas, executar, r, log, 'pelo Bluetooth');
-    $('estadoBluetooth').className = respostas ? 'robo ligado' : 'robo';
-    $('estadoBluetooth').textContent = respostas ? 'O robô respondeu pelo Bluetooth.' : 'O robô não respondeu pelo Bluetooth.';
+    $('estadoBluetooth').className = respostas.respostas ? 'robo ligado' : 'robo';
+    $('estadoBluetooth').textContent = respostas.respostas ? 'O robô respondeu pelo Bluetooth.' : 'O robô não respondeu pelo Bluetooth.';
   } catch (e) {
     mensagem('erro', 'Não enviei', `<p>${escapar(explicarErroBluetooth(e))}</p>`);
     console.error(e);

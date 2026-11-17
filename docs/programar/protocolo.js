@@ -178,19 +178,36 @@ async function portasLigadas(dispositivo, ms = 400) {
   }
 }
 
+/** rx é a resposta do robô a este pacote? 68 21 e o mesmo comando (no USB, o robô responde o RUN com
+    68 21 0A 01 00 01: visto no envio pelo VS Code). */
+const respondeu = (pacote, rx) => !!rx && rx[0] === 0x68 && rx[1] === 0x21 && rx[2] === pacote[2];
+// sem a resposta destes, o programa pode não ter chegado ou não ter começado a rodar
+const PRECISA_DE_RESPOSTA = /^(SEND FILENAME|SEND DATA|RUN)/;
+
 /** Envia o programa pelo canal, lendo a resposta depois de cada pacote (como upload() de est_protocol.py).
-    aoAndar({passo, total, nome, tx, rx}) é chamado a cada pacote. Devolve quantos pacotes tiveram resposta. */
+    Uma resposta que não é a deste pacote (atrasada, de outro pedido) é deixada de lado e a espera continua.
+    aoAndar({passo, total, nome, tx, rx, ok}) é chamado a cada pacote. Devolve {respostas (quantos pacotes o robô
+    respondeu), semResposta (os que precisavam e não tiveram), rodou (o robô confirmou o RUN; null se só gravou)}. */
 async function enviarPorCanal(canal, programa, caminho, executar, aoAndar = () => {}) {
   const lista = sequencia(programa, caminho, executar);
   let respostas = 0;
+  const semResposta = [];
   for (let i = 0; i < lista.length; i++) {
     const {pacote, nome, espera} = lista[i];
     await canal.mandar(pacote);
-    const rx = await canal.resposta(Math.round(espera * 1000) + 300);
-    if (rx) respostas++;
-    aoAndar({passo: i + 1, total: lista.length, nome, tx: hex(pacote), rx: rx ? hex(rx) : null});
+    const ate = Date.now() + Math.round(espera * 1000) + 300;
+    let rx = await canal.resposta(ate - Date.now()), outra = null;
+    while (rx && !respondeu(pacote, rx) && Date.now() < ate) {
+      outra = outra || rx;
+      rx = await canal.resposta(ate - Date.now());
+    }
+    const ok = respondeu(pacote, rx);
+    if (ok) respostas++;
+    else if (PRECISA_DE_RESPOSTA.test(nome)) semResposta.push(nome);
+    const visto = ok ? rx : rx || outra;
+    aoAndar({passo: i + 1, total: lista.length, nome, tx: hex(pacote), rx: visto ? hex(visto) : null, ok});
   }
-  return respostas;
+  return {respostas, semResposta, rodou: executar ? !semResposta.includes('RUN') : null};
 }
 
 /** Pelo USB: envia e fecha o robô no fim. */
@@ -305,7 +322,7 @@ async function abrirCanalBluetooth(porta) {
 
 const API = {VID, PID, TAMANHO_REPORT, PEDACO, checksum, frame, HEARTBEAT, DOWNLOAD, CONSULTA_ESTADO, pacoteSelect,
              pacoteRun, pacoteNome, pacoteDados, pacotesDeDados, sequencia, lerPortas, temWebHID, roboPermitido,
-             escolherRobo, consultarPortas, portasLigadas, enviarPorCanal, enviar, SPP, linhaDeApresentacao,
+             escolherRobo, consultarPortas, portasLigadas, respondeu, enviarPorCanal, enviar, SPP, linhaDeApresentacao,
              temWebSerial, portaBluetoothPermitida, escolherPortaBluetooth, separarPacotes, abrirCanalBluetooth};
 if (typeof module === 'object' && module.exports) module.exports = API;     // para testar no Node
 else raiz.ESTProtocolo = API;

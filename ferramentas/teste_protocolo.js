@@ -47,5 +47,34 @@ estado[1] = 0x21; estado[estado.length - 2] = P.checksum(estado.subarray(0, esta
 const portas = P.lerPortas(P.separarPacotes(estado).pacotes[0]);
 confere('portas pela resposta separada', JSON.stringify(portas) === '{"1":1,"4":8,"B":4}', JSON.stringify(portas));
 
-console.log(`\nprotocolo do navegador: ${falhas ? `${falhas} FALHA(S)` : 'OK'}`);
-process.exit(falhas ? 1 : 0);
+// o envio confere a resposta de cada pacote (68 21 e o mesmo comando): um robô de mentira que responde cada pacote,
+// às vezes com uma resposta velha antes, ou que não responde o RUN
+function roboDeMentira({semRun = false, velhaAntes = ''} = {}) {
+  const fila = [];
+  const resposta = cmd => Uint8Array.from([0x68, 0x21, cmd, 1, 0, 1, 0, 0x16]);
+  return {
+    async mandar(pacote) {
+      const nome = P.sequencia(new Uint8Array(10), '/vscode/t', true).find(p => hex(p.pacote) === hex(pacote));
+      if (velhaAntes && nome && nome.nome === velhaAntes) fila.push(resposta(0x02));     // de outro pedido
+      if (!(semRun && pacote[2] === 0x0A && pacote[5] === 0x01)) fila.push(resposta(pacote[2]));
+    },
+    resposta: async () => fila.shift() || null,
+    fechar() {},
+  };
+}
+(async () => {
+  const certo = await P.enviarPorCanal(roboDeMentira(), new Uint8Array(10), '/vscode/t', true);
+  confere('envio confirmado: rodou, nada faltou', certo.rodou === true && !certo.semResposta.length && certo.respostas === 8,
+    JSON.stringify(certo));
+  const velha = await P.enviarPorCanal(roboDeMentira({velhaAntes: 'SEND DATA'}), new Uint8Array(10), '/vscode/t', true);
+  confere('resposta velha antes da certa é deixada de lado', velha.rodou === true && !velha.semResposta.length,
+    JSON.stringify(velha));
+  const parado = await P.enviarPorCanal(roboDeMentira({semRun: true}), new Uint8Array(10), '/vscode/t', true);
+  confere('sem a resposta do RUN: gravou, mas não confirmou que rodou',
+    parado.rodou === false && JSON.stringify(parado.semResposta) === '["RUN"]', JSON.stringify(parado));
+  const gravar = await P.enviarPorCanal(roboDeMentira(), new Uint8Array(10), '/vscode/t', false);
+  confere('só gravar: rodou fica null', gravar.rodou === null && !gravar.semResposta.length, JSON.stringify(gravar));
+
+  console.log(`\nprotocolo do navegador: ${falhas ? `${falhas} FALHA(S)` : 'OK'}`);
+  process.exit(falhas ? 1 : 0);
+})();
