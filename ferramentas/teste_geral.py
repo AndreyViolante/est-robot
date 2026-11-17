@@ -3,9 +3,12 @@
 Uso: no VS Code, Terminal > Executar Tarefa > Teste geral no robô
      (robô carregado, no USB e no chão, com espaço em volta; IDE EST fechada).
 Em cada passo o teste manda um programa para o robô, diz o que deve acontecer e pergunta se aconteceu
-(s = sim, n = não, p = pular). No fim grava resultado_teste_geral.txt nesta pasta.
+(s = sim, n = não, p = pular; r = refazer o passo: manda o programa de novo e repete as perguntas dele).
+No fim grava resultado_teste_geral.txt nesta pasta.
 
-    python ferramentas/teste_geral.py --sem-robo     só confere se os programas do teste compilam
+    python ferramentas/teste_geral.py --passo 5b      só o passo 5b (ou --passo 2,5b): o resultado vai
+                                                      para o fim do resultado_teste_geral.txt
+    python ferramentas/teste_geral.py --sem-robo      só confere se os programas do teste compilam
 """
 import datetime, os, sys
 
@@ -24,14 +27,49 @@ def titulo(texto):
     print(f'\n{"=" * 70}\n{texto}\n{"=" * 70}')
 
 
-def perguntar(texto, opcoes=('s', 'n', 'p')):
+class Refazer(Exception):
+    """A resposta foi "r": o passo começa de novo (manda o programa outra vez e repete as perguntas)."""
+
+
+def responder(texto, valida, ajuda):
+    """Pergunta até vir uma resposta que valida(resposta) aceita (devolve o valor, ou None se não serve).
+    "r" refaz o passo. Sem robô, a resposta é sempre "p"."""
     if SEM_ROBO:
         return 'p'
     while True:
-        r = input(f'{texto} ({"/".join(opcoes)}) ').strip().lower()
-        if r in opcoes:
+        r = input(f'{texto} ').strip().lower()
+        if r == 'r':
+            raise Refazer
+        v = valida(r)
+        if v is not None:
+            return v
+        print(f'  {ajuda} (r refaz o passo)')
+
+
+def perguntar(texto, opcoes=('s', 'n', 'p')):
+    return responder(f'{texto} ({"/".join(opcoes)})', lambda r: r if r in opcoes else None,
+                     f'Responda com {", ".join(opcoes)}.')
+
+
+def numeros_da_tela(texto, quantos):
+    """Números lidos na tela do robô (ex.: "55 60" ou "55,5"), "n" (não apareceu nada) ou "p" (pular)."""
+    def valida(r):
+        if r in ('n', 'p'):
             return r
-        print(f'  Responda com {", ".join(opcoes)}.')
+        partes = r.replace(';', ' ').split() if quantos > 1 else [r]
+        try:
+            [float(x.replace(',', '.')) for x in partes]
+        except ValueError:
+            return None
+        return ' '.join(partes) if len(partes) == quantos else None
+    exemplo = '55' if quantos == 1 else ' '.join(['55', '60', '58'][:quantos])
+    return responder(f'{texto} (ex.: {exemplo}; n se não apareceu nada, p para pular)', valida,
+                     f'Digite {"o número" if quantos == 1 else f"os {quantos} números"} da tela, n ou p.')
+
+
+def porta_do_sensor(nome):
+    return responder(f'Em que porta está o {nome}? (1 a 4, ou p se não tem)',
+                     lambda r: r if r in ('1', '2', '3', '4', 'p') else None, 'Responda 1, 2, 3, 4 ou p.')
 
 
 def anotar(passo, resposta, obs=''):
@@ -116,8 +154,8 @@ def passo_botoes():
     print('Digite "x" se o robô não tem esse botão, ou "sai" se apertar o botão faz o programa parar.')
     numeros = {}
     for nome in ('cima', 'baixo', 'esquerda', 'direita', 'centro / ok'):
-        v = 'p' if SEM_ROBO else input(f'  Botão {nome}: ').strip().lower()
-        numeros[nome] = v
+        numeros[nome] = responder(f'  Botão {nome}:', lambda r: r if r.isdigit() or r in ('x', 'sai', 'p') else None,
+                                  'Digite o número da tela, x (não tem) ou sai (o programa parou).')
     solto = perguntar('Sem apertar nada, aparece 0?')
     validos = [v for v in numeros.values() if v.isdigit() and v != '0']
     ok = 's' if solto == 's' and validos and len(set(validos)) == len(validos) else ('p' if SEM_ROBO else 'n')
@@ -220,8 +258,9 @@ def passo_medir_laco():
             robo.motores(15 + erro * 0.1, 15 - erro * 0.1)
     if not enviar('teste_medir_laco', escrever):
         return anotar('5c. medir_laco', 'p', 'não enviou')
-    v = 'p' if SEM_ROBO else input('Depois de 5 s ele para e mostra "Voltas/s:". Que número apareceu? (p se nada) ').strip()
-    anotar('5c. medir_laco', 'p' if v in ('', 'p') else 's', f'voltas por segundo: {v}')
+    v = numeros_da_tela('Depois de 5 s ele para e mostra "Voltas/s:". Que número apareceu?', 1)
+    anotar('5c. medir_laco', v if v in ('n', 'p') else 's',
+           'nada apareceu' if v == 'n' else '' if v == 'p' else f'voltas por segundo: {v}')
 
 
 def passo_calibrar():
@@ -234,14 +273,14 @@ def passo_calibrar():
     if not enviar('teste_calibrar', escrever):
         return anotar('5d. calibrar_na_largada', 'p', 'não enviou')
     print('O robô gira um pouco para um lado, para o outro, volta ao meio, apita e mostra lim1 e lim2.')
-    v = 'p' if SEM_ROBO else input('Que números apareceram? (ex.: 55 60, ou p) ').strip()
-    r = perguntar('Ele voltou mais ou menos ao meio, e os limites ficaram entre o preto e o branco do calibracao.py?')
+    v = numeros_da_tela('Que números apareceram?', 2)
+    r = 'n' if v == 'n' else perguntar('Ele voltou mais ou menos ao meio, e os limites ficaram entre o preto e o branco do calibracao.py?')
     anotar('5d. calibrar_na_largada', r, f'limites na tela: {v}')
 
 
 def passo_toque():
     titulo('6. Sensor de toque (se o robô tiver)')
-    porta = 'p' if SEM_ROBO else input('Em que porta está o sensor de toque? (1 a 4, ou p se não tem) ').strip().lower()
+    porta = porta_do_sensor('sensor de toque')
     if porta not in ('1', '2', '3', '4'):
         if not SEM_ROBO:
             return anotar('6. Sensor de toque', 'p', 'sem sensor de toque')
@@ -327,7 +366,7 @@ def passo_blocos_novos():
     anotar('9. Rotação do motor', perguntar('O "graus" foi para perto de 360 (ou -360) com uma volta da roda?'))
     anotar('9. Cronômetro', perguntar('O "tempo" sobe um por segundo?'))
     anotar('9. Aleatório', perguntar('O "sorteio" muda entre 1 e 6?'))
-    porta = 'p' if SEM_ROBO else input('Em que porta está o giroscópio? (1 a 4, ou p se não tem) ').strip().lower()
+    porta = porta_do_sensor('giroscópio')
     if porta not in ('1', '2', '3', '4'):
         if not SEM_ROBO:
             return anotar('9. Giroscópio', 'p', 'sem giroscópio')
@@ -350,45 +389,81 @@ def passo_navegador():
     anotar('8. Envio pelo navegador', perguntar('O robô acendeu a luz, apitou e mostrou "Funcionou!"?'))
 
 
-def gravar_relatorio(bateria):
+def gravar_relatorio(bateria, so=None):
+    """Grava o resultado_teste_geral.txt. Com so (alguns passos), acrescenta no fim do arquivo que já existe."""
     versao = open(os.path.join(RAIZ, 'VERSAO'), encoding='utf-8').read().strip()
-    linhas = [f'Teste geral do EST-LAB {versao} em {datetime.datetime.now():%d/%m/%Y %H:%M}', f'Bateria: {bateria}', '']
-    linhas += [f'{p}: {r}' + (f' | {o}' if o else '') for p, r, o in RESULTADOS]
+    agora = f'{datetime.datetime.now():%d/%m/%Y %H:%M}'
     arquivo = os.path.join(RAIZ, 'resultado_teste_geral.txt')
-    with open(arquivo, 'w', encoding='utf-8') as f:
+    acrescentar = bool(so) and os.path.exists(arquivo)
+    if acrescentar:
+        linhas = ['', f'Refeito em {agora} (passo {", ".join(so)}, EST-LAB {versao}, bateria: {bateria})']
+    else:
+        linhas = [f'Teste geral do EST-LAB {versao} em {agora}', f'Bateria: {bateria}', '']
+    linhas += [f'{p}: {r}' + (f' | {o}' if o else '') for p, r, o in RESULTADOS]
+    with open(arquivo, 'a' if acrescentar else 'w', encoding='utf-8') as f:
         f.write('\n'.join(linhas) + '\n')
     titulo('Resumo')
     print('\n'.join(linhas))
     print(f'\nGravado em {os.path.normpath(arquivo)}: mande este arquivo (ou cole o resumo) para corrigir o que falhou.')
 
 
-def main():
+PASSOS = ['1', '2', '3', '4', '5', '5b', '5c', '5d', '6', '7', '7b', '8', '9']
+
+
+def passos_pedidos():
+    """Os passos do --passo (ex.: --passo 2,5b), ou None para todos."""
+    if '--passo' not in sys.argv:
+        return None
+    i = sys.argv.index('--passo')
+    pedidos = [p.strip().lower() for p in (sys.argv[i + 1] if i + 1 < len(sys.argv) else '').split(',') if p.strip()]
+    errados = [p for p in pedidos if p not in PASSOS]
+    if not pedidos or errados:
+        sys.exit(f'Diga quais passos: --passo 5b (ou --passo 2,5b). Os passos são: {", ".join(PASSOS)}.')
+    return [p for p in PASSOS if p in pedidos]
+
+
+def rodar(ident, so, funcao, *args):
+    """Roda um passo (se ele foi pedido). Se a resposta for "r", apaga o que o passo anotou e começa de novo."""
+    if so and ident not in so:
+        return None
+    while True:
+        antes = len(RESULTADOS)
+        try:
+            return funcao(*args)
+        except Refazer:
+            del RESULTADOS[antes:]
+            print('\n  Refazendo o passo...')
+
+
+def main(so):
     if SEM_ROBO:
         print('Modo --sem-robo: só confere se os programas do teste compilam.')
         nivel, bateria = None, '(sem robô)'
     else:
         nivel, bateria = preparar()
-    passo_bateria(bateria)
-    numeros = passo_botoes()
-    passo_esperar_botao()
-    passo_ao_mesmo_tempo()
-    passo_ajustando(numeros)
-    passo_ajustes()
-    passo_medir_laco()
-    passo_calibrar()
-    passo_toque()
-    passo_programas()
-    passo_rodar_baixar_copiar()
-    passo_navegador()
-    passo_blocos_novos()
+        print('\nEm qualquer pergunta, "r" refaz o passo: manda o programa de novo e repete as perguntas.')
+    rodar('1', so, passo_bateria, bateria)
+    numeros = rodar('2', so, passo_botoes) or {}
+    rodar('3', so, passo_esperar_botao)
+    rodar('4', so, passo_ao_mesmo_tempo)
+    rodar('5', so, passo_ajustando, numeros)
+    rodar('5b', so, passo_ajustes)
+    rodar('5c', so, passo_medir_laco)
+    rodar('5d', so, passo_calibrar)
+    rodar('6', so, passo_toque)
+    rodar('7', so, passo_programas)
+    rodar('7b', so, passo_rodar_baixar_copiar)
+    rodar('8', so, passo_navegador)
+    rodar('9', so, passo_blocos_novos)
     if not SEM_ROBO:
-        gravar_relatorio(bateria)
+        gravar_relatorio(bateria, so)
 
 
 if __name__ == '__main__':
+    pedidos = passos_pedidos()
     try:
-        main()
+        main(pedidos)
     except (KeyboardInterrupt, EOFError):
         print('\nTeste interrompido.')
         if RESULTADOS and not SEM_ROBO:
-            gravar_relatorio('?')
+            gravar_relatorio('?', pedidos)

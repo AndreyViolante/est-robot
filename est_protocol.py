@@ -96,6 +96,29 @@ ERROR_IO_PENDING = 997
 WAIT_OBJECT_0    = 0
 WAIT_TIMEOUT     = 0x102
 
+def usb_com_falha() -> bool:
+    """True se o Windows vê um aparelho USB que falhou antes de dizer o que é ("Dispositivo USB Desconhecido",
+    que aparece como VID_0000). Visto no laboratório em 13/11/2026: era o robô, que voltou depois de tirar e pôr
+    o cabo com ele já ligado. Só pergunta ao Windows quando o robô não foi achado (leva um ou dois segundos)."""
+    import os, subprocess
+    if os.name != 'nt':
+        return False
+    comando = ("Get-PnpDevice -PresentOnly | Where-Object { $_.InstanceId -like 'USB\\VID_0000&PID_000*' } | "
+               "ForEach-Object { $_.InstanceId }")
+    try:
+        saida = subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', comando],
+                               capture_output=True, text=True, timeout=20).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return 'VID_0000' in saida.upper()
+
+
+USB_COM_FALHA = ('Robo nao encontrado no USB: o Windows vê um aparelho no USB, mas a conexão falhou antes de ele '
+                 'dizer o que é ("Dispositivo USB Desconhecido"). Tire o cabo, confira que o robô está ligado e na '
+                 'tela inicial e ponha o cabo de novo, de preferência em outra porta USB. Se continuar, troque o cabo '
+                 'e carregue a bateria.')
+
+
 def find_robot():
     try:
         import pywinusb.hid as hid_lib
@@ -103,6 +126,8 @@ def find_robot():
         raise RuntimeError("Falta o pywinusb: pip install pywinusb") from None
     devs = hid_lib.HidDeviceFilter(vendor_id=VID, product_id=PID).get_devices()
     if not devs:
+        if usb_com_falha():
+            raise RuntimeError(USB_COM_FALHA)
         raise RuntimeError("Robo nao encontrado no USB: confira se o cabo esta ligado e o robo esta ligado.")
     return devs[0].device_path
 

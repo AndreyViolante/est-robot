@@ -85,7 +85,10 @@ Arraste o robô para a largada (a bolinha azul gira) e escolha a pista. Antes, m
 não tem escorregão, bateria fraca nem variação de luz: o teste final é sempre no robô.
 
 **Desafios:** escolha um desafio no campo "Desafio": o robô sai sempre da largada marcada e a página
-diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bateu na caixa). O progresso
+diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bateu na caixa). São 13: os 6
+primeiros vão de andar e virar até seguir linha com falha; do 7 ao 9, cruzamentos, verde e obstáculo; do
+10 ao 13, os mais difíceis: volta rápida no oval (pede um seguidor proporcional), chegada na faixa
+vermelha, beco sem saída e o percurso completo da OBR. Todos têm solução conferida no simulador. O progresso
 fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar. Para mostrar por que
 confirmar a leitura importa, ligue "Sensores com ruído" e rode um programa que decide com uma leitura
 só. Para depurar, use "Próxima linha" ou um ponto de parada: o robô congela e os sensores e as

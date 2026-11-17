@@ -3,6 +3,24 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.8 (17/11/2026)
+
+- **Botões da controladora funcionando.** O `botao_apertado()` ficava sempre no zero porque lia os botões pela
+  tabela antiga da IDE. Agora lê como a IDE de verdade, e os números foram conferidos no robô: esquerda 1, OK 2,
+  direita 3, cima 4 e baixo 5. Com isso funcionam também o `esperar_botao()` e o `ajustando(...)`.
+- **13 desafios no simulador.** Entrou "Cruzamentos sem verde", um passo antes do verde, e quatro desafios mais
+  difíceis no fim da trilha: volta rápida no oval, chegada na faixa vermelha, beco sem saída e o percurso
+  completo da OBR. Quem já tinha cumprido um desafio continua com ele liberado.
+- **Tutorial para IAs** (`docs/tutorial-para-ia.md`): anexe numa conversa com o ChatGPT, o Claude ou o Gemini e a
+  IA passa a escrever programas do EST-LAB sem inventar comandos.
+- **Teste geral no robô mais fácil de responder.** Só aceita respostas que fazem sentido, `r` refaz o passo
+  (manda o programa de novo) e a tarefa **Teste geral: refazer um passo** roda só o passo que você escolher.
+- Quando o Windows mostra um "Dispositivo USB Desconhecido" no lugar do robô, o envio explica o que fazer
+  (tirar o cabo, ligar o robô e pôr o cabo de novo).
+- Mensagens em português para `int()`, `round()` e texto + leitura de sensor, que antes davam erro em inglês.
+- O README mostra o que já foi conferido no robô (teste de 13/11/2026). O `ajustes(...)` e o `medir_laco(...)`
+  falharam no robô e estão em investigação: por enquanto, use um `ajustando(...)`.
+
 ## 0.1.7 (12/11/2026)
 
 - **Pacote para Windows mais simples.** A pasta extraída mostra só o que o aluno usa: `Abrir o EST-LAB`,

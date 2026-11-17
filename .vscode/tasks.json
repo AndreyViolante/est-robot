@@ -76,6 +76,16 @@
             "problemMatcher": []
         },
         {
+            "label": "Teste geral: refazer um passo",
+            "type": "shell",
+            "command": "python",
+            "windows": {"command": "${workspaceFolder}\\ferramentas\\rodar.cmd"},
+            "args": ["${workspaceFolder}/ferramentas/teste_geral.py", "--passo", "${input:passoDoTeste}"],
+            "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
+            "presentation": {"reveal": "always", "panel": "shared", "clear": true, "focus": true},
+            "problemMatcher": []
+        },
+        {
             "label": "Abrir programa da IDE (.est)",
             "type": "shell",
             "command": "python",
@@ -194,6 +204,13 @@
             "options": {"cwd": "${workspaceFolder}", "env": {"PYTHONIOENCODING": "utf-8"}},
             "presentation": {"reveal": "always", "panel": "shared", "clear": true},
             "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "passoDoTeste",
+            "type": "promptString",
+            "description": "Qual passo do Teste geral? (ex.: 5b, ou 2,5b para mais de um)"
         }
     ]
 }

@@ -2012,8 +2012,10 @@ $('verdeDepoisOBR').addEventListener('change', ev => {
 let ultimoMovimento = 0, posAnterior = null;      // para saber há quanto tempo o robô está parado
 
 const cumprido = id => !!(salvo.desafios[id] && salvo.desafios[id].feito);
-// um desafio destrava quando o anterior é cumprido (ou quando o professor libera todos)
-const liberado = i => i === 0 || salvo.desafiosLivres === true || cumprido(EST.DESAFIOS[i - 1].id);
+// um desafio destrava quando o anterior é cumprido (ou quando o professor libera todos); o que já foi cumprido fica
+// liberado mesmo se um desafio novo entrar antes dele na trilha
+const liberado = i => i === 0 || salvo.desafiosLivres === true || cumprido(EST.DESAFIOS[i].id)
+  || cumprido(EST.DESAFIOS[i - 1].id);
 
 function pistaDoDesafio(d) {
   const p = EST.copiaPista(typeof d.pista === 'string' ? EST.PISTAS.find(q => q.id === d.pista) : d.pista);
@@ -2066,7 +2068,7 @@ function sairDesafio() {
 function verificarDesafio() {
   const r = desafio.verificar(prova, {
     t: tSim, x: robo.x, y: robo.y, frente: robo.ponto(robo.config.corpo.frente, 0), parado: tSim - ultimoMovimento,
-    terminou: estado === 'terminou', batidas: robo.batidas, pista,
+    terminou: estado === 'terminou', batidas: robo.batidas, pista, sobreVermelho: !!pista.vermelhos && sobreVermelho(),
   });
   if (!r) return;
   prova.resultado = r;

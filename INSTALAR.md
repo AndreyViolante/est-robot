@@ -96,6 +96,7 @@ copie para a pasta nova o `calibracao.py` e os seus programas.
 |---|---|
 | `python não é reconhecido` ou "O Python não foi encontrado" | Use o pacote com o Python dentro (jeito A). Ou reinstale o Python marcando **"Add python.exe to PATH"**, feche e abra o VS Code |
 | `Robo nao encontrado no USB` | Confira se o robô está ligado e o cabo bem encaixado; teste outra porta USB; feche a IDE EST se estiver aberta |
+| `Robo nao encontrado no USB: o Windows vê um aparelho no USB, mas a conexão falhou` | O Windows mostra um "Dispositivo USB Desconhecido": tire o cabo, ligue o robô, espere a tela inicial e ponha o cabo de novo (de preferência em outra porta). Se continuar, troque o cabo e carregue a bateria |
 | `Falta o pywinusb` | Jeito A: baixe e extraia o pacote de novo. Jeito B: rode o `instalar.bat` de novo (precisa de internet) |
 | O Windows não deixa abrir o `python.exe` do pacote ("bloqueado pelo administrador") | Alguns computadores de escola só rodam programas instalados pelo administrador: peça ao responsável para liberar a pasta do projeto |
 | O VS Code pede para escolher um Python (*Select Interpreter*) | No jeito A ele já usa o `python\python.exe` da pasta do projeto; se ainda pedir, escolha *Enter interpreter path…* e indique esse arquivo. As tarefas funcionam mesmo sem isso |

@@ -205,7 +205,8 @@ refletida fica perto do preto) e um seguidor com uma caixa em cima da linha. A c
 ruído" faz a luz variar como num sensor de verdade. Em "Minha pista" dá para desenhar a sua pista com
 linhas, quadrados verdes e caixas (fica guardada no navegador). O botão "Próxima linha" executa o
 programa linha por linha, e clicar no número de uma linha põe um ponto de parada. A trilha de desafios
-traz 8 desafios, do "andar 30 cm" ao "desviar do obstáculo", com verificação automática; cada um
+traz 13 desafios, do "andar 30 cm" ao "percurso completo da OBR" (cruzamentos, verde, obstáculo, volta
+rápida, faixa vermelha de chegada e beco sem saída no caminho), com verificação automática; cada um
 cumprido destrava o próximo. Os botões da controladora aparecem na tela do robô simulado quando o
 programa usa `botao_apertado()`.
 
