@@ -625,6 +625,12 @@ function desenharRobo(c) {
       c.fillRect(px - 1.4, py - 2.4, 1.4, 4.8);
       c.fillStyle = cor;
       for (const o of [-1.2, 1.2]) { c.beginPath(); c.arc(px - 0.2, py + o, 0.8, 0, 2 * Math.PI); c.fill(); }
+    } else if (s.tipo === 'giroscopio') {                // em cima do robô: um quadradinho com a borda da cor da porta
+      c.fillStyle = '#11141f';
+      c.fillRect(px - 1.1, py - 1.1, 2.2, 2.2);
+      c.strokeStyle = cor;
+      c.lineWidth = 0.32;
+      c.strokeRect(px - 1.1, py - 1.1, 2.2, 2.2);
     }
   }
   c.restore();
@@ -1211,6 +1217,10 @@ function linhaSensor(p, s) {
     const u = robo.sensorUltrassom(p);
     return `<tr><td>${bola}S${p}${lido}</td><td>ultrassom</td><td class="num" colspan="2">${num(u.cm)} cm</td></tr>`;
   }
+  if (s.tipo === 'giroscopio') {
+    return `<tr><td>${bola}S${p}${lido}</td><td>giroscópio</td><td class="num" colspan="2">${Math.round(robo.giro * 180 / Math.PI)}° `
+      + `(${Math.round(robo.giroVel)}°/s)</td></tr>`;
+  }
   return `<tr><td>S${p}</td><td colspan="3">sem sensor</td></tr>`;
 }
 
@@ -1660,7 +1670,8 @@ function montarMedidas() {
   const cfg = robo.config;
   const motor = (chave) => `<select data-chave="${chave}">${'ABCD'.split('').map(l => `<option${cfg[chave] === l ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
   let html = P && P.robo ? '<p class="nota">O tamanho da roda, a distância entre as rodas, os motores, o invertido e o ' +
-    'preto de cada sensor vêm do <code>calibracao.py</code> da sua pasta, com que o programa foi compilado.</p>' : '';
+    'preto de cada sensor vêm do <code>calibracao.py</code> da sua pasta, com que o programa foi compilado (cada porta com ' +
+    'preto lá vira um sensor de cor).</p>' : '';
   html += '<table class="medidas"><tbody>';
   for (const [k, rotulo, min, max, passo] of CAMPOS_ROBO) {
     html += `<tr><td colspan="3" class="rotulo">${rotulo}</td><td colspan="2"><input type="number" data-chave="${k}" min="${min}" max="${max}" step="${passo}" value="${cfg[k]}"></td></tr>`;
@@ -1669,7 +1680,8 @@ function montarMedidas() {
   html += `<tr><td colspan="5" class="rotulo"><label class="marcar"><input type="checkbox" data-chave="invertido"${cfg.invertido ? ' checked' : ''}> Motores invertidos (potência positiva anda de ré)</label></td></tr>`;
   html += '</tbody></table><table class="medidas"><thead><tr><th>Porta</th><th>Sensor</th><th>à frente</th><th>à esquerda</th><th>preto</th></tr></thead><tbody>';
   for (const [p, s] of Object.entries(cfg.portas)) {
-    const tipo = ['cor', 'ultrassom', 'nenhum'].map(t => `<option value="${t}"${s.tipo === t ? ' selected' : ''}>${t}</option>`).join('');
+    const tipo = [['cor', 'cor'], ['ultrassom', 'ultrassom'], ['giroscopio', 'giroscópio'], ['nenhum', 'nenhum']]
+      .map(([t, nome]) => `<option value="${t}"${s.tipo === t ? ' selected' : ''}>${nome}</option>`).join('');
     html += `<tr><td><span class="amostra" style="background:${corDoSensor(p)}"></span>S${p}</td>
       <td><select data-porta="${p}" data-chave="tipo">${tipo}</select></td>
       <td><input type="number" data-porta="${p}" data-chave="frente" min="-30" max="40" step="0.1" value="${s.frente}"></td>

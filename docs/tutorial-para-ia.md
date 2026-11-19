@@ -162,8 +162,8 @@ isso as viradas saem erradas. Não é preciso pôr `esperar` entre `andar_cm` e 
 | `cor_vista(1)` | a cor: compare com `PRETO`, `AZUL`, `VERDE`, `AMARELO`, `VERMELHO`, `BRANCO`, `MARROM` (`if cor_vista(3) == VERDE:`). Dá 0 quando não reconhece |
 | `distancia(4)` | ultrassom, em centímetros |
 | `tocado(1)` | sensor de toque: 1 apertado, 0 solto |
-| `giroscopio(2)` | ângulo do robô em graus desde o começo (ou desde `zerar_giroscopio(2)`) |
-| `velocidade_do_giro(2)` | graus por segundo |
+| `giroscopio(3)` | ângulo do robô em graus desde o começo (ou desde `zerar_giroscopio(3)`) |
+| `velocidade_do_giro(3)` | graus por segundo |
 | `graus_do_motor('B')`, `rotacoes_do_motor('B')` | quanto o motor girou desde o começo (ou desde `zerar_motor('B')`) |
 | `potencia_do_motor('B')` | potência do motor agora |
 | `cronometro()`, `cronometro(2)` | segundos desde o começo (ou desde `zerar_cronometro()`); há 8 cronômetros |
@@ -174,7 +174,7 @@ isso as viradas saem erradas. Não é preciso pôr `esperar` entre `andar_cm` e 
 | `arredondar(valor)` | inteiro mais perto |
 | `ler('nome')` | o número guardado numa variável do robô |
 
-`zerar_motor('B')`, `zerar_giroscopio(2)` (com o robô parado) e `zerar_cronometro()` voltam a contagem
+`zerar_motor('B')`, `zerar_giroscopio(3)` (com o robô parado) e `zerar_cronometro()` voltam a contagem
 para 0.
 
 ### Esperar

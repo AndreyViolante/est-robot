@@ -5,9 +5,10 @@
 (function () {
 const EST = (globalThis.EST = globalThis.EST || {});
 
-/* Medidas padrão: as do robô do laboratório. Roda e entre rodas são os padrões medidos do robo.py.
-   As posições dos sensores são estimadas: S1 e S2 um de cada lado da linha, S3 no meio e mais à
-   frente, ultrassom na frente. Ajuste em "Medidas do robô" na página. */
+/* Medidas padrão: roda e entre rodas são os padrões medidos do robo.py. Sensores: dois de cor (S1 e S2, um de
+   cada lado da linha), a porta 3 sem nada (dá para pôr um giroscópio ou um terceiro sensor de cor) e o ultrassom
+   na frente. Ajuste em "Medidas do robô" na página; pelo VS Code, as portas com preto no calibracao.py viram
+   sensores de cor. */
 const ROBO_PADRAO = {
   roda_cm: 4.3,
   entre_rodas_cm: 12,
@@ -19,7 +20,7 @@ const ROBO_PADRAO = {
   portas: {
     1: {tipo: 'cor', frente: 7, esquerda: 1.6, preto: 18},
     2: {tipo: 'cor', frente: 7, esquerda: -1.6, preto: 21},
-    3: {tipo: 'cor', frente: 10, esquerda: 0, preto: 10},
+    3: {tipo: 'nenhum', frente: 10, esquerda: 0, preto: 10},       // 'giroscopio' ou 'cor' em "Medidas do robô"
     4: {tipo: 'ultrassom', frente: 12, esquerda: 0, preto: 10},     // preto: se virar sensor de cor
   },
 };
@@ -285,7 +286,12 @@ class Robo {
       const graus = m.ang - (this.zeroMotor[m.nome] || 0);
       return {float: modo === 1 ? Math.round(graus) : modo === 2 ? graus / 360 : m.pot};
     }
-    if (tipo === 0x02) {                                   // giroscópio (em qualquer porta): 1 ângulo, 2 graus/s, 4 zerar
+    if (tipo === 0x02) {                                   // giroscópio: 1 ângulo, 2 graus/s, 4 zerar
+      const cfg = this.config.portas[porta];
+      if (!cfg || cfg.tipo !== 'giroscopio') {
+        this.avisar(`O programa lê um giroscópio na porta ${porta}, mas no robô simulado ela não tem giroscópio (escolha "giroscopio" nessa porta em "Medidas do robô").`);
+        return modo === 4 ? {byte: 0} : {float: 0};
+      }
       if (modo === 4) { this.giro = 0; return {byte: 0}; }
       return {float: modo === 1 ? Math.round(this.giro * 180 / Math.PI) : Math.round(this.giroVel)};
     }

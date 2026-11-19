@@ -241,12 +241,12 @@ const DESAFIOS = [
 const TAREFAS = [
   {id: 'bips-gap', onde: 'gap', bips: 2, titulo: 'dois bips no gap',
    texto: 'quando chegar no gap, dê exatamente 2 bips antes de atravessar',
-   dica: 'no gap a linha some dos três sensores por mais tempo que no balanço do seguidor: zere um cronômetro sempre ' +
-         'que algum sensor vê a linha e, quando ele passar de uns 0,3 s, é o gap. Dê os bips uma vez só e atravesse reto.'},
+   dica: 'no gap os dois sensores ficam no branco e a linha não aparece nem girando um pouco para os lados (numa ' +
+         'curva de 90° ela aparece girando mais para o lado da curva). Dê os bips uma vez só e atravesse reto.'},
   {id: 'parar-gap', onde: 'gap', parar: 2, titulo: 'parar no gap',
    texto: 'quando chegar no gap, pare 2 s antes de atravessar',
-   dica: 'no gap a linha some dos três sensores por mais tempo que no balanço do seguidor: zere um cronômetro sempre ' +
-         'que algum sensor vê a linha e, quando ele passar de uns 0,3 s, é o gap. Pare 2 s uma vez só e atravesse reto.'},
+   dica: 'no gap os dois sensores ficam no branco e a linha não aparece nem girando um pouco para os lados (numa ' +
+         'curva de 90° ela aparece girando mais para o lado da curva). Pare 2 s uma vez só e atravesse reto.'},
   {id: 'luz-obstaculo', onde: 'obstaculo', luz: 2, titulo: 'luz vermelha no desvio',
    texto: 'acenda a luz vermelha enquanto desvia do obstáculo e a luz azul quando voltar para a linha',
    dica: "luz('vermelho') no começo da parte que desvia e luz('azul') no fim dela."},

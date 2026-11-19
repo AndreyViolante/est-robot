@@ -1,6 +1,6 @@
 // Roda programas compilados no simulador (simulador/vm.js e robo.js), sem página, e diz como o robô terminou.
 // Usado por ferramentas/teste_simulador.py. Uso: node ferramentas/simulacao.js casos.json resultado.json
-// casos.json: [{nome, hex, segundos, pista, botao}]   resultado: [{nome, x, y, ang, giro, tela, mensagens, avisos, erro, t, andou,
+// casos.json: [{nome, hex, segundos, pista, botao, portas}]   resultado: [{nome, x, y, ang, giro, tela, mensagens, avisos, erro, t, andou,
 //              grafico}] (grafico: o que o gráfico dos sensores no tempo guardou, simulador/grafico.js)
 'use strict';
 const fs = require('fs');
@@ -50,7 +50,9 @@ const casos = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const resultado = casos.map(caso => {
   const base = EST.PISTAS.find(p => p.id === (caso.pista || 'livre')) || EST.PISTAS[0];
   const pista = EST.copiaPista(base);
-  const robo = new EST.Robo(JSON.parse(JSON.stringify(EST.ROBO_PADRAO)), pista);
+  const config = JSON.parse(JSON.stringify(EST.ROBO_PADRAO));
+  for (const [p, s] of Object.entries(caso.portas || {})) Object.assign(config.portas[p], s);     // ex.: {3: {tipo: 'giroscopio'}}
+  const robo = new EST.Robo(config, pista);
   robo.colocar(pista.largada.x, pista.largada.y, pista.largada.ang);
   robo.botao = caso.botao || 0;                  // botão da controladora apertado o tempo todo
   const inicio = {x: robo.x, y: robo.y};

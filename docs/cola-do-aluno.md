@@ -31,7 +31,7 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 | `tocado(4)` | 1 se o botão de toque estiver apertado, 0 se não |
 | `botao_apertado()` | botão da controladora: 0 nenhum, 1 esquerda, 2 OK, 3 direita, 4 cima, 5 baixo |
 | `graus_do_motor('B')` | quanto o motor girou, em graus (`zerar_motor('B')` volta a 0) |
-| `giroscopio(2)` | ângulo do robô, em graus (`zerar_giroscopio(2)` volta a 0) |
+| `giroscopio(3)` | ângulo do robô, em graus (`zerar_giroscopio(3)` volta a 0) |
 | `cronometro()` | segundos passados (`zerar_cronometro()` volta a 0) |
 | `aleatorio(1, 6)` | número sorteado |
 

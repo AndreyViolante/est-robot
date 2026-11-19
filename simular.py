@@ -90,7 +90,8 @@ def medidas_do_robo():
     c = robo._config
     medidas = {'roda_cm': c['roda_cm'], 'entre_rodas_cm': c['entre_rodas_cm'], 'motor_esquerdo': c['esquerdo'],
                'motor_direito': c['direito'], 'invertido': c['sentido'] == -1}
-    portas = {str(p): {'preto': v} for p, v in robo._PRETO.items() if isinstance(v, (int, float))}
+    # a porta com preto no calibracao.py tem sensor de cor (o robô do site vem só com S1 e S2)
+    portas = {str(p): {'tipo': 'cor', 'preto': v} for p, v in robo._PRETO.items() if isinstance(v, (int, float))}
     if portas:
         medidas['portas'] = portas
     return medidas

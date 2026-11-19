@@ -18,11 +18,15 @@ def perto(valor, alvo, folga):
 
 # (nome, programa, segundos, pista, confere(resultado) -> True/False[, mais campos do caso, ex.: {'botao': 2}])
 CASOS = [
-    ('giroscópio: vira até 90 graus', """zerar_giroscopio(2)
-while giroscopio(2) < 90:
+    # o robô do site vem sem nada na porta 3: o giroscópio vai lá quando o aluno escolhe em "Medidas do robô"
+    ('giroscópio na porta 3: vira até 90 graus', """zerar_giroscopio(3)
+while giroscopio(3) < 90:
     motores(20, -20)
 parar()
-mostrar(giroscopio(2))""", 10, 'livre', lambda r: perto(r['giro'], 90, 3) and perto(r['tela'][-1], 90, 3)),
+mostrar(giroscopio(3))""", 10, 'livre', lambda r: perto(r['giro'], 90, 3) and perto(r['tela'][-1], 90, 3),
+     {'portas': {'3': {'tipo': 'giroscopio'}}}),
+    ('giroscópio numa porta sem giroscópio: avisa e dá 0', """mostrar(giroscopio(3))""", 1, 'livre',
+     lambda r: r['tela'][-1] == '0' and any('não tem giroscópio' in a for a in r.get('avisos', []))),
     ('graus do motor: uma volta = 360', """zerar_motor('B')
 motor('B', 50, graus=360)
 mostrar(graus_do_motor('B'))""", 5, 'livre', lambda r: perto(r['tela'][-1], 360, 3)),
@@ -61,7 +65,7 @@ virar_direita(90)""", 8, 'livre',
                                                                encoding='utf-8').read(), 10, 'quadrado',
      lambda r: (abs(r['grafico']['anotacoes'] - 10 / 0.02) <= 2 and perto(r['grafico']['fim'], 10, 0.03)
                 and all(r['grafico']['portas'][p]['min'] < 50 and r['grafico']['portas'][p]['max'] > 90 for p in '12')
-                and set(r['grafico']['portas']) == {'1', '2', '3', '4'} and r['grafico']['reduzidoOk']
+                and set(r['grafico']['portas']) == {'1', '2', '4'} and r['grafico']['reduzidoOk']
                 and r['grafico']['maiorReduzido'] <= 4 * 150)),
     # botões da controladora: o simulador enche os 5 bytes da leitura como o robô do lab (13/11/2026)
     ('botão da controladora: nenhum apertado dá 0', """mostrar(botao_apertado())""", 1, 'livre',

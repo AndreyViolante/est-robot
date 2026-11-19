@@ -195,9 +195,11 @@ e o som. Funciona sem internet e sem instalar nada. O exemplo do projeto está n
   linha, e uma arena com uma caixa.
 - Arraste o robô para escolher a largada; a bolinha azul na frente gira o robô. A caixa da arena
   também pode ser arrastada.
-- Na aba **Medidas** ficam a roda, a distância entre as rodas e a posição de cada sensor. O padrão
-  é o robô do laboratório (S1 e S2 um de cada lado da linha, S3 no meio e mais à frente, ultrassom na
-  porta 4); meça o seu e ajuste.
+- Na aba **Medidas** ficam a roda, a distância entre as rodas, o sensor de cada porta e a posição dele. O
+  padrão do site tem dois sensores de cor (S1 e S2, um de cada lado da linha), nada na porta 3 e o ultrassom
+  na porta 4; na porta 3 dá para pôr um giroscópio ou um terceiro sensor de cor. Os 13 desafios têm solução
+  conferida com esse robô de dois sensores. Pelo VS Code, as portas com preto no `calibracao.py` viram
+  sensores de cor; meça o seu robô e ajuste.
 
 ```bash
 python simular.py meu_programa.py
@@ -320,7 +322,7 @@ Antes de enviar, o programa confere o robô e avisa:
 | `with ajustando('kp', 0.4, 0.05):` | ajusta um número com os botões de cima e de baixo enquanto o programa roda, sem reenviar (use `ler('kp')`) |
 | `calibrar_na_largada(1, 2)`, `limite_medido(1)` | o robô gira sobre a linha, mede o preto e o branco da própria pista e calcula o limite de cada sensor |
 | `graus_do_motor('B')`, `zerar_motor('B')` | quanto o motor girou (o "encoder"): para andar uma distância exata com `motores(...)` ligado |
-| `giroscopio(2)`, `zerar_giroscopio(2)` | sensor giroscópio: o ângulo do robô em graus (para virar 90° certinho) |
+| `giroscopio(3)`, `zerar_giroscopio(3)` | sensor giroscópio: o ângulo do robô em graus (para virar 90° certinho) |
 | `cronometro()`, `zerar_cronometro()` | segundos passados (8 cronômetros: `cronometro(2)`...) |
 | `aleatorio(1, 6)` | número sorteado no robô |
 
@@ -331,7 +333,7 @@ Antes de enviar, o programa confere o robô e avisa:
 
 | Ainda não testados no robô (funcionam no simulador) | |
 |---|---|
-| `rotacoes_do_motor('B')`, `potencia_do_motor('B')`, `velocidade_do_giro(2)` | voltas do motor, potência agora e graus por segundo do giroscópio |
+| `rotacoes_do_motor('B')`, `potencia_do_motor('B')`, `velocidade_do_giro(3)` | voltas do motor, potência agora e graus por segundo do giroscópio |
 | `arredondar(valor)` | arredondar para o inteiro mais perto |
 | `enviar_mensagem('erro', erro)`, `mensagem_recebida('kp')` | mensagens pelo Bluetooth (o bloco Mensagens da IDE): para outro robô (`para='nome'`) ou para quem estiver conectado; no simulador as enviadas aparecem em Variáveis |
 | `ligar_bluetooth()`, `desligar_bluetooth()` | o Bluetooth do robô |
