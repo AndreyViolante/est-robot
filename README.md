@@ -210,7 +210,10 @@ linhas, quadrados verdes e caixas (fica guardada no navegador). O botão "Próxi
 programa linha por linha, e clicar no número de uma linha põe um ponto de parada. A trilha de desafios
 traz 13 desafios, do "andar 30 cm" ao "percurso completo da OBR" (cruzamentos, verde, obstáculo, volta
 rápida, faixa vermelha de chegada e beco sem saída no caminho), com verificação automática; cada um
-cumprido destrava o próximo. Os botões da controladora aparecem na tela do robô simulado quando o
+cumprido destrava o próximo. Depois do último vem o **Desafio surpresa**, como o da OBR: uma arena sorteada e
+uma tarefa a mais sorteada junto (dois bips no gap, parar 2 s no gap, luz vermelha no desvio, luz roxa ou
+parar 3 s no verde, três bips no beco, FIM na tela ou três notas na chegada), conferida automaticamente; o
+mesmo número de arena dá a mesma tarefa para a turma toda. Os botões da controladora aparecem na tela do robô simulado quando o
 programa usa `botao_apertado()`.
 
 Na coluna da direita, as abas **Programa**, **Sensores**, **Variáveis** e **Medidas** mostram uma coisa de

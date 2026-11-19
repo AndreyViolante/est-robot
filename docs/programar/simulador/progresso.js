@@ -73,6 +73,8 @@ function resumo(progresso) {
   if (sim) {
     const feitos = objeto(sim.desafios) ? Object.values(sim.desafios).filter(v => v && v.feito).length : 0;
     partes.push(feitos === 1 ? '1 desafio cumprido' : `${feitos} desafios cumpridos`);
+    const surpresas = objeto(sim.surpresas) ? Object.values(sim.surpresas).filter(v => v && v.feito).length : 0;
+    if (surpresas) partes.push(surpresas === 1 ? '1 desafio surpresa' : `${surpresas} desafios surpresa`);
     const arena = objeto(sim.arenaOBR) && Array.isArray(sim.arenaOBR.percurso) ? sim.arenaOBR.percurso.length : 0;
     if (arena) partes.push(`Minha arena OBR com ${arena} ladrilho${arena === 1 ? '' : 's'}`);
     if (objeto(sim.minha) && Array.isArray(sim.minha.linhas) && sim.minha.linhas.length) partes.push('Minha pista');

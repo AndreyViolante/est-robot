@@ -136,6 +136,8 @@ ginásio: o teste final é sempre no robô.
 - [ ] `calibrar_na_largada` no começo do programa (ou o preto e o branco da arena medidos no `calibracao.py`).
 - [ ] Os números do `ajustes` anotados na folha da equipe.
 - [ ] Cada membro sabe o que cada função faz: no desafio surpresa, a equipe tem 30 minutos para mudar o programa.
+  Para treinar, o **Desafio surpresa** do simulador sorteia uma arena e uma tarefa a mais (bips no gap, luz no
+  desvio, parar no verde...) e confere sozinho se o programa mudado fez.
 
 Encontrou um problema no EST-LAB? A tarefa **Diagnóstico (para pedir ajuda)** copia um resumo para
 mandar junto com o que aconteceu.

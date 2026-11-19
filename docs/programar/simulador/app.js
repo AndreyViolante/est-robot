@@ -262,8 +262,10 @@ function silenciar() {
   for (const o of osciladores) { try { o.stop(); } catch (e) { /* já parou */ } }
   osciladores.clear();
 }
+let sonsTocados = 0;              // sons que o programa começou desde o Reiniciar (o desafio surpresa conta os bips)
 robo.aoEvento = e => {
   if (e.tipo === 'som') {
+    sonsTocados++;
     somAte = e.t + e.dur;
     somTexto = `♪ ${Math.round(e.freq)} Hz`;
     tocar(e.freq, e.dur, e.vol);
@@ -283,7 +285,7 @@ function reiniciar() {
   robo.reiniciar();
   colocarNaLargada();
   if (vm) vm.reiniciar();
-  tSim = 0; tFim = 0; acumulado = 0; somAte = -1;
+  tSim = 0; tFim = 0; acumulado = 0; somAte = -1; sonsTocados = 0;
   registro.limpar();
   apontado = null;
   passoAPasso = false; motivoParada = null;
@@ -2054,6 +2056,12 @@ const cumprido = id => !!(salvo.desafios[id] && salvo.desafios[id].feito);
 // liberado mesmo se um desafio novo entrar antes dele na trilha
 const liberado = i => i === 0 || salvo.desafiosLivres === true || cumprido(EST.DESAFIOS[i].id)
   || cumprido(EST.DESAFIOS[i - 1].id);
+// o desafio surpresa (arena sorteada e uma tarefa a mais) abre depois do percurso completo da OBR
+const surpresaLiberada = () => salvo.desafiosLivres === true || cumprido('obr');
+const surpresasCumpridas = () => Object.values(salvo.surpresas && typeof salvo.surpresas === 'object' ? salvo.surpresas : {})
+  .filter(v => v && v.feito).length;
+// o que ficou guardado da tentativa (cumprido, melhor tempo): na surpresa, de cada arena
+const guardadoDo = d => (d.surpresa ? (salvo.surpresas || {})[d.semente] : salvo.desafios[d.id]);
 
 function pistaDoDesafio(d) {
   const p = EST.copiaPista(typeof d.pista === 'string' ? EST.PISTAS.find(q => q.id === d.pista) : d.pista);
@@ -2073,14 +2081,20 @@ function montarSeletorDesafio() {
   $('desafio').innerHTML = '<option value="">Nenhum (treino livre)</option>' + EST.DESAFIOS.map((d, i) => {
     const livre = liberado(i);
     return `<option value="${d.id}"${livre ? '' : ' disabled'}>${i + 1}. ${escapar(d.titulo)}${cumprido(d.id) ? ' ✓' : ''}</option>`;
-  }).join('');
+  }).join('') + `<option value="surpresa"${surpresaLiberada() ? '' : ' disabled'}>Surpresa: tarefa sorteada na arena da OBR`
+    + `${surpresasCumpridas() ? ` (${surpresasCumpridas()} ✓)` : ''}</option>`;
   $('desafio').value = desafio ? desafio.id : '';
 }
 
 function entrarDesafio(id) {
-  const i = EST.DESAFIOS.findIndex(d => d.id === id);
-  if (i < 0 || !liberado(i)) return;
-  desafio = EST.DESAFIOS[i];
+  if (id === 'surpresa') {
+    if (!surpresaLiberada()) return;
+    desafio = EST.desafioSurpresa(sementeOBR());
+  } else {
+    const i = EST.DESAFIOS.findIndex(d => d.id === id);
+    if (i < 0 || !liberado(i)) return;
+    desafio = EST.DESAFIOS[i];
+  }
   salvo.desafio = id;                       // o simular.py abre a página de novo: volta neste desafio
   salvar();
   pista = pistaDoDesafio(desafio);
@@ -2107,14 +2121,20 @@ function verificarDesafio() {
   const r = desafio.verificar(prova, {
     t: tSim, x: robo.x, y: robo.y, frente: robo.ponto(robo.config.corpo.frente, 0), parado: tSim - ultimoMovimento,
     terminou: estado === 'terminou', batidas: robo.batidas, pista, sobreVermelho: !!pista.vermelhos && sobreVermelho(),
+    luz: robo.luz, sons: sonsTocados, tela: robo.tela.map(o => o.texto),
   });
   if (!r) return;
   prova.resultado = r;
   prova.tempo = tSim;
   if (r.ok) {
-    const antes = salvo.desafios[desafio.id];
+    const antes = guardadoDo(desafio);
     const melhor = Math.min(antes && Number.isFinite(antes.tempo) ? antes.tempo : Infinity, Math.round(tSim * 10) / 10);
-    salvo.desafios[desafio.id] = {feito: true, tempo: melhor};
+    if (desafio.surpresa) {
+      if (!salvo.surpresas || typeof salvo.surpresas !== 'object') salvo.surpresas = {};
+      salvo.surpresas[desafio.semente] = {feito: true, tempo: melhor};
+    } else {
+      salvo.desafios[desafio.id] = {feito: true, tempo: melhor};
+    }
     salvar();
     montarSeletorDesafio();
   }
@@ -2130,8 +2150,15 @@ function mostrarDesafio() {
   $('btLargada').hidden = !!desafio || !!pista.obr;
   if (!desafio) return;
   const i = EST.DESAFIOS.indexOf(desafio), total = EST.DESAFIOS.length;
-  $('desafioNum').textContent = `Desafio ${i + 1} de ${total}`;
-  $('desafioProgresso').textContent = `cumpridos: ${EST.DESAFIOS.filter(d => cumprido(d.id)).length} de ${total}`;
+  $('surpresaOpcoes').hidden = !desafio.surpresa;
+  if (desafio.surpresa) {
+    $('desafioNum').textContent = `Desafio surpresa · arena nº ${desafio.semente}`;
+    $('desafioProgresso').textContent = surpresasCumpridas() ? `surpresas cumpridas: ${surpresasCumpridas()}` : '';
+    $('sementeSurpresa').value = desafio.semente;
+  } else {
+    $('desafioNum').textContent = `Desafio ${i + 1} de ${total}`;
+    $('desafioProgresso').textContent = `cumpridos: ${EST.DESAFIOS.filter(d => cumprido(d.id)).length} de ${total}`;
+  }
   $('desafioTitulo').textContent = desafio.titulo;
   $('desafioObjetivo').textContent = desafio.objetivo;
   $('desafioDica').hidden = !desafio.dica;
@@ -2141,16 +2168,17 @@ function mostrarDesafio() {
 
 function atualizarStatusDesafio() {
   if (!desafio || !prova) return;
-  const r = prova.resultado, proximo = EST.DESAFIOS[EST.DESAFIOS.indexOf(desafio) + 1];
+  const r = prova.resultado, proximo = desafio.surpresa ? null : EST.DESAFIOS[EST.DESAFIOS.indexOf(desafio) + 1];
   let texto, classe = 'desafio-status';
   if (r && r.ok) {
-    texto = `Desafio cumprido em ${num(prova.tempo)} s!` + (proximo ? '' : ' Você completou a trilha!');
+    texto = `Desafio cumprido em ${num(prova.tempo)} s!` + (proximo || desafio.surpresa ? '' : ' Você completou a trilha!')
+      + (desafio.surpresa ? ' Sorteie outra surpresa para continuar treinando.' : '');
     classe += ' ok';
   } else if (r) {
     texto = `Ainda não: ${r.motivo}. Aperte Reiniciar e tente de novo.`;
     classe += ' falhou';
   } else if (estado === 'pronto') {
-    const feito = salvo.desafios[desafio.id];
+    const feito = guardadoDo(desafio);
     texto = feito && feito.feito ? `Já cumprido (melhor tempo ${num(feito.tempo)} s). Aperte Executar para tentar de novo.`
       : 'Aperte Executar para tentar.';
   } else {
@@ -2194,6 +2222,21 @@ function desenharDesafio(c) {
       c.fillText(k < feitos ? '✓' : String(k + 1), nx, ny + 0.1);
     });
   }
+  if (desafio.surpresa) {                   // os ladrilhos onde vale a tarefa surpresa
+    const {LADO, BORDA} = EST.OBR;
+    c.setLineDash([2, 1]);
+    c.strokeStyle = '#8a3ffc';
+    c.lineWidth = 0.6;
+    c.fillStyle = '#8a3ffc';
+    c.textAlign = 'left';
+    c.textBaseline = 'top';
+    c.font = '3px "Segoe UI", system-ui, sans-serif';
+    for (const k of desafio.lugares) {
+      const [col, lin] = k.split(',').map(Number), x = BORDA + col * LADO, y = BORDA + lin * LADO;
+      c.strokeRect(x + 0.6, y + 0.6, LADO - 1.2, LADO - 1.2);
+      c.fillText('surpresa', x + 1.6, y + 1.4);
+    }
+  }
   const l = desafio.largada, corpo = robo.config.corpo;
   c.setLineDash([1.2, 0.8]);
   c.translate(l.x, l.y);
@@ -2206,6 +2249,22 @@ function desenharDesafio(c) {
 
 $('desafio').addEventListener('change', ev => { if (ev.target.value) entrarDesafio(ev.target.value); else sairDesafio(); });
 $('btSairDesafio').addEventListener('click', sairDesafio);
+// desafio surpresa: outra arena (e outra tarefa) ao acaso, ou o número que a turma combinou
+function trocarSurpresa(n) {
+  salvo.sementeOBR = n;
+  salvar();
+  entrarDesafio('surpresa');
+}
+$('btSortearSurpresa').addEventListener('click', () => {
+  let n;
+  do { n = 1 + Math.floor(Math.random() * 9999); } while (n === salvo.sementeOBR);
+  trocarSurpresa(n);
+});
+$('sementeSurpresa').addEventListener('change', ev => {
+  const n = Number(ev.target.value);
+  if (Number.isInteger(n) && n >= 1 && n <= 9999) trocarSurpresa(n);
+  else ev.target.value = desafio && desafio.surpresa ? desafio.semente : sementeOBR();
+});
 $('btProximoDesafio').addEventListener('click', () => {
   const proximo = EST.DESAFIOS[EST.DESAFIOS.indexOf(desafio) + 1];
   if (proximo) entrarDesafio(proximo.id);
@@ -2370,7 +2429,8 @@ new ResizeObserver(dimensionar).observe($('quadro'));
 window.addEventListener('resize', dimensionar);
 montarSeletorDesafio();
 const ultimoDesafio = EST.DESAFIOS.findIndex(d => d.id === salvo.desafio);
-if (ultimoDesafio >= 0 && liberado(ultimoDesafio)) entrarDesafio(salvo.desafio);      // abre no desafio da última vez
+if (salvo.desafio === 'surpresa' && surpresaLiberada()) entrarDesafio('surpresa');
+else if (ultimoDesafio >= 0 && liberado(ultimoDesafio)) entrarDesafio(salvo.desafio);      // abre no desafio da última vez
 else trocarPista(pista.id);
 
 let anterior = null, ultimoPainel = 0;

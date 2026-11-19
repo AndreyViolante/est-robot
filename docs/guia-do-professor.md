@@ -89,7 +89,10 @@ diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bate
 primeiros vão de andar e virar até seguir linha com falha; do 7 ao 9, cruzamentos, verde e obstáculo; do
 10 ao 13, os mais difíceis: volta rápida no oval (pede um seguidor proporcional), chegada na faixa
 vermelha, beco sem saída e o percurso completo da OBR. Todos têm solução conferida no simulador. O progresso
-fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar, e em "Progresso" o aluno salva
+fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar. Quem cumpre os 13 ganha o
+**Desafio surpresa**: uma arena sorteada e uma tarefa a mais para mudar no programa (bips no gap, luz vermelha
+no desvio, parar no verde, FIM na tela na chegada...), como o desafio surpresa da OBR. Combine um número de
+arena com a turma ("Arena nº") e todos tentam a mesma tarefa. Em "Progresso", o aluno salva
 um arquivo com os desafios cumpridos e as pistas que montou, para continuar em outro computador. Para mostrar por que
 confirmar a leitura importa, ligue "Sensores com ruído" e rode um programa que decide com uma leitura
 só. Para depurar, use "Próxima linha" ou um ponto de parada: o robô congela e os sensores e as

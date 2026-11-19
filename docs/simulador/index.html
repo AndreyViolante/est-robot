@@ -73,6 +73,11 @@
       <div class="desafio-acoes">
         <button id="btProximoDesafio" class="bt pequeno" type="button" hidden>Próximo desafio</button>
         <button id="btSairDesafio" class="bt pequeno" type="button">Sair do desafio</button>
+        <span class="surpresa-opcoes" id="surpresaOpcoes" hidden>
+          <label class="campo">Arena nº <input type="number" id="sementeSurpresa" min="1" max="9999"
+                 aria-label="Número da arena do desafio surpresa (a turma toda pode usar o mesmo)"></label>
+          <button id="btSortearSurpresa" class="bt pequeno" type="button">Sortear outra surpresa</button>
+        </span>
         <details class="professor">
           <summary>Professor</summary>
           <button id="btLiberar" class="bt pequeno" type="button">Liberar todos os desafios</button>
