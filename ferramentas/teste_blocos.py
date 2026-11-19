@@ -18,6 +18,19 @@ TODOS_OS_BLOCOS = """from robo import *
 
 # todos os blocos da página
 VEL = 30
+
+
+# uma função com parâmetro ("Meus blocos")
+def girar_no_lugar(vel):
+    motores(vel, 0 - vel)
+    esperar(0.5)
+    parar()
+
+
+def perto():
+    return distancia(4) < 10
+
+
 andar(rotacoes=2)
 andar(segundos=1, potencia=30)
 andar(graus=360)
@@ -90,6 +103,11 @@ while True:
         bip()
     painel(erro=abs(erro), s=min(luz_refletida(1), luz_refletida(2)), m=max(erro, 10))
     VEL = 10 if distancia(4) < 20 else 30
+    girar_no_lugar(20)
+    if perto():
+        parar()
+    if confirmado(lambda: cor_vista(2) == VERDE, 3):
+        mostrar(media(luz_refletida(3), 5))
     with se_ver_cor(1, PRETO):
         motores(10, 30)
     with senao():

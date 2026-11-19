@@ -310,6 +310,9 @@ def verificar_mensagens():
         ("mostrar('Luz ' + luz_refletida(1))", 3, 'não dá para juntar um texto'),
         ('mostrar(int(luz_refletida(1)))', 3, 'ou arredondar'),
         ('mostrar(round(distancia(4), 1))', 3, 'só arredonda para o inteiro'),
+        ('mostrar(media(cor_vista(1), 3))', 3, 'não serve para cor_vista'),
+        ('mostrar(media(luz_refletida(1) - 50, 3))', 3, 'precisa da leitura do sensor direto'),
+        ('if confirmado(cor_vista(1) == VERDE, 3):\n    bip()', 3, 'use confirmado(lambda'),
         ("andar_cm('dez')", 3, 'precisa de um número'),
         ('x = 10 / 0', 3, 'divisão por zero'),
         ('for i in range(distancia(4)):\n    bip()', 3, 'só existe no robô'),
@@ -567,6 +570,19 @@ with se(b < ler('m')):
     guardar('m', b)
 mostrar(ler('m'))
 mostrar(9)"""),
+    ('media e confirmado = leituras seguidas',
+     """mostrar(media(luz_refletida(1), 3))
+if confirmado(lambda: distancia(4) < 10, 2):
+    bip()""",
+     """mostrar((luz_refletida(1) + luz_refletida(1) + luz_refletida(1)) / 3)
+perto = distancia(4) < 10
+guardar('c', 0)
+with se(perto):
+    esperar(0.02)
+    with se(distancia(4) < 10):
+        guardar('c', 1)
+with se(ler('c') == 1):
+    bip()"""),
     ('notas pelo nome e melodia',
      """tocar('la4', 0.5)
 melodia('do re - mi:0.6')""",

@@ -16,6 +16,7 @@ const INICIO = '\u0001', FIM = '\u0002';      // marcas das linhas de cada bloco
 
 const CORES = {inicio: '#d9a400', movimento: '#4c97ff', tela: '#9966ff', sensores: '#2b9fc4', decidir: '#e6900a',
                repetir: '#cf7c00', esperar: '#b8860b', contas: '#40a640', variaveis: '#ff7a1a', competicao: '#d9534f',
+               funcoes: '#995ba5',
                python: '#6b7590'};
 
 // ---------------------------------------------------------------- baixar o Blockly
@@ -62,7 +63,7 @@ const leitura = (tipo, cor, mensagem, args, saida, dica) => ({type: tipo, messag
   output: saida, colour: cor, tooltip: dica});
 
 function nomeDeVariavel(texto) {      // as variáveis do robô: letras sem acento, números e _
-  const limpo = String(texto).normalize('NFKD').replace(/[^\w]/g, '_').replace(/^(\d)/, '_$1');
+  const limpo = String(texto).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]/g, '_').replace(/^(\d)/, '_$1');
   return limpo || null;
 }
 
@@ -194,6 +195,12 @@ function definir() {
       'calibrar_na_largada(1, 2): com o robô parado sobre a linha, mede o preto e o branco da pista'),
     leitura('robo_limite_medido', CORES.competicao, 'limite medido porta %1', [portas()], 'Number',
       'limite_medido(1): o limite que o calibrar na largada mediu'),
+    leitura('robo_media', CORES.competicao, 'média de %1 leituras de %2',
+      [numero('VEZES', 5, {min: 1, max: 20, precision: 1}), {type: 'input_value', name: 'LEITURA', check: 'Number'}],
+      'Number', 'media(luz_refletida(1), 5): lê o sensor 5 vezes seguidas e faz a média (uma leitura errada pesa menos)'),
+    leitura('robo_confirmado', CORES.competicao, '%1 confirmado %2 vezes',
+      [{type: 'input_value', name: 'COND', check: 'Boolean'}, numero('VEZES', 3, {min: 1, max: 20, precision: 1})],
+      'Boolean', 'confirmado(lambda: cor_vista(1) == VERDE, 3): verdadeiro só se 3 leituras seguidas concordarem'),
     comando('robo_ajustando', CORES.competicao, 'ajustando %1 começando em %2 passo %3 %4 faça %5',
       [{type: 'field_input', name: 'NOME', text: 'kp'}, numero('INICIAL', 0.4), numero('PASSO', 0.05, {min: 0}),
        {type: 'input_dummy'}, {type: 'input_statement', name: 'FAZER'}],
@@ -274,7 +281,7 @@ function definir() {
     init.call(this);
     for (const campo of ['N1', 'N2', 'N3']) this.getField(campo).setValidator(nomeDoPainel);
   })(B.Blocks.robo_painel.init);
-  for (const tipo of ['robo_conta', 'robo_absoluto', 'robo_menor_maior', 'robo_escolha']) {
+  for (const tipo of ['robo_conta', 'robo_absoluto', 'robo_menor_maior', 'robo_escolha', 'robo_media', 'robo_confirmado']) {
     B.Blocks[tipo].init = (init => function () { init.call(this); this.setInputsInline(true); })(B.Blocks[tipo].init);
   }
 }
@@ -304,7 +311,19 @@ function criarGerador() {
   const potencia = b => (num(b, 'POTENCIA') === '50' ? '' : `, potencia=${num(b, 'POTENCIA')}`);
   const f = G.forBlock;
 
-  f.robo_inicio = () => 'from robo import *\n\n';
+  // as funções ("Meus blocos") vão logo depois do import, antes do programa: o Python precisa delas antes de chamar
+  f.robo_inicio = b => 'from robo import *\n\n' + b.workspace.getTopBlocks(true)
+    .filter(d => /^procedures_def/.test(d.type) && d.isEnabled()).map(d => G.blockToCode(d)).join('');
+  const nomeDaFuncao = nome => nomePython(String(nome).trim().replace(/\s+/g, '_'));
+  const parametros = b => (b.getVars ? b.getVars() : []).map(nomePython).join(', ');
+  f.procedures_defnoreturn = b => `def ${nomeDaFuncao(b.getFieldValue('NAME'))}(${parametros(b)}):\n${corpo(b, 'STACK')}\n`;
+  f.procedures_defreturn = b => `def ${nomeDaFuncao(b.getFieldValue('NAME'))}(${parametros(b)}):\n`
+    + `${G.statementToCode(b, 'STACK')}${G.INDENT}return ${valor(b, 'RETURN', ORDEM.NADA)}\n\n`;
+  const chamada = b => `${nomeDaFuncao(b.getProcedureCall())}(${(b.arguments_ || []).map((_, i) => valor(b, `ARG${i}`, ORDEM.NADA)).join(', ')})`;
+  f.procedures_callnoreturn = b => `${chamada(b)}\n`;
+  f.procedures_callreturn = b => [chamada(b), ORDEM.ATOMO];
+  f.procedures_ifreturn = b => `if ${valor(b, 'CONDITION', ORDEM.NADA)}:\n${G.INDENT}return`
+    + `${b.hasReturnValue_ ? ` ${valor(b, 'VALUE', ORDEM.NADA)}` : ''}\n`;
   f.robo_andar = b => (b.getFieldValue('UNIDADE') === 'cm' ? `andar_cm(${num(b, 'QUANTO')}${potencia(b)})\n`
     : `andar(${b.getFieldValue('UNIDADE')}=${num(b, 'QUANTO')}${potencia(b)})\n`);
   f.robo_re = b => (b.getFieldValue('UNIDADE') === 'cm' ? `andar_cm(-${num(b, 'QUANTO')}${potencia(b)})\n`
@@ -348,6 +367,9 @@ function criarGerador() {
   f.robo_botao_nome = b => [b.getFieldValue('BOTAO'), ORDEM.ATOMO];
   f.robo_aleatorio = b => [`aleatorio(${num(b, 'MIN')}, ${num(b, 'MAX')})`, ORDEM.ATOMO];
   f.robo_limite_medido = b => [`limite_medido(${b.getFieldValue('PORTA')})`, ORDEM.ATOMO];
+  const vezes = b => Math.max(1, Math.min(20, Math.round(Number(b.getFieldValue('VEZES')))));
+  f.robo_media = b => [`media(${valor(b, 'LEITURA', ORDEM.NADA)}, ${vezes(b)})`, ORDEM.ATOMO];
+  f.robo_confirmado = b => [`confirmado(lambda: ${valor(b, 'COND', ORDEM.NADA)}, ${vezes(b)})`, ORDEM.ATOMO];
 
   f.robo_girar = b => `girar_${b.getFieldValue('LADO')}(${b.getFieldValue('UNIDADE')}=${num(b, 'QUANTO')}${potencia(b)})\n`;
   f.robo_mover = b => `mover(${num(b, 'ESQ')}, ${num(b, 'DIR')}, ${b.getFieldValue('UNIDADE')}=${num(b, 'QUANTO')})\n`;
@@ -577,6 +599,10 @@ const CAIXA = {
       {kind: 'block', type: 'robo_calibrar', fields: {P1: '1', P2: '2'}},
       {kind: 'block', type: 'logic_compare', fields: {OP: 'LT'},
        inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_limite_medido'}}}},
+      {kind: 'block', type: 'robo_media', inputs: {LEITURA: {block: {type: 'robo_luz_refletida'}}}},
+      {kind: 'block', type: 'robo_confirmado',
+       inputs: {COND: {block: {type: 'logic_compare', fields: {OP: 'EQ'},
+         inputs: {A: {block: {type: 'robo_cor_vista'}}, B: {block: {type: 'robo_cor', fields: {COR: 'VERDE'}}}}}}}},
       {kind: 'block', type: 'robo_ajustando'},
       {kind: 'block', type: 'robo_ler', fields: {NOME: 'kp'}},
       {kind: 'block', type: 'robo_painel',
@@ -584,6 +610,8 @@ const CAIXA = {
          inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_luz_refletida', fields: {PORTA: '2'}}}}}}}},
     ]},
     {kind: 'category', name: 'Variáveis do Python', colour: CORES.python, custom: 'VARIABLE'},
+    // uma parte do programa com nome (e parâmetros), para chamar em vários lugares: o def do Python
+    {kind: 'category', name: 'Meus blocos', colour: CORES.funcoes, custom: 'PROCEDURE'},
     {kind: 'category', name: 'Linha em Python', colour: CORES.python, contents: [
       {kind: 'block', type: 'robo_python'},
       {kind: 'block', type: 'robo_python_valor'},
@@ -655,7 +683,7 @@ async function criar(div, aoMudar) {
   ws.addChangeListener(Blockly.Events.disableOrphans);
   function apagarSoltos() {
     for (const topo of ws.getTopBlocks(false)) {
-      if (topo.type === 'robo_inicio') continue;
+      if (topo.type === 'robo_inicio' || /^procedures_def/.test(topo.type)) continue;
       for (let b = topo; b; b = b.getNextBlock()) b.setDisabledReason(true, 'ORPHANED_BLOCK');
     }
   }
@@ -701,7 +729,8 @@ async function criar(div, aoMudar) {
     /** O bloco de um comando com encaixe vazio (ex.: um "se" sem condição), para avisar antes de compilar. */
     faltando() {
       for (const b of ws.getAllBlocks(false)) {
-        if (!b.isEnabled() || b.getRootBlock().type !== 'robo_inicio') continue;
+        const raiz = b.getRootBlock().type;
+        if (!b.isEnabled() || (raiz !== 'robo_inicio' && !/^procedures_def/.test(raiz))) continue;
         if (b.inputList.some(i => i.connection && i.connection.type === Blockly.ConnectionType.INPUT_VALUE &&
                                   !i.connection.targetBlock() && !(b.type === 'robo_painel' && i.name !== 'V1'))) {
           return {id: b.id, texto: b.toString().split('?')[0].trim() || b.toString()};

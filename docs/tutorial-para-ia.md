@@ -172,6 +172,8 @@ isso as viradas saem erradas. Não é preciso pôr `esperar` entre `andar_cm` e 
 | `limite(1)` | número do Python: o meio entre o preto e o branco do sensor 1, medidos no `calibracao.py` |
 | `limite_medido(1)` | o limite que `calibrar_na_largada` mediu na pista |
 | `arredondar(valor)` | inteiro mais perto |
+| `media(luz_refletida(1), 5)` | média de 5 leituras seguidas do mesmo sensor (só a leitura direta, sem conta dentro; não serve para `cor_vista`) |
+| `confirmado(lambda: cor_vista(1) == VERDE, 3)` | comparação verdadeira em 3 leituras seguidas (0,02 s entre elas): use num `if` ou `while` antes de uma decisão grande |
 | `ler('nome')` | o número guardado numa variável do robô |
 
 `zerar_motor('B')`, `zerar_giroscopio(3)` (com o robô parado) e `zerar_cronometro()` voltam a contagem
@@ -267,7 +269,7 @@ Situação no teste de 13/11/2026, numa controladora com firmware 03.04:
   o número) e `medir_laco(...)` (o robô não anda). No lugar do `ajustes`, use um `ajustando` para o
   número mais importante.
 - **Ainda não vistos no robô** (funcionam no simulador): `rotacoes_do_motor`, `potencia_do_motor`,
-  `velocidade_do_giro`, `arredondar` e o Bluetooth. Se usar, avise o aluno.
+  `velocidade_do_giro`, `arredondar`, `media`, `confirmado` e o Bluetooth. Se usar, avise o aluno.
 
 ## 6. Programas de exemplo
 

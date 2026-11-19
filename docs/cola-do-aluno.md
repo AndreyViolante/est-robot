@@ -34,8 +34,9 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 | `giroscopio(3)` | ângulo do robô, em graus (`zerar_giroscopio(3)` volta a 0) |
 | `cronometro()` | segundos passados (`zerar_cronometro()` volta a 0) |
 | `aleatorio(1, 6)` | número sorteado |
+| `media(luz_refletida(1), 5)` | média de 5 leituras; `confirmado(lambda: ..., 3)`: 3 seguidas concordam |
 
-Ainda não vistos no robô: `arredondar(...)` e as mensagens pelo Bluetooth.
+Ainda não vistos no robô: `arredondar(...)`, `media(...)`, `confirmado(...)` e as mensagens pelo Bluetooth.
 
 No simulador, **Dirigir** leva o robô pelas setas e o programa se escreve sozinho. Há 13 desafios, do
 "andar 30 cm" ao percurso completo da OBR.

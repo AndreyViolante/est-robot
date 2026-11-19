@@ -39,6 +39,7 @@ __all__ = ['PRETO', 'AZUL', 'VERDE', 'AMARELO', 'VERMELHO', 'BRANCO', 'MARROM',
            'ajustes', 'medir_laco', 'calibrar_na_largada', 'limite_medido',
            'graus_do_motor', 'rotacoes_do_motor', 'potencia_do_motor', 'zerar_motor', 'giroscopio',
            'velocidade_do_giro', 'zerar_giroscopio', 'cronometro', 'zerar_cronometro', 'aleatorio', 'arredondar',
+           'media', 'confirmado',
            'enviar_mensagem', 'mensagem_recebida', 'ligar_bluetooth', 'desligar_bluetooth',
            'BOTAO_CIMA', 'BOTAO_BAIXO', 'BOTAO_ESQUERDA', 'BOTAO_DIREITA', 'BOTAO_CENTRO',
            'novo_programa', 'programa']
@@ -534,6 +535,67 @@ def arredondar(valor: float | Valor) -> float | Valor:
     if isinstance(valor, Valor):
         return Valor(_adiciona(_b.round_num(1, src=valor.bloco, out=valor.saida)), 3)
     return round(_const(valor))
+
+
+# ---------------------------------------------------------------- leituras mais confiáveis
+
+def _vezes_valida(vezes, oque):
+    if isinstance(vezes, bool) or not isinstance(vezes, int) or not 1 <= vezes <= 20:
+        raise ValueError(f'{oque}: o número de vezes vai de 1 a 20 e precisa estar escrito no programa (ex.: 5)')
+    return vezes
+
+
+def media(leitura: float | Valor, vezes: int = 5) -> float | Valor:
+    """A média de várias leituras seguidas do mesmo sensor: uma leitura errada pesa menos.
+    Ex.: if media(luz_refletida(1), 5) < limite(1):   Ainda não conferido no robô."""
+    _vezes_valida(vezes, 'media(...)')
+    if not isinstance(leitura, Valor):
+        return _const(leitura)
+    if leitura.cor:
+        raise TypeError('media(...) não serve para cor_vista(...): a média de duas cores não é uma cor. '
+                        'Para confirmar uma cor, use confirmado(lambda: cor_vista(1) == VERDE, 3)')
+    bloco = leitura.bloco
+    if bloco.wires:
+        raise TypeError('media(...) precisa da leitura do sensor direto, ex.: media(luz_refletida(1), 5) '
+                        '(faça a conta depois: media(luz_refletida(1), 5) - 50)')
+    total = leitura
+    for _ in range(vezes - 1):              # lê de novo: um bloco igual ao da leitura, logo depois
+        nova = Valor(_adiciona(_b.Blk(bloco.t, bloco.mode, bloco.params, bloco.port, [])), leitura.saida,
+                     byte=leitura.byte)
+        total = total + nova
+    return total / vezes if vezes > 1 else total
+
+
+def confirmado(condicao: Callable[[], Condicao], vezes: int = 3, intervalo: float = 0.02) -> Condicao:
+    """A comparação é verdadeira em várias leituras seguidas (com intervalo segundos entre elas)? Uma leitura só
+    engana: a borda da linha ou uma sujeira parecem verde por um instante. A comparação vai num lambda, para
+    ser lida de novo a cada vez. Ex.: if confirmado(lambda: cor_vista(1) == VERDE, 3):
+    Ainda não conferido no robô."""
+    if not callable(condicao):
+        raise TypeError('use confirmado(lambda: ..., 3), ex.: confirmado(lambda: cor_vista(1) == VERDE, 3)')
+    _vezes_valida(vezes, 'confirmado(...)')
+    intervalo = _const(intervalo)
+    primeira = condicao()
+    cond = _como_condicao(primeira)
+    if cond is None:                        # comparação do Python: não muda de uma leitura para outra
+        return primeira
+    nome = _variavel_logica('_confirmado')
+    guardar(nome, 0)
+
+    def proxima(n, c):
+        with se(c):
+            if n == vezes:
+                guardar(nome, 1)
+                return
+            if intervalo > 0:
+                esperar(intervalo)
+            outra = _como_condicao(condicao())
+            if outra is None:
+                raise TypeError('confirmado(...) precisa de uma comparação com sensor, ex.: '
+                                'confirmado(lambda: distancia(4) < 10, 3)')
+            proxima(n + 1, outra)
+    proxima(1, cond)
+    return ler(nome) == 1
 
 
 # Mensagens pelo Bluetooth: o bloco Mensagens da IDE, como as caixas de mensagem do EV3 (um título e um valor).

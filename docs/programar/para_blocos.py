@@ -30,7 +30,7 @@ SAIDA = {'math_number': 'Number', 'text': 'String', 'logic_boolean': 'Boolean', 
          'robo_distancia': 'Number', 'robo_limite': 'Number', 'robo_graus_motor': 'Number', 'robo_giroscopio': 'Number',
          'robo_cronometro': 'Number', 'robo_ler': 'Number', 'robo_cor_vista': 'Cor', 'robo_cor': 'Cor',
          'robo_botao': 'Number', 'robo_botao_nome': 'Number', 'robo_aleatorio': 'Number', 'robo_limite_medido': 'Number',
-         'robo_absoluto': 'Number', 'robo_menor_maior': 'Number'}
+         'robo_absoluto': 'Number', 'robo_menor_maior': 'Number', 'robo_media': 'Number', 'robo_confirmado': 'Boolean'}
 
 
 class NaoTemBloco(Exception):
@@ -92,6 +92,35 @@ def _tem_break(corpo):
     return False
 
 
+def _retornos(corpo):
+    """Os return do corpo de uma função (fora das funções de dentro)."""
+    achados = []
+    for no in corpo:
+        if isinstance(no, ast.Return):
+            achados.append(no)
+        if not isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            for campo in ('body', 'orelse', 'finalbody'):
+                achados += _retornos(getattr(no, campo, None) or [])
+            for h in getattr(no, 'handlers', None) or []:
+                achados += _retornos(h.body)
+    return achados
+
+
+def _funcao_com_bloco(no):
+    """Para um def que vira bloco de "Meus blocos" (só parâmetros simples; sem return, ou um return com valor no
+    fim), (parâmetros, se devolve valor); senão None."""
+    a = no.args
+    if (no.decorator_list or a.posonlyargs or a.vararg or a.kwonlyargs or a.kwarg or a.defaults
+            or isinstance(no, ast.AsyncFunctionDef)):
+        return None
+    retornos = _retornos(no.body)
+    if not retornos:
+        return [p.arg for p in a.args], False
+    if len(retornos) == 1 and retornos[0] is no.body[-1] and retornos[0].value is not None and len(no.body) >= 1:
+        return [p.arg for p in a.args], True
+    return None
+
+
 def _sombra_numero(v):
     return {'shadow': {'type': 'math_number', 'fields': {'NUM': v}}}
 
@@ -113,6 +142,8 @@ class Tradutor:
         except (tokenize.TokenError, IndentationError):
             pass
         self.usados = set()                    # comentários já postos em algum bloco
+        self.funcoes = {}                      # nome -> (parâmetros, devolve valor): os def que viram "Meus blocos"
+        self.definicoes = []                   # os blocos de função (ficam soltos, ao lado do programa)
 
     # ---- blocos "Python": o texto como está
     def _bloco_python(self, texto):
@@ -187,6 +218,8 @@ class Tradutor:
                                                        'SIM': {'block': self.valor(no.body)},
                                                        'NAO': {'block': self.valor(no.orelse)}}}
         if isinstance(no, ast.Call) and isinstance(no.func, ast.Name):
+            if no.func.id in self.funcoes:
+                return self._chamada(no, valor=True)
             return self._leitura(no.func.id, no)
         raise NaoTemBloco
 
@@ -219,6 +252,21 @@ class Tradutor:
             return {'type': 'robo_menor_maior', 'fields': {'QUAL': nome},
                     'inputs': {'A': {'block': self.valor(chamada.args[0], 'Number')},
                                'B': {'block': self.valor(chamada.args[1], 'Number')}}}
+        if nome == 'media':
+            a = _argumentos(chamada, ['leitura', 'vezes'], {'vezes': ast.Constant(5)})
+            if 'leitura' not in a:
+                raise NaoTemBloco
+            n = _numero(a['vezes'])
+            if not isinstance(n, int) or not 1 <= n <= 20:
+                raise NaoTemBloco
+            return {'type': 'robo_media', 'fields': {'VEZES': n}, 'inputs': {'LEITURA': {'block': self.valor(a['leitura'], 'Number')}}}
+        if nome == 'confirmado':
+            a = _argumentos(chamada, ['condicao', 'vezes'], {'vezes': ast.Constant(3)})
+            f, n = a.get('condicao'), _numero(a['vezes'])
+            if not (isinstance(f, ast.Lambda) and not f.args.args and not f.args.vararg and not f.args.kwarg
+                    and isinstance(n, int) and 1 <= n <= 20):
+                raise NaoTemBloco
+            return {'type': 'robo_confirmado', 'fields': {'VEZES': n}, 'inputs': {'COND': {'block': self.valor(f.body, 'Boolean')}}}
         if nome == 'ler':
             a = _argumentos(chamada, ['nome'])
             texto = _texto(a.get('nome'))
@@ -226,6 +274,35 @@ class Tradutor:
                 raise NaoTemBloco
             return {'type': 'robo_ler', 'fields': {'NOME': texto}}
         raise NaoTemBloco
+
+    # ---- funções do aluno ("Meus blocos")
+    def _chamada(self, chamada, valor=False):
+        """A chamada de uma função do programa: bloco com um encaixe por parâmetro, ou NaoTemBloco."""
+        params, devolve = self.funcoes[chamada.func.id]
+        if valor != devolve or chamada.keywords or len(chamada.args) != len(params) \
+                or any(isinstance(a, ast.Starred) for a in chamada.args):
+            raise NaoTemBloco
+        bloco = {'type': 'procedures_callreturn' if devolve else 'procedures_callnoreturn',
+                 'extraState': {'name': chamada.func.id, 'params': list(params)}, 'inputs': {}}
+        for i, arg in enumerate(chamada.args):
+            bloco['inputs'][f'ARG{i}'] = {'block': self.valor(arg)}
+        return bloco
+
+    def _definicao(self, no, comentario):
+        """O bloco de um def (fica solto na área, à direita do programa)."""
+        params, devolve = self.funcoes[no.name]
+        corpo = no.body[:-1] if devolve else no.body
+        bloco = {'type': 'procedures_defreturn' if devolve else 'procedures_defnoreturn',
+                 'x': 420, 'y': 24 + 260 * len(self.definicoes), 'fields': {'NAME': no.name},
+                 'extraState': {'params': [{'name': p, 'id': self._variavel(p)} for p in params]}, 'inputs': {}}
+        dentro = self.cadeia(corpo, no.lineno + 1) if corpo else None
+        if dentro:
+            bloco['inputs']['STACK'] = {'block': dentro}
+        if devolve:
+            bloco['inputs']['RETURN'] = {'block': self.valor(no.body[-1].value)}
+        if comentario:
+            bloco['icons'] = {'comment': {'text': comentario, 'pinned': False, 'height': 80, 'width': 160}}
+        self.definicoes.append(bloco)
 
     # ---- comandos
     def _comando(self, nome, chamada):
@@ -407,6 +484,8 @@ class Tradutor:
         if isinstance(no, (ast.Break, ast.Continue)):
             return [{'type': 'robo_sair_laco', 'fields': {'MODO': 'break' if isinstance(no, ast.Break) else 'continue'}}], False
         if isinstance(no, ast.Expr) and isinstance(no.value, ast.Call) and isinstance(no.value.func, ast.Name):
+            if no.value.func.id in self.funcoes:
+                return [self._chamada(no.value)], False
             return [self._comando(no.value.func.id, no.value)], False
         if isinstance(no, ast.Assign) and len(no.targets) == 1 and isinstance(no.targets[0], ast.Name):
             valor = self.valor(no.value)            # antes de criar a variável: "x = x + 1" lê a de antes
@@ -531,6 +610,11 @@ class Tradutor:
             no = corpo[i]
             seguinte = corpo[i + 1] if i + 1 < len(corpo) else None
             comentario = self._comentario_antes(no, desde)
+            if isinstance(no, ast.FunctionDef) and corpo is self.arvore.body and no.name in self.funcoes:
+                self._definicao(no, comentario)          # vira um bloco solto de "Meus blocos"
+                desde = no.end_lineno + 1
+                i += 1
+                continue
             try:
                 blocos, pulou = self._instrucao(no, seguinte)
             except NaoTemBloco:
@@ -567,11 +651,16 @@ class Tradutor:
 
     def traduzir(self):
         self.arvore = ast.parse(self.fonte)
+        # os def do programa (no nível de fora) que viram blocos: antes de tudo, para as chamadas saberem deles
+        nomes = [n.name for n in self.arvore.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        for n in self.arvore.body:
+            if isinstance(n, ast.FunctionDef) and nomes.count(n.name) == 1 and _funcao_com_bloco(n):
+                self.funcoes[n.name] = _funcao_com_bloco(n)
         corpo = self.cadeia(self.arvore.body)
         inicio = {'type': 'robo_inicio', 'x': 24, 'y': 24}
         if corpo:
             inicio['next'] = {'block': corpo}
-        estado = {'blocks': {'languageVersion': 0, 'blocks': [inicio]}}
+        estado = {'blocks': {'languageVersion': 0, 'blocks': [inicio] + self.definicoes}}
         if self.variaveis:
             estado['variables'] = [{'name': nome, 'id': i} for nome, i in self.variaveis.items()]
         return estado

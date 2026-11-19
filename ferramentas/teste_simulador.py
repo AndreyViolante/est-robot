@@ -88,6 +88,9 @@ while ler('n') < 6:
         continue
     guardar('contadas', ler('contadas') + 1)
 mostrar(ler('contadas'))""", 2, 'livre', lambda r: r['tela'][-1] == '4'),
+    ('media e confirmado: sem nada na frente, 255 cm confirmados', """mostrar(media(distancia(4), 5))
+if confirmado(lambda: distancia(4) > 100, 3):
+    mostrar('livre', linha=2)""", 2, 'livre', lambda r: r['tela'] == ['255', 'livre']),
     ('a if c else b, abs, min e max no robô', """mostrar(10 if aleatorio(1, 1) == 1 else 20)
 mostrar(abs(0 - aleatorio(3, 3)), linha=2, limpar=False)
 mostrar(min(aleatorio(5, 5), aleatorio(2, 2), 9) + max(aleatorio(4, 4), 1), linha=3, limpar=False)""", 2, 'livre',

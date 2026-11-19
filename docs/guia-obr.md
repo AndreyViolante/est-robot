@@ -96,9 +96,9 @@ while True:
 Uma leitura só engana: a borda da linha, uma sujeira ou o reflexo da luz parecem verde ou preto por um
 instante. Antes de uma decisão grande (virar no verde, começar o desvio), confirme:
 
-- leia de novo depois de um pequeno avanço;
-- ou conte quantas vezes seguidas o sensor viu a mesma coisa (`guardar('vezes', ...)` e `ler('vezes')`) e
-  só aja depois de algumas.
+- `if confirmado(lambda: cor_vista(1) == VERDE, 3):` só vale se 3 leituras seguidas virem verde;
+- `media(luz_refletida(1), 5)` faz a média de 5 leituras: uma leitura errada pesa menos;
+- ou leia de novo depois de um pequeno avanço.
 
 No simulador, ligue **Sensores com ruído** para ver se a decisão aguenta leituras que variam.
 

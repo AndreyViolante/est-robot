@@ -335,6 +335,8 @@ Antes de enviar, o programa confere o robô e avisa:
 |---|---|
 | `rotacoes_do_motor('B')`, `potencia_do_motor('B')`, `velocidade_do_giro(3)` | voltas do motor, potência agora e graus por segundo do giroscópio |
 | `arredondar(valor)` | arredondar para o inteiro mais perto |
+| `media(luz_refletida(1), 5)` | a média de 5 leituras seguidas do sensor (uma leitura errada pesa menos) |
+| `confirmado(lambda: cor_vista(1) == VERDE, 3)` | verdadeiro só se 3 leituras seguidas concordarem (num `if` ou `while`) |
 | `enviar_mensagem('erro', erro)`, `mensagem_recebida('kp')` | mensagens pelo Bluetooth (o bloco Mensagens da IDE): para outro robô (`para='nome'`) ou para quem estiver conectado; no simulador as enviadas aparecem em Variáveis |
 | `ligar_bluetooth()`, `desligar_bluetooth()` | o Bluetooth do robô |
 
