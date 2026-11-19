@@ -69,6 +69,25 @@ virar_direita(90)""", 8, 'livre',
     ('botão da controladora: o de baixo dá BOTAO_BAIXO (5)', """mostrar(botao_apertado())
 if botao_apertado() == BOTAO_BAIXO:
     mostrar('baixo', linha=2)""", 1, 'livre', lambda r: r['tela'] == ['5', 'baixo'], {'botao': 5}),
+    # break e continue com condição do robô: o while True vira o laço do robô e sai pela variável
+    ('break com sensor: o while True sai quando o cronômetro passa de 1 s', """zerar_cronometro(2)
+while True:
+    if cronometro(2) > 1:
+        break
+    esperar(0.1)
+mostrar(cronometro(2))""", 3, 'livre', lambda r: perto(r['tela'][-1], 1.05, 0.1)),
+    ('continue com variável do robô: pula as voltas 2 e 4', """guardar('n', 0)
+guardar('contadas', 0)
+while ler('n') < 6:
+    guardar('n', ler('n') + 1)
+    if ler('n') == 2 or ler('n') == 4:
+        continue
+    guardar('contadas', ler('contadas') + 1)
+mostrar(ler('contadas'))""", 2, 'livre', lambda r: r['tela'][-1] == '4'),
+    ('a if c else b, abs, min e max no robô', """mostrar(10 if aleatorio(1, 1) == 1 else 20)
+mostrar(abs(0 - aleatorio(3, 3)), linha=2, limpar=False)
+mostrar(min(aleatorio(5, 5), aleatorio(2, 2), 9) + max(aleatorio(4, 4), 1), linha=3, limpar=False)""", 2, 'livre',
+     lambda r: r['tela'] == ['10', '3', '6']),
 ]
 
 

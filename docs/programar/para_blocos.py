@@ -29,7 +29,8 @@ SAIDA = {'math_number': 'Number', 'text': 'String', 'logic_boolean': 'Boolean', 
          'logic_operation': 'Boolean', 'logic_negate': 'Boolean', 'robo_conta': 'Number', 'robo_luz_refletida': 'Number',
          'robo_distancia': 'Number', 'robo_limite': 'Number', 'robo_graus_motor': 'Number', 'robo_giroscopio': 'Number',
          'robo_cronometro': 'Number', 'robo_ler': 'Number', 'robo_cor_vista': 'Cor', 'robo_cor': 'Cor',
-         'robo_botao': 'Number', 'robo_botao_nome': 'Number', 'robo_aleatorio': 'Number', 'robo_limite_medido': 'Number'}
+         'robo_botao': 'Number', 'robo_botao_nome': 'Number', 'robo_aleatorio': 'Number', 'robo_limite_medido': 'Number',
+         'robo_absoluto': 'Number', 'robo_menor_maior': 'Number'}
 
 
 class NaoTemBloco(Exception):
@@ -168,6 +169,10 @@ class Tradutor:
                 bloco = {'type': 'logic_operation', 'fields': {'OP': op},
                          'inputs': {'A': {'block': bloco}, 'B': {'block': self.valor(proximo, 'Boolean')}}}
             return bloco
+        if isinstance(no, ast.IfExp):
+            return {'type': 'robo_escolha', 'inputs': {'COND': {'block': self.valor(no.test, 'Boolean')},
+                                                       'SIM': {'block': self.valor(no.body)},
+                                                       'NAO': {'block': self.valor(no.orelse)}}}
         if isinstance(no, ast.Call) and isinstance(no.func, ast.Name):
             return self._leitura(no.func.id, no)
         raise NaoTemBloco
@@ -193,6 +198,14 @@ class Tradutor:
             if not (isinstance(minimo, int) and isinstance(maximo, int)):
                 raise NaoTemBloco
             return {'type': 'robo_aleatorio', 'fields': {'MIN': minimo, 'MAX': maximo}}
+        if nome == 'abs' and len(chamada.args) == 1 and not chamada.keywords \
+                and not isinstance(chamada.args[0], ast.Starred):
+            return {'type': 'robo_absoluto', 'inputs': {'X': {'block': self.valor(chamada.args[0], 'Number')}}}
+        if nome in ('min', 'max') and len(chamada.args) == 2 and not chamada.keywords \
+                and not any(isinstance(a, ast.Starred) for a in chamada.args):
+            return {'type': 'robo_menor_maior', 'fields': {'QUAL': nome},
+                    'inputs': {'A': {'block': self.valor(chamada.args[0], 'Number')},
+                               'B': {'block': self.valor(chamada.args[1], 'Number')}}}
         if nome == 'ler':
             a = _argumentos(chamada, ['nome'])
             texto = _texto(a.get('nome'))
@@ -378,6 +391,8 @@ class Tradutor:
             return [], False
         if isinstance(no, ast.Pass):
             return [], False
+        if isinstance(no, (ast.Break, ast.Continue)):
+            return [{'type': 'robo_sair_laco', 'fields': {'MODO': 'break' if isinstance(no, ast.Break) else 'continue'}}], False
         if isinstance(no, ast.Expr) and isinstance(no.value, ast.Call) and isinstance(no.value.func, ast.Name):
             return [self._comando(no.value.func.id, no.value)], False
         if isinstance(no, ast.Assign) and len(no.targets) == 1 and isinstance(no.targets[0], ast.Name):

@@ -26,11 +26,19 @@ class _IfWhileDoRobo(ast.NodeTransformer):
                                  _rb2.fim()
 
     E também: a and b -> __robo__._e(lambda: a, lambda: b); a or b -> __robo__._ou(...);
-    not a -> __robo__._nao_geral(a); for _ in range(n) (variável sem uso) -> for _rb3 in __robo__._vezes(n).
+    not a -> __robo__._nao_geral(a); for _ in range(n) (variável sem uso) -> for _rb3 in __robo__._vezes(n);
+    a if c else b -> __robo__._escolhe(lambda: c, lambda: a, lambda: b); min(...)/max(...) -> __robo__._minimo/_maximo.
+
+    break e continue num while: viram "if _rb2.sair(): break" / "if _rb2.pular(): continue". No while do Python
+    eles saem de verdade; no while do robô marcam uma variável do robô, e o que vem depois deles na volta fica
+    dentro de "if _rb2.seguindo():" (uma decisão do robô), como o robô faria.
     """
     def __init__(self, arvore):
         self.n = 0
         self.usados = {no.id for no in ast.walk(arvore) if isinstance(no, ast.Name) and isinstance(no.ctx, ast.Load)}
+        # nomes que o programa define (min = ..., def max(...)): esses não são o min/max do Python
+        self.definidos = {no.id for no in ast.walk(arvore) if isinstance(no, ast.Name) and isinstance(no.ctx, ast.Store)}
+        self.definidos |= {no.name for no in ast.walk(arvore) if isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef))}
 
     def _nome(self):
         self.n += 1
@@ -69,17 +77,87 @@ class _IfWhileDoRobo(ast.NodeTransformer):
             return no
         return _na_linha(self._robo('_nao_geral', [no.operand]), no)
 
+    def visit_IfExp(self, no):
+        self.generic_visit(no)
+        partes = [ast.Lambda(ast.arguments([], [], None, [], [], None, []), v) for v in (no.test, no.body, no.orelse)]
+        return _na_linha(self._robo('_escolhe', partes), no)
+
+    def visit_Call(self, no):
+        self.generic_visit(no)
+        f = no.func
+        if (isinstance(f, ast.Name) and f.id in ('min', 'max') and f.id not in self.definidos and not no.keywords
+                and not any(isinstance(a, ast.Starred) for a in no.args)):
+            no.func = _na_linha(ast.Attribute(ast.Name('__robo__', ast.Load()), '_minimo' if f.id == 'min' else '_maximo',
+                                              ast.Load()), no)
+        return no
+
     def visit_For(self, no):
         self.generic_visit(no)
         it = no.iter
+        saidas = _saidas(no.body)
         if (isinstance(no.target, ast.Name) and no.target.id not in self.usados and not no.orelse
                 and isinstance(it, ast.Call) and isinstance(it.func, ast.Name) and it.func.id == 'range'
-                and len(it.args) == 1 and not it.keywords
-                and not any(isinstance(n, (ast.Break, ast.Continue)) for n in _sem_lacos_internos(no.body))):
+                and len(it.args) == 1 and not it.keywords and not saidas):
             no.target = ast.Name(self._nome(), ast.Store())
             no.iter = self._robo('_vezes', it.args)
             _na_linha(no, no)
-        return no
+            return no
+        if not saidas:
+            return no
+        # for do Python com break/continue: continua repetindo no Python (veja robo._Saidas)
+        var = self._nome()
+        no.body = [_na_linha(ast.Expr(self._chama(var, 'volta')), no)] + self._com_saidas(no.body, var)
+        novos = [ast.Assign([ast.Name(var, ast.Store())], self._robo('_LacoDoPython', [])), no,
+                 ast.Expr(self._chama(var, 'fim'))]
+        return [_na_linha(n, no) for n in novos]
+
+    # ---- break e continue (fora dos laços de dentro)
+    def _troca_saidas(self, st, var):
+        """O comando com cada break/continue dele trocado por "if var.sair(): break" (ou pular/continue)."""
+        if isinstance(st, (ast.Break, ast.Continue)):
+            metodo = 'sair' if isinstance(st, ast.Break) else 'pular'
+            return _na_linha(ast.If(self._chama(var, metodo), [st], []), st)
+        if isinstance(st, (ast.For, ast.AsyncFor, ast.While, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            return st
+        for campo in ('body', 'orelse', 'finalbody'):
+            if getattr(st, campo, None):
+                setattr(st, campo, self._com_saidas(getattr(st, campo), var, self._guardando))
+        for h in getattr(st, 'handlers', []) or []:
+            h.body = self._com_saidas(h.body, var, self._guardando)
+        return st
+
+    @staticmethod
+    def _decisao_de(st):
+        """O nome _rbN se st é o "if _rbN.sim():" ou "if _rbN.nao():" de um if já trocado, senão None."""
+        t = getattr(st, 'test', None) if isinstance(st, ast.If) else None
+        if (isinstance(t, ast.Call) and isinstance(t.func, ast.Attribute) and t.func.attr in ('sim', 'nao')
+                and isinstance(t.func.value, ast.Name)):
+            return t.func.value.id
+        return None
+
+    def _com_saidas(self, corpo, var, guardar=True):
+        """Os comandos com os break/continue trocados; com guardar, o que vem depois de um comando que pode sair
+        da volta fica dentro de uma decisão "var.seguindo()" (que no while do robô confere a variável de saída)."""
+        self._guardando = guardar
+        novo, i = [], 0
+        while i < len(corpo):
+            st = corpo[i]
+            sai = bool(_saidas([st]))
+            novo.append(self._troca_saidas(st, var))
+            i += 1
+            if not sai:
+                continue
+            decisao = self._decisao_de(st)          # o resto do mesmo if (fim, senão) vem junto, antes da guarda
+            while decisao and i < len(corpo) and any(isinstance(n, ast.Name) and n.id == decisao for n in ast.walk(corpo[i])):
+                novo.append(self._troca_saidas(corpo[i], var))
+                i += 1
+            if guardar and i < len(corpo):
+                resto, g = self._com_saidas(corpo[i:], var, guardar), self._nome()
+                guarda = [self._cria(g, '_Decisao', [self._chama(var, 'seguindo')], False),
+                          ast.If(self._chama(g, 'sim'), resto, []), ast.Expr(self._chama(g, 'fim'))]
+                novo += [_na_linha(n, corpo[i]) for n in guarda]
+                break
+        return novo
 
     def visit_If(self, no):
         self.generic_visit(no)
@@ -96,18 +174,21 @@ class _IfWhileDoRobo(ast.NodeTransformer):
         self.generic_visit(no)
         if no.orelse:
             return no                                   # while ... else: fica do jeito do Python
-        tem_break = any(isinstance(n, (ast.Break, ast.Continue)) for n in _sem_lacos_internos(no.body))
-        if isinstance(no.test, ast.Constant) and no.test.value is True:
-            if tem_break:
-                return no                               # while True com break: lógica do Python
-            sempre = ast.Call(ast.Attribute(ast.Name('__robo__', ast.Load()), 'para_sempre', ast.Load()), [], [])
-            _na_linha(sempre, no)               # só a linha do while (o bloco do laço fica marcado nela)
-            return ast.copy_location(ast.With([ast.withitem(sempre)], no.body), no)
-        teste, negar = self._teste(no)
+        saidas = _saidas(no.body)
+        tem_break, tem_continue = ast.Break in saidas, ast.Continue in saidas
+        sempre = isinstance(no.test, ast.Constant) and no.test.value is True
+        if sempre and not saidas:
+            para = ast.Call(ast.Attribute(ast.Name('__robo__', ast.Load()), 'para_sempre', ast.Load()), [], [])
+            _na_linha(para, no)                 # só a linha do while (o bloco do laço fica marcado nela)
+            return ast.copy_location(ast.With([ast.withitem(para)], no.body), no)
         var = self._nome()
+        corpo = self._com_saidas(no.body, var) if saidas else no.body
+        teste, negar = (no.test, False) if sempre else self._teste(no)
         condicao = ast.Lambda(ast.arguments([], [], None, [], [], None, []), teste)
-        novos = [self._cria(var, '_Repeticao', [condicao], negar, [ast.keyword('tem_break', ast.Constant(tem_break))]),
-                 ast.While(self._chama(var, 'volta'), no.body, []),
+        extras = [ast.keyword('tem_break', ast.Constant(tem_break)), ast.keyword('tem_continue', ast.Constant(tem_continue)),
+                  ast.keyword('sempre', ast.Constant(sempre))]
+        novos = [self._cria(var, '_Repeticao', [condicao], negar, extras),
+                 ast.While(self._chama(var, 'volta'), corpo, []),
                  ast.Expr(self._chama(var, 'fim'))]
         return [_na_linha(n, no) for n in novos]
 
@@ -119,6 +200,11 @@ def _na_linha(novo, original):
             no.lineno = no.end_lineno = original.lineno
             no.col_offset = no.end_col_offset = original.col_offset
     return novo
+
+
+def _saidas(corpo):
+    """Os tipos (ast.Break, ast.Continue) que aparecem nos comandos, fora dos laços e funções de dentro."""
+    return {type(n) for n in _sem_lacos_internos(corpo) if isinstance(n, (ast.Break, ast.Continue))}
 
 
 def _sem_lacos_internos(corpo):

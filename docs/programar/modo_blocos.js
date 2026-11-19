@@ -231,11 +231,23 @@ function definir() {
       [{type: 'field_dropdown', name: 'MODO', options: [['enquanto', 'enquanto'], ['até', 'ate']]},
        {type: 'input_value', name: 'COND', check: 'Boolean'}, {type: 'input_statement', name: 'FAZER'}],
       'while distancia(4) > 20:   (até: while not ...)'),
+    comando('robo_sair_laco', CORES.repetir, '%1',
+      [{type: 'field_dropdown', name: 'MODO', options: [['sair do repetir', 'break'], ['pular para a próxima volta', 'continue']]}],
+      'Dentro de um repetir: break sai dele; continue volta para o começo dele'),
 
     leitura('robo_conta', CORES.contas, '%1 %2 %3',
       [{type: 'input_value', name: 'A', check: 'Number'},
        {type: 'field_dropdown', name: 'OP', options: [['+', '+'], ['-', '-'], ['×', '*'], ['÷', '/']]},
        {type: 'input_value', name: 'B', check: 'Number'}], 'Number', 'Conta: + - * /'),
+    leitura('robo_absoluto', CORES.contas, 'valor absoluto de %1', [{type: 'input_value', name: 'X', check: 'Number'}],
+      'Number', 'abs(erro): o número sem o sinal de menos'),
+    leitura('robo_menor_maior', CORES.contas, '%1 entre %2 e %3',
+      [{type: 'field_dropdown', name: 'QUAL', options: [['o menor', 'min'], ['o maior', 'max']]},
+       {type: 'input_value', name: 'A', check: 'Number'}, {type: 'input_value', name: 'B', check: 'Number'}], 'Number',
+      'min(a, b) ou max(a, b)'),
+    leitura('robo_escolha', CORES.decidir, 'se %1 então %2 senão %3',
+      [{type: 'input_value', name: 'COND', check: 'Boolean'}, {type: 'input_value', name: 'SIM'},
+       {type: 'input_value', name: 'NAO'}], null, 'a if condição else b: um dos dois números, conforme a condição'),
 
     comando('robo_guardar', CORES.variaveis, 'guardar %1 = %2',
       [{type: 'field_input', name: 'NOME', text: 'contador'}, {type: 'input_value', name: 'VALOR', check: 'Number'}],
@@ -262,12 +274,14 @@ function definir() {
     init.call(this);
     for (const campo of ['N1', 'N2', 'N3']) this.getField(campo).setValidator(nomeDoPainel);
   })(B.Blocks.robo_painel.init);
-  B.Blocks.robo_conta.init = (init => function () { init.call(this); this.setInputsInline(true); })(B.Blocks.robo_conta.init);
+  for (const tipo of ['robo_conta', 'robo_absoluto', 'robo_menor_maior', 'robo_escolha']) {
+    B.Blocks[tipo].init = (init => function () { init.call(this); this.setInputsInline(true); })(B.Blocks[tipo].init);
+  }
 }
 
 // ---------------------------------------------------------------- gerador de Python
 
-const ORDEM = {ATOMO: 0, SINAL: 4, VEZES: 5, MAIS: 6, COMPARA: 11, NAO: 12, E: 13, OU: 14, NADA: 99};
+const ORDEM = {ATOMO: 0, SINAL: 4, VEZES: 5, MAIS: 6, COMPARA: 11, NAO: 12, E: 13, OU: 14, SE: 15, NADA: 99};
 
 const texto = s => `'${String(s).replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 const num = (b, campo) => String(Number(b.getFieldValue(campo)));
@@ -398,6 +412,7 @@ function criarGerador() {
   f.robo_enquanto = b => (b.getFieldValue('MODO') === 'ate'
     ? `while not ${valor(b, 'COND', ORDEM.COMPARA)}:\n${corpo(b, 'FAZER')}`
     : `while ${valor(b, 'COND', ORDEM.NADA)}:\n${corpo(b, 'FAZER')}`);
+  f.robo_sair_laco = b => `${b.getFieldValue('MODO') === 'continue' ? 'continue' : 'break'}\n`;
   f.controls_if = b => {
     let codigo = '', n = 0;
     do {
@@ -413,6 +428,11 @@ function criarGerador() {
     const op = b.getFieldValue('OP'), ordem = op === '+' || op === '-' ? ORDEM.MAIS : ORDEM.VEZES;
     return [`${valor(b, 'A', ordem + 0.5)} ${op} ${valor(b, 'B', ordem)}`, ordem];
   };
+  f.robo_absoluto = b => [`abs(${valor(b, 'X', ORDEM.NADA)})`, ORDEM.ATOMO];
+  f.robo_menor_maior = b => [`${b.getFieldValue('QUAL') === 'max' ? 'max' : 'min'}(${valor(b, 'A', ORDEM.NADA)}, `
+                             + `${valor(b, 'B', ORDEM.NADA)})`, ORDEM.ATOMO];
+  f.robo_escolha = b => [`${valor(b, 'SIM', ORDEM.SE)} if ${valor(b, 'COND', ORDEM.SE)} else ${valor(b, 'NAO', ORDEM.SE + 0.5)}`,
+                         ORDEM.SE];
   const COMPARA = {EQ: '==', NEQ: '!=', LT: '<', LTE: '<=', GT: '>', GTE: '>='};
   f.logic_compare = b => [`${valor(b, 'A', ORDEM.COMPARA)} ${COMPARA[b.getFieldValue('OP')]} ${valor(b, 'B', ORDEM.COMPARA)}`,
                           ORDEM.COMPARA];
@@ -510,12 +530,18 @@ const CAIXA = {
       {kind: 'block', type: 'robo_se_luz'},
       {kind: 'block', type: 'robo_se_distancia', fields: {PORTA: '4'}},
       {kind: 'block', type: 'robo_se_tocado', fields: {PORTA: '4'}},
+      {kind: 'block', type: 'robo_escolha',
+       inputs: {COND: {block: {type: 'logic_compare', fields: {OP: 'LT'},
+                               inputs: {A: {block: {type: 'robo_distancia', fields: {PORTA: '4'}}}, B: n(20)}}},
+                SIM: n(10), NAO: n(30)}},
     ]},
     {kind: 'category', name: 'Repetir', colour: CORES.repetir, contents: [
       {kind: 'block', type: 'robo_para_sempre'},
       {kind: 'block', type: 'robo_repetir'},
       {kind: 'block', type: 'robo_enquanto'},
       {kind: 'block', type: 'robo_enquanto', fields: {MODO: 'ate'}},
+      {kind: 'block', type: 'robo_sair_laco'},
+      {kind: 'block', type: 'robo_sair_laco', fields: {MODO: 'continue'}},
       {kind: 'block', type: 'robo_ao_mesmo_tempo'},
       {kind: 'block', type: 'robo_esperar'},
     ]},
@@ -536,6 +562,10 @@ const CAIXA = {
        inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_luz_refletida', fields: {PORTA: '2'}}}}},
       {kind: 'block', type: 'robo_conta', fields: {OP: '*'}, inputs: {A: n(0), B: n(0.5)}},
       {kind: 'block', type: 'robo_conta', fields: {OP: '/'}, inputs: {A: n(0), B: n(2)}},
+      {kind: 'block', type: 'robo_absoluto', inputs: {X: {block: {type: 'robo_conta', fields: {OP: '-'},
+        inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_luz_refletida', fields: {PORTA: '2'}}}}}}}},
+      {kind: 'block', type: 'robo_menor_maior', fields: {QUAL: 'min'},
+       inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_luz_refletida', fields: {PORTA: '2'}}}}},
     ]},
     {kind: 'category', name: 'Variáveis', colour: CORES.variaveis, contents: [
       {kind: 'block', type: 'robo_guardar', inputs: {VALOR: n(0)}},

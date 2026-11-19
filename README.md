@@ -340,8 +340,9 @@ conferido no laboratório (`ferramentas/bluetooth.py --escutar`).
 Comparações (`<`, `<=`, `>`, `>=`, `==`, `!=`) com sensores e variáveis do robô funcionam no `if`,
 no `elif`, no `while` (também com `not`), em `se(...)` e em `repetir_ate(...)`. Como a leitura
 acontece no robô, e não no computador, o `if` e o `while` com sensor viram os blocos de decisão e de
-repetição do robô; `and` e `or` viram um `if` dentro do outro. Um `while` com sensor ainda não aceita
-`break`, e o `x if ... else y` numa linha só não funciona com sensor (o programa avisa nos dois casos).
+repetição do robô; `and` e `or` viram um `if` dentro do outro. `break` e `continue` funcionam também
+dentro de um `if` com sensor (o laço vira o laço do robô e sai por uma variável dele), e `abs(...)`,
+`min(...)`, `max(...)`, `round(...)` e o `a if ... else b` com números funcionam com leituras.
 
 ## Exemplo
 

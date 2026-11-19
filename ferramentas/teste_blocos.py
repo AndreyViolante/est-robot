@@ -83,6 +83,13 @@ while True:
         motores(-20, -20)
     while not luz_refletida(3) < 40:
         mostrar(cronometro())
+        if tocado(1) == 1:
+            break
+        if botao_apertado() == BOTAO_CENTRO:
+            continue
+        bip()
+    painel(erro=abs(erro), s=min(luz_refletida(1), luz_refletida(2)), m=max(erro, 10))
+    VEL = 10 if distancia(4) < 20 else 30
     with se_ver_cor(1, PRETO):
         motores(10, 30)
     with senao():

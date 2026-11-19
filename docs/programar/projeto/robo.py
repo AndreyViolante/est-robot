@@ -389,14 +389,28 @@ class Valor:
     __hash__ = object.__hash__
 
     def __bool__(self):
-        raise TypeError('esse valor do robô não funciona aqui: use ele num "if" ou num "while" '
-                        '(o "x if ... else y" numa linha só ainda não funciona com o robô)')
+        raise TypeError('esse valor do robô não funciona aqui: use ele num "if", num "while" ou num '
+                        '"a if ... else b"')
+
+    def __abs__(self):
+        """abs(erro): o robô guarda o valor e troca o sinal quando ele é negativo."""
+        v = self + 0 if self.byte else self
+        nome = _variavel_logica('_abs')
+        guardar(nome, v)
+        with se(v < 0):
+            guardar(nome, -v)
+        return ler(nome)
+
+    def __round__(self, casas=None):
+        if casas is not None:
+            raise TypeError('no robô, round(...) só arredonda para o inteiro mais perto: use round(valor)')
+        return arredondar(self)
 
     def _so_no_robo(self, *_):
-        raise TypeError('a leitura de um sensor só existe no robô: int(), float() e round() não funcionam com ela. '
-                        'Para arredondar no robô, use arredondar(...)')
+        raise TypeError('a leitura de um sensor só existe no robô: int() e float() não funcionam com ela. '
+                        'Para arredondar no robô, use round(...) ou arredondar(...)')
 
-    __int__ = __float__ = __round__ = _so_no_robo
+    __int__ = __float__ = _so_no_robo
 
 
 # numero que cor_vista() devolve para cada cor. No robo (2026-10-16) o preto deu 1 e o branco oscilou entre 6 e 0:
@@ -418,8 +432,8 @@ class Condicao:
         self.bloco, self.saida = bloco, 3
 
     def __bool__(self):
-        raise TypeError('essa comparação do robô não funciona aqui: use ela num "if" ou num "while" '
-                        '(o "x if ... else y" numa linha só ainda não funciona com o robô)')
+        raise TypeError('essa comparação do robô não funciona aqui: use ela num "if", num "while" ou num '
+                        '"a if ... else b"')
 
 
 def luz_refletida(porta: PortaSensor) -> Valor:
@@ -902,45 +916,140 @@ class _Decisao:
             self.trecho = None
 
 
-class _Repeticao:
+class _Saidas:
+    """break e continue de um laço do aluno. O enviar.py troca cada um por "if laco.sair(): break" (ou
+    "if laco.pular(): continue") e põe o que vem depois deles na volta dentro de "if laco.seguindo():".
+
+    No laço do Python, um break solto (num if do Python) sai de verdade. Quando ele está dentro de um if com
+    sensor, quem decide é o robô: o break guarda 2 numa variável do robô (o continue guarda 1), o resto da
+    volta só roda com ela em 0 e o laço confere a variável. Um while True vira o laço do robô na hora; um laço
+    do Python com fim (while n < 3, for) continua repetindo no Python, cada volta dentro de "se o robô não saiu"."""
+    sempre = False
+    tem_break = False
+
+    def _prepara_saidas(self):
+        self.sai = _variavel_logica('_saida')
+        self.armado = False         # já existe a variável de saída no robô (laço do Python com break do robô)
+        self.guardas = []           # os "se o robô não saiu" de cada volta seguinte
+        self.base = self.inicio = None
+
+    def _comeca_volta_python(self):
+        if self.armado:
+            guarda = se(ler(self.sai) < 2)
+            guarda.__enter__()
+            self.guardas.append(guarda)
+            guardar(self.sai, 0)
+        self.base, self.inicio = len(_pilha), len(_pilha[-1].blocos)
+
+    def _dentro_do_robo(self):
+        """O break/continue está dentro de um bloco do robô (um if com sensor) aberto nesta volta."""
+        return self.base is not None and len(_pilha) > self.base
+
+    def _arma(self):
+        if not self.armado:         # a variável começa em 0 no começo desta volta
+            _pilha[self.base - 1].blocos.insert(self.inicio, _b.var_wn(self.sai, 0))
+            self.armado = True
+
+    def _vira_robo(self):
+        """while True com break/continue dentro de um if com sensor: a volta que já começou vira o laço do robô."""
+        pai = _pilha[self.base - 1]
+        laco = _b.Blk(2003, 35, _b.LOOP_PARAMS, '', label='01') if self.tem_break else _b.loop_forever()
+        movidos = pai.blocos[self.inicio:]
+        del pai.blocos[self.inicio:]
+        laco.b1[:] = [_b.var_wn(self.sai, 0)] + movidos
+        pai.blocos.append(laco)
+        pai.ultimo_switch = None
+        _pilha.insert(self.base, _Trecho(laco.b1))
+        self.trechos.append(_Bloco(laco, laco.b1, condicao_no_fim=(lambda: ler(self.sai) == 2) if self.tem_break else None))
+        self.robo = True
+
+    def _sai(self, valor):
+        if not self.robo:
+            if not self._dentro_do_robo():
+                return True                     # break/continue do Python: sai de verdade
+            if self.sempre:
+                self._vira_robo()
+            else:
+                self._arma()
+        guardar(self.sai, valor)
+        return False
+
+    def sair(self):
+        return self._sai(2)
+
+    def pular(self):
+        return self._sai(1)
+
+    def seguindo(self):
+        return ler(self.sai) == 0 if self.robo or self.armado else True
+
+    def _fecha_guardas(self):
+        while self.guardas:
+            self.guardas.pop().__exit__(None, None, None)
+
+
+class _Repeticao(_Saidas):
     """Um while do aluno. Com condição do robô vira se(cond) + repetir_ate(cond ao contrário)
     (o robô confere no fim de cada volta); com condição do Python, while comum."""
-    def __init__(self, condicao, negar=False, tem_break=False):
-        self.condicao, self.negar, self.tem_break = condicao, negar, tem_break
+    def __init__(self, condicao, negar=False, tem_break=False, tem_continue=False, sempre=False):
+        self.condicao, self.negar, self.sempre = condicao, negar, sempre
+        self.tem_break, self.saidas = tem_break, tem_break or tem_continue
         self.robo = None            # None antes da 1a volta; depois True ou False
         self.trechos = []
+        self._prepara_saidas()
 
     def volta(self):
         if self.robo is None:
-            cond = _como_condicao(self.condicao(), self.negar)
+            cond = None if self.sempre else _como_condicao(self.condicao(), self.negar)
             self.robo = cond is not None
             if not self.robo:
                 return self._python()
-            if self.tem_break:
-                raise SyntaxError('"break" e "continue" ainda não funcionam num while com sensor: '
-                                  'use a condição do próprio while para sair')
-            for faz in (lambda: se(cond), lambda: repetir_ate(lambda: _como_condicao(self.condicao(), not self.negar))):
+            ate = lambda: _como_condicao(self.condicao(), not self.negar)
+            if self.tem_break:                  # sai quando a condição acaba ou quando o break guardou 2
+                ate_sem_break = ate
+                ate = lambda: _ou(lambda: ler(self.sai) == 2, ate_sem_break)
+            for faz in (lambda: se(cond), lambda: repetir_ate(ate)):
                 bloco = faz()                   # um de cada vez: o repetir_ate fica dentro do se
                 bloco.__enter__()
                 self.trechos.append(bloco)
+            if self.saidas:
+                guardar(self.sai, 0)
             return True
         return False if self.robo else self._python()
 
     def _python(self):
         valor = self.condicao()
-        return not valor if self.negar else bool(valor)
+        continua = not valor if self.negar else bool(valor)
+        if continua and self.saidas:
+            self._comeca_volta_python()
+        return continua
 
     def fim(self):
         while self.trechos:
             self.trechos.pop().__exit__(None, None, None)
+        self._fecha_guardas()
+
+
+class _LacoDoPython(_Saidas):
+    """Um for do aluno com break/continue: continua repetindo no Python (enviar.py chama volta() no começo
+    de cada volta e fim() depois do for)."""
+    def __init__(self):
+        self.robo = False
+        self._prepara_saidas()
+
+    def volta(self):
+        self._comeca_volta_python()
+
+    def fim(self):
+        self._fecha_guardas()
 
 
 _contador_logica = [0]
 
 
-def _variavel_logica():
+def _variavel_logica(prefixo='_logica'):
     _contador_logica[0] += 1
-    return f'_logica{_contador_logica[0]}'
+    return f'{prefixo}{_contador_logica[0]}'
 
 
 def _e(*partes):
@@ -1008,6 +1117,62 @@ def _nao_geral(valor):
     """"not x" do aluno: comparação do robô ao contrário, ou o not do Python."""
     cond = _como_condicao(valor, negar=True)
     return cond if cond is not None else not valor
+
+
+def _numero_escolhido(v):
+    if isinstance(v, (Valor, int, float)) and not isinstance(v, bool):
+        return v
+    raise TypeError('com uma condição do robô, o "a if ... else b" só escolhe números (o robô guarda o '
+                    'resultado numa variável). Para textos ou comandos, use um if de várias linhas')
+
+
+def _escolhe(condicao, sim, nao):
+    """"a if c else b" do aluno. Com condição do Python, o de sempre; com condição do robô, o número
+    escolhido vai para uma variável do robô (só a parte escolhida é lida, como no Python)."""
+    valor = condicao()
+    cond = _como_condicao(valor)
+    if cond is None:
+        return sim() if valor else nao()
+    nome, partes = _variavel_logica('_escolha'), []
+    with se(cond):
+        partes.append(_numero_escolhido(sim()))
+        guardar(nome, partes[-1])
+    with senao():
+        partes.append(_numero_escolhido(nao()))
+        guardar(nome, partes[-1])
+    resultado = ler(nome)
+    resultado.cor = all(isinstance(p, Valor) and p.cor for p in partes)   # cor_vista(1) if ... else cor_vista(2)
+    return resultado
+
+
+def _extremo(args, menor):
+    embutida = min if menor else max
+    itens = args
+    if len(args) == 1:
+        try:
+            itens = tuple(args[0])          # min([a, b, c])
+        except TypeError:
+            return embutida(*args)
+    if not any(isinstance(v, Valor) for v in itens):
+        return embutida(*args)
+    itens = [v + 0 if isinstance(v, Valor) and v.byte else v for v in itens]     # leituras de 1 byte viram número
+    nome = _variavel_logica('_menor' if menor else '_maior')
+    guardar(nome, itens[0])
+    for v in itens[1:]:
+        atual = ler(nome)
+        with se(v < atual if menor else v > atual):
+            guardar(nome, v)
+    return ler(nome)
+
+
+def _minimo(*args):
+    """min(...) do aluno: com leituras do robô, o robô compara um por um; senão, o min do Python."""
+    return _extremo(args, True)
+
+
+def _maximo(*args):
+    """max(...) do aluno, como o _minimo."""
+    return _extremo(args, False)
 
 
 def _vezes(n):

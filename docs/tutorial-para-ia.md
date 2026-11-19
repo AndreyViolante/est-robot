@@ -84,6 +84,15 @@ e depois `if viu_obstaculo():`.
 `for i in range(3):` usando o `i` faz o Python escrever o corpo 3 vezes, uma para cada `i` (o programa
 fica maior). O número do `range` precisa estar escrito no programa: não pode ser leitura de sensor.
 
+**`break` e `continue` funcionam**, também dentro de um `if` com sensor: `while True:` com
+`if distancia(4) < 10: break` vira um laço do robô que sai quando a distância fica pequena. O robô
+guarda numa variável que o laço acabou, e o que vem depois do `break` na mesma volta não roda. Num
+`while` com sensor, ele sai pela condição do `while` ou pelo `break`, o que vier primeiro.
+
+**Contas com leituras que também funcionam:** `abs(erro)`, `min(luz_refletida(1), luz_refletida(2))`,
+`max(...)`, `round(valor)` (o mesmo que `arredondar(valor)`) e `x = a if sensor < 50 else b` (só com
+números: o robô guarda o número escolhido numa variável). Cada um vira alguns blocos de decisão no robô.
+
 **O que não funciona com valores do robô:**
 
 | Não use | Use |
@@ -91,11 +100,8 @@ fica maior). O número do `range` precisa estar escrito no programa: não pode s
 | `print(...)`, `input(...)` | `mostrar(...)`, `painel(...)`, `esperar_botao()` |
 | `time.sleep(1)`, `import time` | `esperar(1)` |
 | `import random`, `random.randint` | `aleatorio(1, 6)` |
-| `round(leitura)`, `int(leitura)` | `arredondar(leitura)` |
-| `abs(erro)` | um `if erro < 0:` com os dois casos |
-| `x = a if sensor < 50 else b` | `if`/`else` com `guardar('x', ...)` em cada caso |
-| `break` ou `continue` dentro de `while` com sensor | a condição no próprio `while`, ou `repetir_ate(...)` |
-| `while True:` com `break` | `while condicao:` ou `with repetir_ate(lambda: condicao):` |
+| `int(leitura)`, `float(leitura)` | `round(leitura)` ou `arredondar(leitura)` |
+| `'perto' if sensor < 10 else 'longe'` (textos) | um `if`/`else` de várias linhas, com um `mostrar` em cada caso |
 | `'Luz: ' + str(luz_refletida(1))` | `mostrar('Luz:')` e `mostrar(luz_refletida(1), linha=2)`, ou `painel(luz=luz_refletida(1))` |
 | `range(ler('n'))` | `with repetir(5):` com um número escrito |
 | outros `import`, classes, arquivos, listas de leituras | só os comandos da seção 4 |
@@ -457,10 +463,10 @@ As mensagens dizem a linha e o que corrigir. As mais comuns:
 | Mensagem (começo) | O que corrigir |
 |---|---|
 | `não conheço "..."` | o comando não existe: troque por um da seção 4 (a mensagem às vezes sugere o certo) |
-| `esse valor do robô não funciona aqui` / `essa comparação do robô não funciona aqui` | uma leitura ou comparação foi usada onde o Python precisa decidir na hora de montar, como `x if ... else y`. Veja a tabela da seção 2 |
-| `a leitura de um sensor só existe no robô` | leitura dentro de `range(...)`, `int()`, `float()` ou `round()`: use um número escrito, ou `arredondar(...)` |
-| `aqui precisa de um número, e veio uma leitura de sensor` | leitura num lugar que só aceita número escrito, como `abs(...)`, `andar_cm(...)` ou `esperar(...)` |
-| `"break" e "continue" ainda não funcionam num while com sensor` | ponha a condição de parada no próprio `while` ou use `repetir_ate` |
+| `esse valor do robô não funciona aqui` / `essa comparação do robô não funciona aqui` | uma leitura ou comparação foi usada onde o Python precisa decidir na hora de montar, como `assert` ou `while ... else`. Use um `if`, um `while` ou um `a if ... else b` |
+| `a leitura de um sensor só existe no robô` | leitura dentro de `range(...)`, `int()` ou `float()`: use um número escrito, ou `round(...)` |
+| `aqui precisa de um número, e veio uma leitura de sensor` | leitura num lugar que só aceita número escrito, como `andar_cm(...)` ou `esperar(...)` |
+| `o "a if ... else b" só escolhe números` | o `a if ... else b` com sensor escolheu um texto ou um comando: use um `if`/`else` de várias linhas |
 | `a porta ... não é de sensor` / `não é de motor` | sensor com número de 1 a 4; motor com `'A'` a `'D'`, entre aspas |
 | `diga quanto andar` / `use só um` | dê exatamente um de `rotacoes=`, `graus=` ou `segundos=` |
 | `comparação '==' invalida` | nas comparações em texto, use `'='` |

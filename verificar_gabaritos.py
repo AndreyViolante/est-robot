@@ -299,8 +299,8 @@ def verificar_mensagens():
         ('andar(rotacoes=0,5)', 3, 'use ponto'),
         ('mostrar("Ola)', 3, 'faltou fechar as aspas'),
         ('esperar()', 3, 'faltou informar segundos'),
-        ('VEL = 30 if distancia(4) < 20 else 10', 3, 'não funciona aqui'),
-        ('while distancia(4) > 10:\n    andar(rotacoes=1)\n    break', 3, '"break"'),
+        ("mostrar('PERTO' if distancia(4) < 10 else 'LONGE')", 3, 'só escolhe números'),
+        ('assert distancia(4) > 10', 3, 'não funciona aqui'),
         ('if distancia(4) = 20:\n    bip()', 3, 'use "=="'),
         ('else:\n    bip()', 3, 'logo depois de um "if"'),
         ('esperar(0,5)', 3, 'use ponto'),
@@ -308,8 +308,8 @@ def verificar_mensagens():
         ('motor(1, 50)', 3, 'não é de motor'),
         ("mostrar('Luz ' + 5)", 3, 'não dá para juntar um texto'),
         ("mostrar('Luz ' + luz_refletida(1))", 3, 'não dá para juntar um texto'),
-        ('mostrar(int(luz_refletida(1)))', 3, 'use arredondar'),
-        ('mostrar(round(distancia(4)))', 3, 'use arredondar'),
+        ('mostrar(int(luz_refletida(1)))', 3, 'ou arredondar'),
+        ('mostrar(round(distancia(4), 1))', 3, 'só arredonda para o inteiro'),
         ("andar_cm('dez')", 3, 'precisa de um número'),
         ('x = 10 / 0', 3, 'divisão por zero'),
         ('for i in range(distancia(4)):\n    bip()', 3, 'só existe no robô'),
@@ -470,6 +470,103 @@ guardar('t', t)""",
 tocar(500, 0.2)
 tocar(600, 0.2)
 guardar('t', 3)"""),
+    ('break num while com sensor = a condição do robô também confere a saída',
+     """while luz_refletida(1) > 20:
+    motores(20, 20)
+    if distancia(4) < 10:
+        break
+parar()""",
+     """def acabou():
+    saiu = ler('s') == 2
+    guardar('o', 0)
+    with se(saiu):
+        guardar('o', 1)
+    with senao():
+        with se(luz_refletida(1) <= 20):
+            guardar('o', 1)
+    return ler('o') == 1
+with se(luz_refletida(1) > 20):
+    with repetir_ate(acabou):
+        guardar('s', 0)
+        motores(20, 20)
+        with se(distancia(4) < 10):
+            guardar('s', 2)
+parar()"""),
+    ('break e continue com sensor num while True = laço do robô',
+     """while True:
+    if tocado(1):
+        break
+    if cor_vista(3) == VERDE:
+        continue
+    motores(20, 20)
+bip()""",
+     """with repetir_ate(lambda: ler('s') == 2):
+    guardar('s', 0)
+    with se(tocado(1) + 0 != 0):
+        guardar('s', 2)
+    with se(ler('s') == 0):
+        with se(cor_vista(3) == VERDE):
+            guardar('s', 1)
+        with se(ler('s') == 0):
+            motores(20, 20)
+bip()"""),
+    ('break com sensor num for = cada volta só se o robô não saiu',
+     """for _ in range(2):
+    andar_cm(10)
+    if distancia(4) < 10:
+        break
+bip()""",
+     """guardar('s', 0)
+andar_cm(10)
+with se(distancia(4) < 10):
+    guardar('s', 2)
+with se(ler('s') < 2):
+    guardar('s', 0)
+    andar_cm(10)
+    with se(distancia(4) < 10):
+        guardar('s', 2)
+bip()"""),
+    ('break do Python continua do Python',
+     """n = 0
+while True:
+    n += 1
+    bip()
+    if n == 2:
+        break
+for i in range(5):
+    if i == 1:
+        continue
+    if i == 3:
+        break
+    tocar(400 + i * 100, 0.2)""",
+     """bip()
+bip()
+tocar(400, 0.2)
+tocar(600, 0.2)"""),
+    ('a if c else b, abs, min e max com leituras',
+     """VEL = 30 if distancia(4) > 20 else 10
+motores(VEL, VEL)
+mostrar(abs(luz_refletida(1) - luz_refletida(2)))
+mostrar(min(luz_refletida(1), luz_refletida(2)))
+mostrar(max(3, 9))""",
+     """with se(distancia(4) > 20):
+    guardar('v', 30)
+with senao():
+    guardar('v', 10)
+v = ler('v')
+motores(v, v)
+e = luz_refletida(1) - luz_refletida(2)
+guardar('a', e)
+with se(e < 0):
+    guardar('a', -e)
+mostrar(ler('a'))
+a = luz_refletida(1)
+b = luz_refletida(2)
+guardar('m', a)
+with se(b < ler('m')):
+    guardar('m', b)
+mostrar(ler('m'))
+mostrar(9)"""),
     ('notas pelo nome e melodia',
      """tocar('la4', 0.5)
 melodia('do re - mi:0.6')""",
@@ -556,6 +653,9 @@ parar()""",
         ('aleatório e arredondar',
          """mostrar(arredondar(aleatorio(1, 6) / 2))""",
          lambda d: b'\x0d\x05' in d and re.search(rb'\x0e.{12}', d, re.S) is not None),
+        ('round() de uma leitura = arredondar no robô',
+         """mostrar(round(distancia(4) / 2))""",
+         lambda d: b'\x0d\x05' in d),
         # bloco Mensagens e Bluetooth da IDE: escrita interna 0x33 tipo 6 (mensagens) e tipo 5 (ligar o Bluetooth)
         ('mensagens pelo Bluetooth: enviar número, texto e lógico, receber número',
          """ligar_bluetooth()
