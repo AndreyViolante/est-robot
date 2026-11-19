@@ -46,6 +46,7 @@
   "simulador/desafios.js",
   "simulador/estilo.css",
   "simulador/grafico.js",
+  "simulador/imprimir.js",
   "simulador/index.html",
   "simulador/mundo.js",
   "simulador/obr.js",

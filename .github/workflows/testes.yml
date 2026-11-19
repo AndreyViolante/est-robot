@@ -36,6 +36,8 @@ jobs:
         run: node ferramentas/teste_obr.js
       - name: Desafio surpresa do simulador (tarefa sorteada e conferência)
         run: node ferramentas/teste_surpresa.js
+      - name: Imprimir a arena da OBR em tamanho real
+        run: node ferramentas/teste_impressao.js
       - name: Protocolo da página de programar (USB e Bluetooth)
         run: node ferramentas/teste_protocolo.js
       - name: Versões do programa guardadas na página de programar
@@ -51,7 +53,7 @@ jobs:
           versao=$(grep -o "const VERSAO = '[^']*'" docs/programar/modo_blocos.js | cut -d"'" -f2)
           npm install --no-audit --no-fund --no-save --prefix "$RUNNER_TEMP/blockly" "blockly@$versao"
           BLOCKLY_DIR="$RUNNER_TEMP/blockly/node_modules/blockly" python ferramentas/teste_blocos.py
-      - name: Página inteira num Chrome sem janela (compilar, simular, erro, blocos, progresso)
+      - name: Página inteira num Chrome sem janela (compilar, simular, erro, blocos, progresso, celular)
         shell: bash
         run: |
           # playwright-core usa o Chrome que já vem no Windows do GitHub (não baixa navegador)

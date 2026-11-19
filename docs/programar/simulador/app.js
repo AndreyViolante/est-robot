@@ -1855,6 +1855,8 @@ function dicaOBR() {
 }
 
 function atualizarEditorOBR() {
+  // imprimir: qualquer arena da OBR que esteja certa (a pronta, a sorteada ou a montada)
+  $('imprimirOBR').hidden = !(pista.obr && pista.obr.arena.percurso.length >= 2 && !pista.obr.erros.length);
   $('sorteioOBR').hidden = pista.id !== SORTEADA;
   if (pista.id === SORTEADA && document.activeElement !== $('sementeOBR')) $('sementeOBR').value = sementeOBR();
   const minha = pista.id === MINHA_OBR;
@@ -1990,6 +1992,10 @@ $('btMontarOBR').addEventListener('click', () => {
   atualizarEditor();
 });
 $('btTirarOBR').addEventListener('click', () => { pista.obr.arena.percurso.pop(); escolhidoOBR = -1; mudouArenaOBR(); });
+$('btImprimirOBR').addEventListener('click', () => {
+  const titulo = pista.id === SORTEADA ? `Arena OBR sorteada nº ${sementeOBR()}` : pista.nome;
+  EST.ImprimirArena.abrir(pista, titulo);
+});
 // arena sorteada: outro número ao acaso, ou o número que a turma combinou
 $('btSortearOBR').addEventListener('click', () => {
   let n;

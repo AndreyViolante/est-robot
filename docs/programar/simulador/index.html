@@ -144,6 +144,10 @@
       <label class="campo">Arena nº <input type="number" id="sementeOBR" min="1" max="9999" aria-label="Número da arena sorteada"></label>
       <button id="btSortearOBR" class="bt pequeno" type="button">Sortear outra</button>
     </div>
+    <div class="editor" id="imprimirOBR" hidden>
+      <button id="btImprimirOBR" class="bt pequeno" type="button"
+              title="Abre as folhas A4 com os ladrilhos em tamanho real (4 folhas por ladrilho), para montar a arena no laboratório">Imprimir os ladrilhos</button>
+    </div>
     <div class="editor" id="editorOBR" hidden>
       <button id="btMontarOBR" class="bt pequeno" type="button" aria-pressed="false">Montar o percurso</button>
       <div class="itens" id="itensOBR" hidden>
@@ -264,6 +268,7 @@
 <script src="desafios.js"></script>
 <script src="obr.js"></script>
 <script src="progresso.js"></script>
+<script src="imprimir.js"></script>
 <script src="programa.js"></script>
 <script src="app.js"></script>
 <script>

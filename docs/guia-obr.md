@@ -126,7 +126,8 @@ No simulador, a **Arena da OBR** monta o percurso com ladrilhos de 30 cm e conta
 use as arenas prontas ou monte a sua em "Minha arena OBR" com os perigos que a equipe quer treinar. Na
 "Arena OBR sorteada", cada "Sortear outra" monta uma arena nova: um programa que só funciona numa pista
 decorada falha logo, como no percurso da prova. O simulador não tem escorregão, bateria fraca nem a luz do
-ginásio: o teste final é sempre no robô.
+ginásio: o teste final é sempre no robô. Para levar a mesma arena para o laboratório, "Imprimir os ladrilhos"
+gera as folhas em tamanho real (4 folhas A4 por ladrilho de 30 cm).
 
 ## 7. No dia da prova
 

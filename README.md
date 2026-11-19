@@ -225,7 +225,9 @@ refletida dos sensores de cor (0 a 100) num gráfico e a distância do ultrassom
 os valores de cada sensor naquele instante: bom para ver o seguidor oscilando e escolher o limite entre o
 preto e o branco.
 
-**Arena da OBR.** Duas arenas prontas, a "Arena OBR sorteada" (uma arena nova a cada "Sortear outra"; o
+**Arena da OBR.** "Imprimir os ladrilhos" abre as folhas A4 de qualquer arena da OBR em tamanho real (cada
+ladrilho de 30 cm em 4 folhas, com o mapa de montagem), para montar no laboratório a pista do simulador.
+Duas arenas prontas, a "Arena OBR sorteada" (uma arena nova a cada "Sortear outra"; o
 número dela repete a mesma arena em qualquer computador, para a turma correr na mesma) e a "Minha arena OBR"
 montam o percurso com linha da prova prática
 com ladrilhos de 30 cm, como no manual da OBR 2026: curvas, gap, obstáculo, interseções com e sem verde,
@@ -441,8 +443,9 @@ A versão instalada fica no arquivo [VERSAO](VERSAO) e o que mudou em cada uma, 
 [NOVIDADES.md](NOVIDADES.md). A cada envio para o GitHub, os testes rodam sozinhos
 ([.github/workflows/testes.yml](.github/workflows/testes.yml)): conferência com a IDE, testes da
 linguagem e erros de escrita nos arquivos Python e JavaScript, o simulador, os blocos e a página inteira num
-Chrome sem janela (compila com o Python do navegador, simula, mostra um erro, passa para blocos e salva e
-carrega o progresso, em [ferramentas/teste_pagina.js](ferramentas/teste_pagina.js)). Uma vez por mês o Dependabot do GitHub
+Chrome sem janela (compila com o Python do navegador, simula, mostra um erro, passa para blocos, salva e
+carrega o progresso e repete o principal numa tela de celular com toque, em
+[ferramentas/teste_pagina.js](ferramentas/teste_pagina.js)). Uma vez por mês o Dependabot do GitHub
 confere se saíram versões novas das peças desses workflows e abre um Pull Request para aprovar
 ([.github/dependabot.yml](.github/dependabot.yml)).
 

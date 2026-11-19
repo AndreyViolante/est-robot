@@ -1,7 +1,9 @@
 'use strict';
 /* Teste da página inteira, num Chrome sem janela: abre a página de programar (servida da pasta docs/, como no
    site), compila com o Python do navegador, abre o simulador e executa, mostra um erro em português, passa o
-   programa para blocos e compila de novo (mesmos bytes), salva e carrega o progresso, e abre o simulador sozinho.
+   programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), salva e carrega o
+   progresso e abre o simulador sozinho. Depois, num celular (390 x 844, toque): a página começa nos blocos, não
+   rola para o lado, o teclado de programação aparece no código, o menu Arquivo cabe na tela e o simulador roda.
    Precisa de internet (Python do navegador, Blockly e o editor vêm da CDN) e do pacote playwright-core, que usa o
    Chrome instalado (não baixa navegador).
    Uso: npm install --prefix <pasta> playwright-core@1.59.1
@@ -42,15 +44,68 @@ function confere(nome, certo, detalhe = '') {
 
 const PROGRAMA = `from robo import *
 
+
+
+def acelerar(vel):
+    motores(vel, vel)
+
+
 VEL = 30 if distancia(4) > 20 else 20
 zerar_cronometro()
 while True:
-    motores(VEL, VEL)
+    acelerar(VEL)
     if cronometro() > 1:
         break
 parar()
 mostrar(abs(luz_refletida(1) - 50))
+mostrar(media(luz_refletida(2), 3), linha=2)
 `;
+
+/* o celular: a mesma página numa tela de 390 x 844 com toque (Chrome do Android) */
+async function celular(navegador, base, erros) {
+  const contexto = await navegador.newContext({
+    serviceWorkers: 'block', viewport: {width: 390, height: 844}, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36'});
+  contexto.on('weberror', e => erros.push(`celular: ${e.error()}`));
+  const pagina = await contexto.newPage();
+  pagina.on('console', m => { if (m.type() === 'error' && !/status of 404/.test(m.text())) erros.push(`celular: ${m.text()}`); });
+  pagina.on('dialog', d => d.accept());
+  pagina.setDefaultTimeout(30000);
+  const semRolarDeLado = () => pagina.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
+  try {
+    await pagina.goto(`${base}/programar/`);
+    await pagina.locator('#areaBlocos .injectionDiv').waitFor({timeout: 60000});
+    confere('celular: a primeira visita começa nos blocos', await pagina.getAttribute('#abaBlocos', 'aria-selected') === 'true');
+    confere('celular: a página não rola para o lado (blocos)', await semRolarDeLado());
+    await pagina.locator('#btExtras').tap();
+    const menu = await pagina.locator('#extras').boundingBox();
+    confere('celular: o menu Arquivo abre dentro da tela', !!menu && menu.x >= 0 && menu.x + menu.width <= 391,
+            JSON.stringify(menu));
+    await pagina.locator('#btExtras').tap();
+    await pagina.locator('#abaPython').tap();
+    await pagina.locator('#areaPython .CodeMirror').waitFor();
+    confere('celular: a página não rola para o lado (Python)', await semRolarDeLado());
+    await pagina.locator('#areaPython .CodeMirror-lines').tap();
+    await pagina.locator('#teclado').waitFor({state: 'visible', timeout: 5000}).catch(() => {});
+    confere('celular: tocar no código mostra o teclado de programação', await pagina.isVisible('#teclado'));
+    await pagina.locator('#btSimular').tap();
+    await pagina.locator('#mensagens .msg.ok', {hasText: 'bytes'}).last().waitFor({timeout: 150000});
+    await pagina.locator('#sim').waitFor({state: 'visible'});
+    const quadro = pagina.frameLocator('#quadroSim');
+    await quadro.locator('#btExecutar:not([disabled])').waitFor();
+    await quadro.locator('#btExecutar').tap();
+    await pagina.waitForTimeout(2500);
+    const relogio = await quadro.locator('#relogio').innerText();
+    const simDeLado = await pagina.frame({url: /simulador\/index\.html/}).evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth + 1);
+    confere('celular: o simulador abre, executa e não rola para o lado', !/^0,0 s$/.test(relogio.trim()) && simDeLado,
+            `${relogio}, sem rolar de lado: ${simDeLado}`);
+  } catch (e) {
+    confere('celular: o teste chegou até o fim', false, e.message.split('\n')[0]);
+  } finally {
+    await contexto.close();
+  }
+}
 
 async function main() {
   const servidor = await servir();
@@ -87,7 +142,7 @@ async function main() {
     await pagina.click('#btSimular');
     const ok = await ultimaMensagem('ok', 'bytes');
     const bytesPython = bytesDe(ok);
-    confere('compila com o Python do navegador (if numa linha, break, abs)', bytesPython > 0, ok);
+    confere('compila com o Python do navegador (função, if numa linha, break, abs, media)', bytesPython > 0, ok);
     await pagina.locator('#sim').waitFor({state: 'visible'});
     const quadro = pagina.frameLocator('#quadroSim');
     await quadro.locator('#btExecutar:not([disabled])').waitFor();
@@ -112,7 +167,8 @@ async function main() {
     await limpar();
     await pagina.click('#btTrazer');
     const trouxe = await ultimaMensagem('ok', 'agora está em blocos');
-    confere('o programa vira blocos, todas as linhas', trouxe.includes('Todas as linhas viraram blocos'), trouxe);
+    confere('o programa vira blocos, todas as linhas (a função em "Meus blocos")', trouxe.includes('Todas as linhas viraram blocos')
+            && await pagina.locator('#areaBlocos .blocklyDraggable').count() > 5, trouxe);
     await limpar();
     await pagina.click('#btSimular');
     const okBlocos = await ultimaMensagem('ok', 'bytes');
@@ -149,6 +205,8 @@ async function main() {
     await pagina.waitForTimeout(2000);
     const relogio2 = await pagina.locator('#relogio').innerText();
     confere('o simulador do site abre e executa o exemplo', !/^0,0 s$/.test(relogio2.trim()), relogio2);
+
+    await celular(navegador, base, erros);
   } catch (e) {
     confere('o teste chegou até o fim', false, e.message.split('\n')[0]);
   } finally {
