@@ -353,6 +353,125 @@ const ARENAS = [
   },
 ];
 
+// ---------------------------------------------------------------- arena sorteada
+
+/* números de 0 a 1 sempre na mesma sequência para a mesma semente (mulberry32): a arena nº 4821 é a mesma em
+   qualquer computador, então a turma toda pode correr na mesma */
+function sorteador(semente) {
+  let a = semente >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), a | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* um caminho sem repetir ladrilho, de alvo ladrilhos, que prefere seguir reto (pista da OBR tem retas) */
+function caminhoSorteado(rnd, colunas, linhas, alvo) {
+  const visto = new Set(), perc = [], chave = (c, r) => `${c},${r}`;
+  let passos = 0;
+  function anda(c, r, veio) {
+    perc.push({c, r});
+    visto.add(chave(c, r));
+    if (perc.length >= alvo) return true;
+    if (++passos > 4000) return false;
+    const lados = Object.keys(PASSO).sort(() => rnd() - 0.5);
+    if (veio && rnd() < 0.75) lados.unshift(...lados.splice(lados.indexOf(veio), 1));      // reto primeiro
+    for (const lado of lados) {
+      const [dc, dr] = PASSO[lado], x = c + dc, y = r + dr;
+      if (x >= 0 && y >= 0 && x < colunas && y < linhas && !visto.has(chave(x, y)) && anda(x, y, lado)) return true;
+    }
+    perc.pop();
+    visto.delete(chave(c, r));
+    return false;
+  }
+  const c = Math.floor(rnd() * colunas), r = rnd() < 0.5 ? 0 : linhas - 1;      // a partida numa beirada
+  return anda(c, r, null) ? perc : null;
+}
+
+/* Uma arena da OBR sorteada pela semente: o caminho e os perigos (gap, obstáculo, interseções com e sem verde,
+   beco sem saída, curvas suaves e checkpoints). Só sai arena que o conferir aceita, e as linhas que saem de uma
+   interseção para o lado só vão para ladrilhos fora do caminho (não fazem atalho). */
+function sortear(semente, colunas = 6, linhas = 4) {
+  const rnd = sorteador(semente);
+  const um = lista => lista[Math.floor(rnd() * lista.length)];
+  const tira = (lista, v) => { const i = lista.indexOf(v); if (i >= 0) lista.splice(i, 1); };
+  for (let tentativa = 0; tentativa < 300; tentativa++) {
+    const base = caminhoSorteado(rnd, colunas, linhas, 13 + Math.floor(rnd() * 5));
+    if (!base) continue;
+    const ocupado = new Set(base.map(t => `${t.c},${t.r}`));
+    const livre = (t, lado) => {
+      const x = t.c + PASSO[lado][0], y = t.r + PASSO[lado][1];
+      return !ocupado.has(`${x},${y}`);
+    };
+    let perc = base.map(t => ({c: t.c, r: t.r, elemento: ''}));
+    let tipos = tiposDoPercurso(perc);
+    const meio = perc.map((t, i) => i).filter(i => i > 1 && i < perc.length - 2);
+    const retas = meio.filter(i => tipos[i].tipo === 'reta'), curvas = meio.filter(i => tipos[i].tipo === 'curva');
+    const usado = new Set();
+    const pega = (lista, longeDe = 1) => {
+      const ok = lista.filter(i => [...usado].every(j => Math.abs(i - j) > longeDe));
+      if (!ok.length) return null;
+      const i = um(ok);
+      usado.add(i);
+      return i;
+    };
+    // beco sem saída: numa curva com o ladrilho da frente livre (e os lados dele também), o robô entra lá,
+    // dá meia-volta e, de volta na curva, o verde manda virar
+    const becos = curvas.filter(i => {
+      const k = tipos[i], frente = {c: perc[i].c + PASSO[k.anda][0], r: perc[i].r + PASSO[k.anda][1]};
+      return frente.c >= 0 && frente.r >= 0 && frente.c < colunas && frente.r < linhas && livre(perc[i], k.anda)
+        && livre(frente, ESQUERDA[k.anda]) && livre(frente, DIREITA[k.anda]);
+    });
+    const beco = rnd() < 0.7 ? pega(becos) : null;
+    // gap e obstáculo com reta antes e depois: o robô chega alinhado e tem onde voltar para a linha
+    const entreRetas = retas.filter(i => tipos[i - 1].tipo === 'reta' && tipos[i + 1].tipo === 'reta');
+    const gap = pega(entreRetas);
+    const obstaculo = pega(entreRetas);
+    if (gap !== null) Object.assign(perc[gap], {elemento: 'gap', gap: 10});
+    if (obstaculo !== null) perc[obstaculo].elemento = 'obstaculo';
+    // interseções: na reta, um T para um lado livre (ou cruz, com os dois livres); na curva, T com o verde
+    for (let n = 0; n < 2; n++) {
+      const i = pega(retas.filter(j => livre(perc[j], ESQUERDA[tipos[j].anda]) || livre(perc[j], DIREITA[tipos[j].anda])));
+      if (i === null) break;
+      const k = tipos[i], esq = livre(perc[i], ESQUERDA[k.anda]), dir = livre(perc[i], DIREITA[k.anda]);
+      if (esq && dir && rnd() < 0.35) perc[i].elemento = 'cruz';
+      else if (dir && (!esq || rnd() < 0.5)) Object.assign(perc[i], {elemento: 'T', ramo: 'direita'});
+      else perc[i].elemento = 'T';
+      // o verde depois fica num canto do cruzamento: do lado em que sai linha (na cruz, qualquer um)
+      const lados = perc[i].elemento === 'cruz' ? ['esquerda', 'direita'] : [perc[i].ramo || 'esquerda'];
+      if (rnd() < 0.4) perc[i].verdeDepois = um(lados);
+    }
+    for (let n = 0; n < 2; n++) {
+      const i = pega(curvas.filter(j => {
+        const k = tipos[j], outro = k.saida === ESQUERDA[k.anda] ? DIREITA[k.anda] : ESQUERDA[k.anda];
+        return livre(perc[j], outro) || livre(perc[j], k.anda);
+      }));
+      if (i === null) break;
+      const k = tipos[i], outro = k.saida === ESQUERDA[k.anda] ? DIREITA[k.anda] : ESQUERDA[k.anda];
+      perc[i].elemento = 'T';
+      if (!livre(perc[i], outro) || (livre(perc[i], k.anda) && rnd() < 0.5)) perc[i].ramo = 'reto';    // chega pela barra
+    }
+    for (const i of curvas) if (!usado.has(i) && rnd() < 0.3) perc[i].curva = 'suave';
+    for (let n = 0; n < 2; n++) {
+      const i = pega(retas.filter(j => !perc[j].elemento), 2);
+      if (i !== null) perc[i].checkpoint = true;
+    }
+    if (beco !== null) {
+      const k = tipos[beco], t = perc[beco];
+      const frente = {c: t.c + PASSO[k.anda][0], r: t.r + PASSO[k.anda][1], elemento: 'T'};
+      const ida = {c: t.c, r: t.r, elemento: 'T'};
+      if (k.saida === DIREITA[k.anda]) ida.ramo = 'direita';
+      const volta = {c: t.c, r: t.r, elemento: 'T', ramo: 'reto'};
+      perc = [...perc.slice(0, beco), ida, frente, volta, ...perc.slice(beco + 1)];
+    }
+    const arena = {colunas, linhas, nivel: 1, percurso: perc};
+    if (!conferir(arena).length) return arena;
+  }
+  return JSON.parse(JSON.stringify(ARENAS[0].arena));          // não deve acontecer: a arena de treino
+}
+
 /* a "Minha arena OBR" guardada no navegador (ou uma arena vazia) */
 function arenaGuardada(dados) {
   const d = dados && typeof dados === 'object' ? dados : {};
@@ -372,5 +491,5 @@ function arenaGuardada(dados) {
 }
 
 EST.OBR = {LADO, BORDA, RODADA, PONTOS, GAP_MAXIMO, VERMELHO, ARENAS, NOMES_PERIGO,
-           montar, conferir, decisao, tiposDoPercurso, largadaNoLadrilho, arenaGuardada, vizinhos, percursoDe, Placar};
+           montar, conferir, decisao, tiposDoPercurso, largadaNoLadrilho, arenaGuardada, vizinhos, percursoDe, sortear, Placar};
 })();

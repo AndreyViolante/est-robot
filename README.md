@@ -217,13 +217,15 @@ refletida dos sensores de cor (0 a 100) num gráfico e a distância do ultrassom
 os valores de cada sensor naquele instante: bom para ver o seguidor oscilando e escolher o limite entre o
 preto e o branco.
 
-**Arena da OBR.** Duas arenas prontas e a "Minha arena OBR" montam o percurso com linha da prova prática
+**Arena da OBR.** Duas arenas prontas, a "Arena OBR sorteada" (uma arena nova a cada "Sortear outra"; o
+número dela repete a mesma arena em qualquer computador, para a turma correr na mesma) e a "Minha arena OBR"
+montam o percurso com linha da prova prática
 com ladrilhos de 30 cm, como no manual da OBR 2026: curvas, gap, obstáculo, interseções com e sem verde,
 beco sem saída, checkpoints e a faixa vermelha de chegada. O cartão **Rodada da OBR** conta os pontos
 como a súmula (ladrilhos por tentativa, perigos, chegada menos 5 por falha), marca a falha de progresso
 (perdeu a linha, ficou 10 s sem sair do lugar, pegou o caminho errado), devolve o robô ao último
 checkpoint e recomeça o programa, com a rodada de 5 minutos. Para montar a sua: escolha "Minha arena
-OBR", aperte **✎ Montar o percurso** e clique nos quadrados um depois do outro; a página confere se os
+OBR", aperte **Montar o percurso** e clique nos quadrados um depois do outro; a página confere se os
 verdes de cada interseção batem com o caminho. Rampa, gangorra, lombada, passagem e sala de resgate não
 dá para simular visto de cima.
 

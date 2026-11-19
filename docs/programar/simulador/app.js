@@ -15,6 +15,7 @@ const CORES_SENSOR = {1: '#2f8cff', 2: '#ff8a1f', 3: '#18b07a', 4: '#b27cff'};  
 const NOMES_LUZ = ['azul', 'roxo', 'vermelho'];
 const MINHA = 'minha';            // id da pista que o aluno desenha (fica guardada no navegador)
 const MINHA_OBR = 'obr-minha';    // id da arena da OBR que o aluno monta com ladrilhos (também fica guardada)
+const SORTEADA = 'obr-sorteada';  // id da arena da OBR sorteada (obr.js, sortear): guarda só o número dela
 const GRADE = 5;                  // cm: as pontas das linhas desenhadas grudam nesta grade
 const CAIXA = 10;                 // cm: lado da caixa que o editor coloca
 const MAX_ITENS = 500;            // linhas, quadrados ou caixas guardados na "Minha pista", no máximo
@@ -170,8 +171,21 @@ function pistaMinha() {
   return p;
 }
 
-// arena da OBR (obr.js): uma das prontas ou a "Minha arena OBR" guardada no navegador
+// número da arena sorteada (guardado): a mesma semente dá a mesma arena em qualquer computador
+const sementeOBR = () => (Number.isInteger(salvo.sementeOBR) && salvo.sementeOBR >= 1 && salvo.sementeOBR <= 9999
+  ? salvo.sementeOBR : (salvo.sementeOBR = 1 + Math.floor(Math.random() * 9999)));
+
+// arena da OBR (obr.js): uma das prontas, a sorteada ou a "Minha arena OBR" guardada no navegador
 function pistaOBR(id) {
+  if (id === SORTEADA) {
+    const n = sementeOBR();
+    const p = EST.OBR.montar(EST.OBR.sortear(n), SORTEADA, `Arena OBR sorteada nº ${n}`);
+    p.dica = `Arena sorteada nº ${n}: interseções, verdes, gap, obstáculo e beco em lugares que mudam a cada sorteio, ` +
+             'para o programa funcionar em qualquer pista, como no percurso da prova. Para a turma toda correr na mesma ' +
+             'arena, todos digitam o mesmo número.';
+    p.obr.erros = [];
+    return p;
+  }
   if (id === MINHA_OBR) {
     const arena = EST.OBR.arenaGuardada(salvo.arenaOBR);
     const p = EST.OBR.montar(arena, MINHA_OBR, 'Minha arena OBR (ladrilhos)');
@@ -184,7 +198,7 @@ function pistaOBR(id) {
   p.obr.erros = [];
   return p;
 }
-const ehOBR = id => id === MINHA_OBR || EST.OBR.ARENAS.some(a => a.id === id);
+const ehOBR = id => id === MINHA_OBR || id === SORTEADA || EST.OBR.ARENAS.some(a => a.id === id);
 
 function montarPista(id) {
   if (id === MINHA) return pistaMinha();
@@ -202,7 +216,9 @@ let desafio = null, prova = null;     // desafio escolhido e a tentativa em anda
 let placar = null;                    // rodada da OBR em andamento (ver "arena da OBR")
 let editandoOBR = false, escolhidoOBR = -1;     // montando a "Minha arena OBR" e o ladrilho escolhido nela
 let pista = montarPista((P && P.pista) || salvo.pista);     // o exemplo da demonstração já diz a pista
-const robo = new EST.Robo(mesclar(copia(EST.ROBO_PADRAO), salvo.robo), pista);
+// programa do VS Code (simular.py): as medidas do calibracao.py valem por cima das guardadas na página, porque o
+// programa foi compilado com elas (o andar_cm vira graus com aquela roda)
+const robo = new EST.Robo(mesclar(mesclar(copia(EST.ROBO_PADRAO), salvo.robo), P && P.robo), pista);
 let vm = novaVM();
 
 function largada() {
@@ -1641,7 +1657,9 @@ const CAMPOS_CORPO = [['frente', 'à frente'], ['tras', 'atrás'], ['largura', '
 function montarMedidas() {
   const cfg = robo.config;
   const motor = (chave) => `<select data-chave="${chave}">${'ABCD'.split('').map(l => `<option${cfg[chave] === l ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
-  let html = '<table class="medidas"><tbody>';
+  let html = P && P.robo ? '<p class="nota">O tamanho da roda, a distância entre as rodas, os motores, o invertido e o ' +
+    'preto de cada sensor vêm do <code>calibracao.py</code> da sua pasta, com que o programa foi compilado.</p>' : '';
+  html += '<table class="medidas"><tbody>';
   for (const [k, rotulo, min, max, passo] of CAMPOS_ROBO) {
     html += `<tr><td colspan="3" class="rotulo">${rotulo}</td><td colspan="2"><input type="number" data-chave="${k}" min="${min}" max="${max}" step="${passo}" value="${cfg[k]}"></td></tr>`;
   }
@@ -1823,6 +1841,8 @@ function dicaOBR() {
 }
 
 function atualizarEditorOBR() {
+  $('sorteioOBR').hidden = pista.id !== SORTEADA;
+  if (pista.id === SORTEADA && document.activeElement !== $('sementeOBR')) $('sementeOBR').value = sementeOBR();
   const minha = pista.id === MINHA_OBR;
   if (!minha) { editandoOBR = false; escolhidoOBR = -1; }
   $('editorOBR').hidden = !minha;
@@ -1956,6 +1976,24 @@ $('btMontarOBR').addEventListener('click', () => {
   atualizarEditor();
 });
 $('btTirarOBR').addEventListener('click', () => { pista.obr.arena.percurso.pop(); escolhidoOBR = -1; mudouArenaOBR(); });
+// arena sorteada: outro número ao acaso, ou o número que a turma combinou
+$('btSortearOBR').addEventListener('click', () => {
+  let n;
+  do { n = 1 + Math.floor(Math.random() * 9999); } while (n === salvo.sementeOBR);
+  salvo.sementeOBR = n;
+  salvar();
+  trocarPista(SORTEADA);
+});
+$('sementeOBR').addEventListener('change', ev => {
+  const n = Number(ev.target.value);
+  if (Number.isInteger(n) && n >= 1 && n <= 9999) {
+    salvo.sementeOBR = n;
+    salvar();
+    trocarPista(SORTEADA);
+  } else {
+    ev.target.value = sementeOBR();
+  }
+});
 $('btBecoOBR').addEventListener('click', () => {
   const perc = pista.obr.arena.percurso;
   if (perc.length < 2) return;
@@ -2187,7 +2225,7 @@ $('btZerar').addEventListener('click', () => {
 });
 
 $('pista').innerHTML = [...EST.PISTAS, {id: MINHA, nome: 'Minha pista'}, ...EST.OBR.ARENAS,
-                        {id: MINHA_OBR, nome: 'Minha arena OBR (ladrilhos)'}]
+                        {id: SORTEADA, nome: 'Arena OBR sorteada'}, {id: MINHA_OBR, nome: 'Minha arena OBR (ladrilhos)'}]
   .map(p => `<option value="${p.id}">${escapar(p.nome)}</option>`).join('') +
   '<option value="desafio" hidden>Pista do desafio</option>';
 $('pista').value = pista.id;

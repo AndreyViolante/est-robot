@@ -92,5 +92,41 @@ const ruim = {colunas: 3, linhas: 3, nivel: 1, percurso: OBR.percursoDe('0,0 1,0
 const errosRuim = OBR.conferir(ruim);
 confere('conferência: gap na curva e gap maior que 10 cm no nível 1', errosRuim.length === 2, errosRuim.join('; '));
 
+// arena sorteada: o mesmo número dá a mesma arena; todas passam na conferência, sem cair na arena de reserva; as
+// linhas que saem das interseções para o lado não encostam em outro ladrilho do caminho (não fazem atalho)
+confere('arena sorteada: o mesmo número dá a mesma arena',
+  JSON.stringify(OBR.sortear(4821)) === JSON.stringify(OBR.sortear(4821)) &&
+  JSON.stringify(OBR.sortear(4821)) !== JSON.stringify(OBR.sortear(4822)));
+const reserva = JSON.stringify(OBR.ARENAS[0].arena);
+const problemas = [], perigos = {gap: 0, obstaculo: 0, beco: 0, T: 0, cruz: 0};
+for (let n = 1; n <= 300; n++) {
+  const a = OBR.sortear(n), erros = OBR.conferir(a), tipos = OBR.tiposDoPercurso(a.percurso);
+  if (JSON.stringify(a) === reserva) problemas.push(`${n}: caiu na reserva`);
+  if (erros.length) problemas.push(`${n}: ${erros.join('; ')}`);
+  // atalho: um ponto da beirada entre dois ladrilhos aonde chegam linhas dos DOIS, sem eles se seguirem no caminho
+  const p = OBR.montar(a, 'x', 'x'), naBeirada = new Map();
+  for (const s of p.linhas) {
+    if (!s.seg) continue;
+    const [x1, y1, x2, y2] = s.seg;
+    const dono = `${Math.floor(((x1 + x2) / 2 - OBR.BORDA) / OBR.LADO)},${Math.floor(((y1 + y2) / 2 - OBR.BORDA) / OBR.LADO)}`;
+    for (const [x, y] of [[x1, y1], [x2, y2]]) {
+      const c = (x - OBR.BORDA) / OBR.LADO, r = (y - OBR.BORDA) / OBR.LADO;
+      if (Number.isInteger(c) === Number.isInteger(r)) continue;          // centro ou canto: não é beirada
+      const k = `${x},${y}`;
+      if (!naBeirada.has(k)) naBeirada.set(k, new Set());
+      naBeirada.get(k).add(dono);
+    }
+  }
+  const seguem = new Set(a.percurso.slice(1).map((t, i) => [`${t.c},${t.r}`, `${a.percurso[i].c},${a.percurso[i].r}`].sort().join('|')));
+  for (const donos of naBeirada.values()) {
+    const d = [...donos].sort();
+    if (d.length > 1 && !seguem.has(d.join('|'))) problemas.push(`${n}: linhas de ${d.join(' e ')} se encontram, sem eles se seguirem`);
+  }
+  a.percurso.forEach((t, i) => { if (t.elemento) perigos[t.elemento]++; if (tipos[i].tipo === 'beco') perigos.beco++; });
+}
+confere('arena sorteada: 300 números, todas válidas e sem atalho', !problemas.length, problemas.slice(0, 5).join(' | '));
+confere('arena sorteada: aparecem gap, obstáculo, beco, T e cruz',
+  Object.values(perigos).every(v => v > 0), JSON.stringify(perigos));
+
 console.log(falhas ? `\narena da OBR: ${falhas} FALHA(S)` : '\narena da OBR: OK');
 process.exit(falhas ? 1 : 0);

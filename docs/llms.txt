@@ -1,0 +1,22 @@
+# EST-LAB
+
+> Programa a controladora educacional EST (Dr. Luck) em Python, com comandos em português (`from robo import *`).
+> O arquivo .py roda no computador e vira o programa do robô: não é MicroPython. Antes de escrever um programa
+> para um aluno, leia o tutorial para IAs: ele explica como o código vira programa do robô, os comandos que
+> existem (não invente outros), o que já foi conferido no robô e o que corrigir em cada mensagem de erro.
+
+## Para escrever programas
+
+- [Tutorial do EST-LAB para IAs](https://raw.githubusercontent.com/AndreyViolante/est-robot/master/docs/tutorial-para-ia.md): leia primeiro; regras, comandos, exemplos testados e erros comuns
+- [Cola de comandos do aluno](https://raw.githubusercontent.com/AndreyViolante/est-robot/master/docs/cola-do-aluno.md): todos os comandos numa folha
+- [Guia da OBR](https://raw.githubusercontent.com/AndreyViolante/est-robot/master/docs/guia-obr.md): como organizar o programa da prova prática
+
+## Onde o aluno roda o programa
+
+- [Página de programar](https://andreyviolante.github.io/est-robot/programar/): Python ou blocos no navegador, simula e envia ao robô
+- [Simulador](https://andreyviolante.github.io/est-robot/simulador/): pistas, desafios e a arena da OBR
+
+## Opcional
+
+- [README do projeto](https://raw.githubusercontent.com/AndreyViolante/est-robot/master/README.md): instalação, comandos e o que já foi testado no robô
+- [Guia do professor](https://raw.githubusercontent.com/AndreyViolante/est-robot/master/docs/guia-do-professor.md): roteiro de 8 aulas

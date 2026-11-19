@@ -123,8 +123,10 @@ estava quando errou. O `painel(...)` mostra até 3 números na tela, como o erro
 3. Só então junte tudo no laço principal.
 
 No simulador, a **Arena da OBR** monta o percurso com ladrilhos de 30 cm e conta os pontos como a súmula:
-use as arenas prontas ou monte a sua em "Minha arena OBR" com os perigos que a equipe quer treinar. O
-simulador não tem escorregão, bateria fraca nem a luz do ginásio: o teste final é sempre no robô.
+use as arenas prontas ou monte a sua em "Minha arena OBR" com os perigos que a equipe quer treinar. Na
+"Arena OBR sorteada", cada "Sortear outra" monta uma arena nova: um programa que só funciona numa pista
+decorada falha logo, como no percurso da prova. O simulador não tem escorregão, bateria fraca nem a luz do
+ginásio: o teste final é sempre no robô.
 
 ## 7. No dia da prova
 

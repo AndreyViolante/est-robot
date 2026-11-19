@@ -14,9 +14,12 @@ NOTAS = {'do', 'do#', 're', 're#', 'mi', 'fa', 'fa#', 'sol', 'sol#', 'la', 'la#'
 COMPARA = {ast.Eq: 'EQ', ast.NotEq: 'NEQ', ast.Lt: 'LT', ast.LtE: 'LTE', ast.Gt: 'GT', ast.GtE: 'GTE'}
 CONTA = {ast.Add: '+', ast.Sub: '-', ast.Mult: '*', ast.Div: '/'}
 SENSORES = {'luz_refletida': 'robo_luz_refletida', 'cor_vista': 'robo_cor_vista', 'distancia': 'robo_distancia',
-            'tocado': 'robo_tocado', 'limite': 'robo_limite', 'giroscopio': 'robo_giroscopio'}
+            'tocado': 'robo_tocado', 'limite': 'robo_limite', 'giroscopio': 'robo_giroscopio',
+            'limite_medido': 'robo_limite_medido'}
 SIMPLES = {'parar': 'robo_parar', 'bip': 'robo_bip', 'apagar_luz': 'robo_apagar_luz',
-           'zerar_cronometro': 'robo_zerar_cronometro'}
+           'zerar_cronometro': 'robo_zerar_cronometro', 'esperar_botao': 'robo_esperar_botao'}
+BOTOES = {'BOTAO_CIMA', 'BOTAO_BAIXO', 'BOTAO_ESQUERDA', 'BOTAO_DIREITA', 'BOTAO_CENTRO'}
+COMPARACOES = ('<', '<=', '>', '>=', '=', '!=')
 UNIDADES = ('rotacoes', 'segundos', 'graus')
 SE_SENSOR = {'se_ver_cor': 'robo_se_cor', 'se_luz': 'robo_se_luz', 'se_distancia': 'robo_se_distancia',
              'se_tocado': 'robo_se_tocado'}
@@ -25,7 +28,8 @@ SE_SENSOR = {'se_ver_cor': 'robo_se_cor', 'se_luz': 'robo_se_luz', 'se_distancia
 SAIDA = {'math_number': 'Number', 'text': 'String', 'logic_boolean': 'Boolean', 'logic_compare': 'Boolean',
          'logic_operation': 'Boolean', 'logic_negate': 'Boolean', 'robo_conta': 'Number', 'robo_luz_refletida': 'Number',
          'robo_distancia': 'Number', 'robo_limite': 'Number', 'robo_graus_motor': 'Number', 'robo_giroscopio': 'Number',
-         'robo_cronometro': 'Number', 'robo_ler': 'Number', 'robo_cor_vista': 'Cor', 'robo_cor': 'Cor'}
+         'robo_cronometro': 'Number', 'robo_ler': 'Number', 'robo_cor_vista': 'Cor', 'robo_cor': 'Cor',
+         'robo_botao': 'Number', 'robo_botao_nome': 'Number', 'robo_aleatorio': 'Number', 'robo_limite_medido': 'Number'}
 
 
 class NaoTemBloco(Exception):
@@ -146,6 +150,8 @@ class Tradutor:
         if isinstance(no, ast.Name):
             if no.id in CORES:
                 return {'type': 'robo_cor', 'fields': {'COR': no.id}}
+            if no.id in BOTOES:
+                return {'type': 'robo_botao_nome', 'fields': {'BOTAO': no.id}}
             if no.id in self.variaveis:
                 return {'type': 'variables_get', 'fields': {'VAR': {'id': self.variaveis[no.id]}}}
             raise NaoTemBloco
@@ -179,6 +185,14 @@ class Tradutor:
             return {'type': 'robo_graus_motor', 'fields': {'MOTOR': _porta(a['porta'], ('A', 'B', 'C', 'D'))}}
         if nome == 'cronometro' and not chamada.args and not chamada.keywords:
             return {'type': 'robo_cronometro'}
+        if nome == 'botao_apertado' and not chamada.args and not chamada.keywords:
+            return {'type': 'robo_botao'}
+        if nome == 'aleatorio':
+            a = _argumentos(chamada, ['minimo', 'maximo'])
+            minimo, maximo = _numero(a.get('minimo')), _numero(a.get('maximo'))
+            if not (isinstance(minimo, int) and isinstance(maximo, int)):
+                raise NaoTemBloco
+            return {'type': 'robo_aleatorio', 'fields': {'MIN': minimo, 'MAX': maximo}}
         if nome == 'ler':
             a = _argumentos(chamada, ['nome'])
             texto = _texto(a.get('nome'))
@@ -260,7 +274,69 @@ class Tradutor:
         if nome == 'zerar_giroscopio':
             a = _argumentos(chamada, ['porta'])
             return {'type': 'robo_zerar_giroscopio', 'fields': {'PORTA': _porta(a.get('porta'))}}
+        if nome in ('girar_direita', 'girar_esquerda'):
+            a = _argumentos(chamada, ['rotacoes', 'graus', 'segundos', 'potencia'])
+            unidade = self._unidade(a)
+            pot = _faixa(_numero(a['potencia']), -100, 100) if 'potencia' in a else 50
+            return {'type': 'robo_girar', 'fields': {'LADO': nome.split('_')[1], 'QUANTO': _faixa(_numero(a[unidade]), 0),
+                                                     'UNIDADE': unidade, 'POTENCIA': pot}}
+        if nome == 'mover':
+            a = _argumentos(chamada, ['esquerdo', 'direito', 'rotacoes', 'graus', 'segundos'])
+            unidade = self._unidade(a)
+            return {'type': 'robo_mover', 'fields': {'ESQ': _faixa(_numero(a.get('esquerdo')), -100, 100),
+                                                     'DIR': _faixa(_numero(a.get('direito')), -100, 100),
+                                                     'QUANTO': _faixa(_numero(a[unidade]), 0), 'UNIDADE': unidade}}
+        if nome == 'motor':
+            a = _argumentos(chamada, ['porta', 'potencia', 'rotacoes', 'graus', 'segundos'], {'potencia': ast.Constant(50)})
+            unidade = self._unidade(a)
+            return {'type': 'robo_motor', 'fields': {'MOTOR': _porta(a.get('porta'), ('A', 'B', 'C', 'D')),
+                                                     'POTENCIA': _faixa(_numero(a['potencia']), -100, 100),
+                                                     'QUANTO': _faixa(_numero(a[unidade]), 0), 'UNIDADE': unidade}}
+        if nome == 'ligar_motor':
+            a = _argumentos(chamada, ['porta', 'potencia'], {'potencia': ast.Constant(50)})
+            return {'type': 'robo_ligar_motor', 'fields': {'MOTOR': _porta(a.get('porta'), ('A', 'B', 'C', 'D')),
+                                                           'POTENCIA': _faixa(_numero(a['potencia']), -100, 100)}}
+        if nome == 'desligar_motor':
+            a = _argumentos(chamada, ['porta'])
+            return {'type': 'robo_desligar_motor', 'fields': {'MOTOR': _porta(a.get('porta'), ('A', 'B', 'C', 'D'))}}
+        if nome == 'esperar_toque':
+            return {'type': 'robo_esperar_toque', 'fields': {'PORTA': _porta(_argumentos(chamada, ['porta']).get('porta'))}}
+        if nome in ('esperar_distancia', 'esperar_luz'):
+            campo = 'cm' if nome == 'esperar_distancia' else 'valor'
+            a = _argumentos(chamada, ['porta', 'comparacao', campo])
+            comparacao = _texto(a.get('comparacao'))
+            if comparacao not in COMPARACOES:
+                raise NaoTemBloco
+            return {'type': f'robo_{nome}', 'fields': {'PORTA': _porta(a.get('porta')), 'OP': comparacao,
+                                                       'VALOR': _numero(a.get(campo))}}
+        if nome == 'esperar_cor':
+            a = _argumentos(chamada, ['porta', 'cor'])
+            cor = a.get('cor')
+            if not (isinstance(cor, ast.Name) and cor.id in CORES):
+                raise NaoTemBloco
+            return {'type': 'robo_esperar_cor', 'fields': {'PORTA': _porta(a.get('porta')), 'COR': cor.id}}
+        if nome == 'calibrar_na_largada':
+            if len(chamada.args) != 2 or chamada.keywords:          # com giro= ou potencia=: fica em Python
+                raise NaoTemBloco
+            return {'type': 'robo_calibrar', 'fields': {'P1': _porta(chamada.args[0]), 'P2': _porta(chamada.args[1])}}
+        if nome == 'painel':
+            if chamada.args or not 1 <= len(chamada.keywords) <= 3 \
+                    or any(not re.fullmatch(r'[A-Za-z_]\w*', k.arg or '', re.ASCII) for k in chamada.keywords):
+                raise NaoTemBloco
+            bloco = {'type': 'robo_painel', 'fields': {}, 'inputs': {}}
+            for n, k in enumerate(chamada.keywords, 1):
+                bloco['fields'][f'N{n}'] = k.arg
+                bloco['inputs'][f'V{n}'] = {'block': self.valor(k.value, 'Number')}
+            return bloco
         raise NaoTemBloco
+
+    @staticmethod
+    def _unidade(a):
+        """A única de rotacoes, graus ou segundos que a chamada usa (o bloco tem uma só), ou NaoTemBloco."""
+        unidades = [u for u in UNIDADES if u in a]
+        if len(unidades) != 1:
+            raise NaoTemBloco
+        return unidades[0]
 
     def _variavel(self, nome):
         if nome not in self.variaveis:
@@ -347,6 +423,24 @@ class Tradutor:
             vezes = _numero(chamada.args[0])
             if isinstance(vezes, int) and vezes >= 0:
                 return [self._laco('robo_repetir', no, {'VEZES': vezes})], False
+        chamada = self._com_chamada(no, 'ajustando')
+        if chamada and not chamada.keywords:
+            a = _argumentos(chamada, ['nome', 'inicial', 'passo'])
+            texto = _texto(a.get('nome'))
+            if not re.fullmatch(r'[A-Za-z_]\w*', texto, re.ASCII):
+                raise NaoTemBloco
+            return [self._laco('robo_ajustando', no, {'NOME': texto, 'INICIAL': _numero(a.get('inicial')),
+                                                      'PASSO': _faixa(_numero(a.get('passo')), 0)})], False
+        # ao mesmo tempo: 2 ou 3 "with tarefa():" e mais nada
+        chamada = self._com_chamada(no, 'ao_mesmo_tempo')
+        if chamada and not chamada.args and not chamada.keywords and 2 <= len(no.body) <= 3 \
+                and all(self._com_chamada(t, 'tarefa') and not self._com_chamada(t, 'tarefa').args for t in no.body):
+            bloco = {'type': 'robo_ao_mesmo_tempo', 'inputs': {}}
+            for n, t in enumerate(no.body, 1):
+                dentro = self.cadeia(t.body, t.lineno + 1)
+                if dentro:
+                    bloco['inputs'][f'T{n}'] = {'block': dentro}
+            return [bloco], False
         # with repetir_ate(...) fica em Python: o "while not" dos blocos confere a condição antes de começar
         for nome, tipo in SE_SENSOR.items():                # with se_ver_cor(1, PRETO): ... with senao(): ...
             chamada = self._com_chamada(no, nome)

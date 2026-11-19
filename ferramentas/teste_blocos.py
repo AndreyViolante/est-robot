@@ -45,6 +45,30 @@ zerar_giroscopio(2)
 zerar_cronometro()
 erro = luz_refletida(1) - luz_refletida(2)
 erro += 1
+girar_direita(rotacoes=0.5)
+girar_esquerda(graus=180, potencia=30)
+mover(30, 10, rotacoes=1)
+motor('A', 50, graus=180)
+ligar_motor('D', 40)
+desligar_motor('D')
+esperar_toque(4)
+esperar_distancia(4, '<', 20)
+esperar_luz(1, '>=', 30)
+esperar_cor(1, VERDE)
+esperar_botao()
+calibrar_na_largada(1, 2)
+painel(erro=luz_refletida(1) - luz_refletida(2), vel=VEL)
+mostrar(aleatorio(1, 6))
+if luz_refletida(1) < limite_medido(1):
+    bip()
+with ao_mesmo_tempo():
+    with tarefa():
+        andar_cm(30)
+    with tarefa():
+        melodia('do re mi')
+with ajustando('kp', 0.4, 0.05):
+    if botao_apertado() == BOTAO_CIMA:
+        motores(25 + erro * ler('kp'), 25)
 while True:
     # segue a linha
     if cor_vista(1) == VERDE and not tocado(4) == 1:

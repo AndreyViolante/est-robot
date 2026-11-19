@@ -82,10 +82,28 @@ def montar_dbf(arquivo):
             'fonte': '', 'linhas': [], 'variaveis': {}, 'avisos': []}
 
 
+def medidas_do_robo():
+    """As medidas com que o programa foi compilado (calibracao.py e configurar(...) do próprio programa), no formato
+    do simulador ("Medidas do robô"): o andar_cm(30) vira graus de roda com o RODA_CM do calibracao.py, então o robô
+    simulado precisa ter essa mesma roda para andar os mesmos 30 cm."""
+    import robo
+    c = robo._config
+    medidas = {'roda_cm': c['roda_cm'], 'entre_rodas_cm': c['entre_rodas_cm'], 'motor_esquerdo': c['esquerdo'],
+               'motor_direito': c['direito'], 'invertido': c['sentido'] == -1}
+    portas = {str(p): {'preto': v} for p, v in robo._PRETO.items() if isinstance(v, (int, float))}
+    if portas:
+        medidas['portas'] = portas
+    return medidas
+
+
 def preparar(arquivo):
     """Compila o arquivo (ou lê o .dbf baixado do robô) e grava simulador/programa.js. Devolve o programa
-    (dicionário de montar)."""
-    dados = montar_dbf(arquivo) if arquivo.lower().endswith('.dbf') else montar(arquivo)
+    (dicionário de montar). O programa do aluno leva as medidas do calibracao.py da pasta dele."""
+    if arquivo.lower().endswith('.dbf'):
+        dados = montar_dbf(arquivo)
+    else:
+        dados = montar(arquivo)
+        dados['robo'] = medidas_do_robo()
     gravar(dados)
     return dados
 

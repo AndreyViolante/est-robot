@@ -15,7 +15,8 @@ const CHAVE = 'est-programar-blocos-v1';
 const INICIO = '\u0001', FIM = '\u0002';      // marcas das linhas de cada bloco no código gerado (saem antes de mostrar)
 
 const CORES = {inicio: '#d9a400', movimento: '#4c97ff', tela: '#9966ff', sensores: '#2b9fc4', decidir: '#e6900a',
-               repetir: '#cf7c00', contas: '#40a640', variaveis: '#ff7a1a', python: '#6b7590'};
+               repetir: '#cf7c00', esperar: '#b8860b', contas: '#40a640', variaveis: '#ff7a1a', competicao: '#d9534f',
+               python: '#6b7590'};
 
 // ---------------------------------------------------------------- baixar o Blockly
 
@@ -50,6 +51,11 @@ const NOTAS = [['dó', 'do'], ['dó#', 'do#'], ['ré', 're'], ['ré#', 're#'], [
                ['sol', 'sol'], ['sol#', 'sol#'], ['lá', 'la'], ['lá#', 'la#'], ['si', 'si']];
 const CORES_ROBO = [['preto', 'PRETO'], ['azul', 'AZUL'], ['verde', 'VERDE'], ['amarelo', 'AMARELO'],
                     ['vermelho', 'VERMELHO'], ['branco', 'BRANCO'], ['marrom', 'MARROM']];
+// os botões da controladora (números do EV3, conferidos no robô em 13/11/2026)
+const BOTOES = [['de cima', 'BOTAO_CIMA'], ['de baixo', 'BOTAO_BAIXO'], ['da esquerda', 'BOTAO_ESQUERDA'],
+                ['da direita', 'BOTAO_DIREITA'], ['OK', 'BOTAO_CENTRO']];
+const QUANTO = [['rotações', 'rotacoes'], ['graus', 'graus'], ['segundos', 'segundos']];
+const lado = () => ({type: 'field_dropdown', name: 'LADO', options: [['à direita', 'direita'], ['à esquerda', 'esquerda']]});
 const comando = (tipo, cor, mensagem, args, dica, extra = {}) => ({type: tipo, message0: mensagem, args0: args,
   previousStatement: null, nextStatement: null, colour: cor, tooltip: dica, ...extra});
 const leitura = (tipo, cor, mensagem, args, saida, dica) => ({type: tipo, message0: mensagem, args0: args,
@@ -97,6 +103,21 @@ function definir() {
     comando('robo_motores', CORES.movimento, 'motores esquerdo %1 direito %2',
       [{type: 'input_value', name: 'ESQ', check: 'Number'}, {type: 'input_value', name: 'DIR', check: 'Number'}],
       'motores(30, 30): liga os dois motores e deixa ligados', {inputsInline: true}),
+    comando('robo_girar', CORES.movimento, 'girar %1 %2 %3 potência %4',
+      [lado(), numero('QUANTO', 0.5, {min: 0}), {type: 'field_dropdown', name: 'UNIDADE', options: QUANTO},
+       numero('POTENCIA', 50, {min: -100, max: 100})],
+      'girar_direita(rotacoes=0.5): gira no lugar; as rotações, os graus e os segundos são das rodas'),
+    comando('robo_mover', CORES.movimento, 'mover esquerda %1 direita %2 por %3 %4',
+      [numero('ESQ', 30, {min: -100, max: 100}), numero('DIR', 10, {min: -100, max: 100}), numero('QUANTO', 1, {min: 0}),
+       {type: 'field_dropdown', name: 'UNIDADE', options: QUANTO}],
+      'mover(30, 10, rotacoes=1): cada roda com uma potência (curva aberta)'),
+    comando('robo_motor', CORES.movimento, 'motor %1 potência %2 por %3 %4',
+      [motores(), numero('POTENCIA', 50, {min: -100, max: 100}), numero('QUANTO', 180, {min: 0}),
+       {type: 'field_dropdown', name: 'UNIDADE', options: [['graus', 'graus'], ['rotações', 'rotacoes'], ['segundos', 'segundos']]}],
+      "motor('A', 50, graus=180): um motor sozinho (garra, braço)"),
+    comando('robo_ligar_motor', CORES.movimento, 'ligar motor %1 potência %2', [motores(), numero('POTENCIA', 50, {min: -100, max: 100})],
+      "ligar_motor('A', 50): liga um motor e deixa ligado"),
+    comando('robo_desligar_motor', CORES.movimento, 'desligar motor %1', [motores()], "desligar_motor('A')"),
     comando('robo_parar', CORES.movimento, 'parar', [], 'parar(): desliga os motores'),
     comando('robo_esperar', CORES.repetir, 'esperar %1 segundos', [numero('SEGUNDOS', 1, {min: 0})], 'esperar(1)'),
 
@@ -133,19 +154,56 @@ function definir() {
       'tocado(4): 1 se o toque estiver apertado, 0 se não'),
     leitura('robo_limite', CORES.sensores, 'limite porta %1', [portas()], 'Number',
       'limite(1): o meio entre o preto e o branco do sensor, medidos no calibracao.py'),
-    // rotação do motor, giroscópio e cronômetro: da tabela de compilação da IDE, ainda não conferidos no robô
+    // rotação do motor, giroscópio, cronômetro, botões e sorteio: conferidos no robô em 13/11/2026
     leitura('robo_graus_motor', CORES.sensores, 'graus do motor %1', [motores()], 'Number',
-      "graus_do_motor('B'): quanto o motor girou desde o começo ou o último zerar (ainda não conferido no robô)"),
+      "graus_do_motor('B'): quanto o motor girou desde o começo ou o último zerar"),
     leitura('robo_giroscopio', CORES.sensores, 'giroscópio porta %1', [portas()], 'Number',
-      'giroscopio(2): o ângulo do robô em graus, pelo sensor giroscópio (ainda não conferido no robô)'),
+      'giroscopio(2): o ângulo do robô em graus, pelo sensor giroscópio'),
     leitura('robo_cronometro', CORES.sensores, 'cronômetro', [], 'Number',
-      'cronometro(): segundos desde o começo do programa ou o último zerar (ainda não conferido no robô)'),
-    comando('robo_zerar_motor', CORES.sensores, 'zerar graus do motor %1', [motores()],
-      "zerar_motor('B') (ainda não conferido no robô)"),
+      'cronometro(): segundos desde o começo do programa ou o último zerar'),
+    comando('robo_zerar_motor', CORES.sensores, 'zerar graus do motor %1', [motores()], "zerar_motor('B')"),
     comando('robo_zerar_giroscopio', CORES.sensores, 'zerar giroscópio porta %1', [portas()],
-      'zerar_giroscopio(2): deixe o robô parado (ainda não conferido no robô)'),
-    comando('robo_zerar_cronometro', CORES.sensores, 'zerar cronômetro', [],
-      'zerar_cronometro() (ainda não conferido no robô)'),
+      'zerar_giroscopio(2): deixe o robô parado'),
+    comando('robo_zerar_cronometro', CORES.sensores, 'zerar cronômetro', [], 'zerar_cronometro()'),
+    leitura('robo_botao', CORES.sensores, 'botão apertado', [], 'Number',
+      'botao_apertado(): o botão da controladora que está apertado (0 = nenhum). Compare com um botão'),
+    leitura('robo_botao_nome', CORES.sensores, 'botão %1', [{type: 'field_dropdown', name: 'BOTAO', options: BOTOES}], 'Number',
+      'Um botão da controladora para comparar com o botão apertado (o de voltar termina o programa)'),
+    leitura('robo_aleatorio', CORES.sensores, 'número sorteado de %1 a %2',
+      [numero('MIN', 1, {precision: 1}), numero('MAX', 6, {precision: 1})], 'Number', 'aleatorio(1, 6): sorteado no robô'),
+
+    // esperar o sensor (os blocos "Esperar" da IDE)
+    comando('robo_esperar_toque', CORES.esperar, 'esperar o toque do sensor %1', [portas()], 'esperar_toque(4)'),
+    comando('robo_esperar_distancia', CORES.esperar, 'esperar a distância do sensor %1 ficar %2 %3 cm',
+      [portas(), comparacoes(), numero('VALOR', 20)], "esperar_distancia(4, '<', 20)"),
+    comando('robo_esperar_luz', CORES.esperar, 'esperar a luz do sensor %1 ficar %2 %3',
+      [portas(), comparacoes(), numero('VALOR', 30)], "esperar_luz(1, '<', 30)"),
+    comando('robo_esperar_cor', CORES.esperar, 'esperar o sensor %1 ver %2',
+      [portas(), {type: 'field_dropdown', name: 'COR', options: CORES_ROBO}], 'esperar_cor(1, VERDE)'),
+    comando('robo_esperar_botao', CORES.esperar, 'esperar apertar e soltar um botão', [],
+      'esperar_botao(): bom para largar o robô na hora certa'),
+
+    // várias coisas ao mesmo tempo: uma tarefa em cada encaixe (a terceira é opcional)
+    comando('robo_ao_mesmo_tempo', CORES.repetir, 'ao mesmo tempo %1 tarefa 1 %2 tarefa 2 %3 tarefa 3 %4',
+      [{type: 'input_dummy'}, {type: 'input_statement', name: 'T1'}, {type: 'input_statement', name: 'T2'},
+       {type: 'input_statement', name: 'T3'}],
+      'with ao_mesmo_tempo(): com um with tarefa(): para cada parte; continua quando todas acabam'),
+
+    // para competição
+    comando('robo_calibrar', CORES.competicao, 'calibrar na largada os sensores %1 e %2', [portas('P1'), portas('P2')],
+      'calibrar_na_largada(1, 2): com o robô parado sobre a linha, mede o preto e o branco da pista'),
+    leitura('robo_limite_medido', CORES.competicao, 'limite medido porta %1', [portas()], 'Number',
+      'limite_medido(1): o limite que o calibrar na largada mediu'),
+    comando('robo_ajustando', CORES.competicao, 'ajustando %1 começando em %2 passo %3 %4 faça %5',
+      [{type: 'field_input', name: 'NOME', text: 'kp'}, numero('INICIAL', 0.4), numero('PASSO', 0.05, {min: 0}),
+       {type: 'input_dummy'}, {type: 'input_statement', name: 'FAZER'}],
+      "with ajustando('kp', 0.4, 0.05): os botões de cima e de baixo mudam o número; use ler('kp')"),
+    comando('robo_painel', CORES.competicao, 'painel %1 %2 %3 %4 %5 %6',
+      [{type: 'field_input', name: 'N1', text: 'erro'}, {type: 'input_value', name: 'V1', check: 'Number'},
+       {type: 'field_input', name: 'N2', text: 'vel'}, {type: 'input_value', name: 'V2', check: 'Number'},
+       {type: 'field_input', name: 'N3', text: 's1'}, {type: 'input_value', name: 'V3', check: 'Number'}],
+      'painel(erro=..., vel=...): até 3 valores na tela, um por linha, com o nome na frente (o 2º e o 3º são opcionais)',
+      {inputsInline: false}),
 
     // decidir pelo sensor (with se_ver_cor / se_luz / se_distancia / se_tocado): o bloco de sensor da IDE, com o senão
     comando('robo_se_cor', CORES.decidir, 'se o sensor %1 vê %2 %3 faça %4 senão %5',
@@ -191,13 +249,19 @@ function definir() {
     leitura('robo_python_valor', CORES.python, 'Python %1', [{type: 'field_input', name: 'CODIGO', text: '0'}], null,
       'Um valor em Python, escrito como está (ex.: aleatorio(1, 6))'),
   ]);
-  for (const tipo of ['robo_guardar', 'robo_ler']) {
+  for (const tipo of ['robo_guardar', 'robo_ler', 'robo_ajustando']) {
     const init = B.Blocks[tipo].init;
     B.Blocks[tipo].init = function () {
       init.call(this);
       this.getField('NOME').setValidator(nomeDeVariavel);
     };
   }
+  // os nomes do painel viram nomes de argumento do Python (painel(erro=...)): sem acento e sem palavra do Python
+  const nomeDoPainel = texto => { const n = nomeDeVariavel(texto); return n && (PALAVRAS_DO_PYTHON.has(n) ? `${n}_` : n); };
+  B.Blocks.robo_painel.init = (init => function () {
+    init.call(this);
+    for (const campo of ['N1', 'N2', 'N3']) this.getField(campo).setValidator(nomeDoPainel);
+  })(B.Blocks.robo_painel.init);
   B.Blocks.robo_conta.init = (init => function () { init.call(this); this.setInputsInline(true); })(B.Blocks.robo_conta.init);
 }
 
@@ -266,6 +330,42 @@ function criarGerador() {
   f.robo_zerar_giroscopio = b => `zerar_giroscopio(${b.getFieldValue('PORTA')})\n`;
   f.robo_zerar_cronometro = () => 'zerar_cronometro()\n';
   f.robo_ler = b => [`ler(${texto(b.getFieldValue('NOME'))})`, ORDEM.ATOMO];
+  f.robo_botao = () => ['botao_apertado()', ORDEM.ATOMO];
+  f.robo_botao_nome = b => [b.getFieldValue('BOTAO'), ORDEM.ATOMO];
+  f.robo_aleatorio = b => [`aleatorio(${num(b, 'MIN')}, ${num(b, 'MAX')})`, ORDEM.ATOMO];
+  f.robo_limite_medido = b => [`limite_medido(${b.getFieldValue('PORTA')})`, ORDEM.ATOMO];
+
+  f.robo_girar = b => `girar_${b.getFieldValue('LADO')}(${b.getFieldValue('UNIDADE')}=${num(b, 'QUANTO')}${potencia(b)})\n`;
+  f.robo_mover = b => `mover(${num(b, 'ESQ')}, ${num(b, 'DIR')}, ${b.getFieldValue('UNIDADE')}=${num(b, 'QUANTO')})\n`;
+  f.robo_motor = b => `motor(${texto(b.getFieldValue('MOTOR'))}, ${num(b, 'POTENCIA')}, ${b.getFieldValue('UNIDADE')}=${num(b, 'QUANTO')})\n`;
+  f.robo_ligar_motor = b => `ligar_motor(${texto(b.getFieldValue('MOTOR'))}, ${num(b, 'POTENCIA')})\n`;
+  f.robo_desligar_motor = b => `desligar_motor(${texto(b.getFieldValue('MOTOR'))})\n`;
+
+  f.robo_esperar_toque = b => `esperar_toque(${b.getFieldValue('PORTA')})\n`;
+  f.robo_esperar_distancia = b => `esperar_distancia(${b.getFieldValue('PORTA')}, ${texto(b.getFieldValue('OP'))}, ${num(b, 'VALOR')})\n`;
+  f.robo_esperar_luz = b => `esperar_luz(${b.getFieldValue('PORTA')}, ${texto(b.getFieldValue('OP'))}, ${num(b, 'VALOR')})\n`;
+  f.robo_esperar_cor = b => `esperar_cor(${b.getFieldValue('PORTA')}, ${b.getFieldValue('COR')})\n`;
+  f.robo_esperar_botao = () => 'esperar_botao()\n';
+
+  // ao mesmo tempo: cada encaixe vira um "with tarefa():" (a tarefa 3 só se tiver blocos)
+  f.robo_ao_mesmo_tempo = b => {
+    let codigo = 'with ao_mesmo_tempo():\n';
+    for (const nome of ['T1', 'T2', 'T3']) {
+      const dentro = G.statementToCode(b, nome);
+      if (!dentro && nome === 'T3') continue;
+      codigo += `${G.INDENT}with tarefa():\n${G.prefixLines(dentro || `${G.INDENT}pass\n`, G.INDENT)}`;
+    }
+    return codigo;
+  };
+  f.robo_calibrar = b => `calibrar_na_largada(${b.getFieldValue('P1')}, ${b.getFieldValue('P2')})\n`;
+  f.robo_ajustando = b => `with ajustando(${texto(b.getFieldValue('NOME'))}, ${num(b, 'INICIAL')}, ${num(b, 'PASSO')}):\n${corpo(b, 'FAZER')}`;
+  // painel: só os valores encaixados (o 2º e o 3º são opcionais)
+  f.robo_painel = b => {
+    const partes = [['N1', 'V1'], ['N2', 'V2'], ['N3', 'V3']]
+      .filter(([, v]) => b.getInputTargetBlock(v))
+      .map(([n, v]) => `${b.getFieldValue(n)}=${valor(b, v, ORDEM.NADA)}`);
+    return `painel(${partes.join(', ')})\n`;
+  };
 
   // linha e valor em Python, como estão; um valor que não é nome nem chamada vai entre parênteses quando precisa
   f.robo_python = b => `${b.getFieldValue('CODIGO')}\n`;
@@ -359,6 +459,11 @@ const CAIXA = {
       {kind: 'block', type: 'robo_virar', fields: {LADO: 'esquerda'}},
       {kind: 'block', type: 'robo_motores', inputs: {ESQ: n(30), DIR: n(30)}},
       {kind: 'block', type: 'robo_parar'},
+      {kind: 'block', type: 'robo_girar'},
+      {kind: 'block', type: 'robo_mover'},
+      {kind: 'block', type: 'robo_motor', fields: {MOTOR: 'A'}},
+      {kind: 'block', type: 'robo_ligar_motor', fields: {MOTOR: 'A'}},
+      {kind: 'block', type: 'robo_desligar_motor', fields: {MOTOR: 'A'}},
       {kind: 'block', type: 'robo_esperar'},
     ]},
     {kind: 'category', name: 'Sensores', colour: CORES.sensores, contents: [
@@ -374,6 +479,18 @@ const CAIXA = {
       {kind: 'block', type: 'robo_giroscopio', fields: {PORTA: '2'}},
       {kind: 'block', type: 'robo_zerar_cronometro'},
       {kind: 'block', type: 'robo_cronometro'},
+      {kind: 'block', type: 'robo_botao'},
+      {kind: 'block', type: 'logic_compare', fields: {OP: 'EQ'},
+       inputs: {A: {block: {type: 'robo_botao'}}, B: {block: {type: 'robo_botao_nome'}}}},
+      {kind: 'block', type: 'robo_aleatorio'},
+    ]},
+    {kind: 'category', name: 'Esperar', colour: CORES.esperar, contents: [
+      {kind: 'block', type: 'robo_esperar'},
+      {kind: 'block', type: 'robo_esperar_luz', fields: {OP: '<'}},
+      {kind: 'block', type: 'robo_esperar_cor', fields: {COR: 'PRETO'}},
+      {kind: 'block', type: 'robo_esperar_distancia', fields: {PORTA: '4', OP: '<'}},
+      {kind: 'block', type: 'robo_esperar_toque', fields: {PORTA: '4'}},
+      {kind: 'block', type: 'robo_esperar_botao'},
     ]},
     {kind: 'category', name: 'Decidir', colour: CORES.decidir, contents: [
       {kind: 'block', type: 'controls_if'},
@@ -399,6 +516,7 @@ const CAIXA = {
       {kind: 'block', type: 'robo_repetir'},
       {kind: 'block', type: 'robo_enquanto'},
       {kind: 'block', type: 'robo_enquanto', fields: {MODO: 'ate'}},
+      {kind: 'block', type: 'robo_ao_mesmo_tempo'},
       {kind: 'block', type: 'robo_esperar'},
     ]},
     {kind: 'category', name: 'Tela e som', colour: CORES.tela, contents: [
@@ -424,6 +542,16 @@ const CAIXA = {
       {kind: 'block', type: 'robo_guardar',
        inputs: {VALOR: {block: {type: 'robo_conta', fields: {OP: '+'}, inputs: {A: {block: {type: 'robo_ler'}}, B: n(1)}}}}},
       {kind: 'block', type: 'robo_ler'},
+    ]},
+    {kind: 'category', name: 'Competição', colour: CORES.competicao, contents: [
+      {kind: 'block', type: 'robo_calibrar', fields: {P1: '1', P2: '2'}},
+      {kind: 'block', type: 'logic_compare', fields: {OP: 'LT'},
+       inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_limite_medido'}}}},
+      {kind: 'block', type: 'robo_ajustando'},
+      {kind: 'block', type: 'robo_ler', fields: {NOME: 'kp'}},
+      {kind: 'block', type: 'robo_painel',
+       inputs: {V1: {block: {type: 'robo_conta', fields: {OP: '-'},
+         inputs: {A: {block: {type: 'robo_luz_refletida'}}, B: {block: {type: 'robo_luz_refletida', fields: {PORTA: '2'}}}}}}}},
     ]},
     {kind: 'category', name: 'Variáveis do Python', colour: CORES.python, custom: 'VARIABLE'},
     {kind: 'category', name: 'Linha em Python', colour: CORES.python, contents: [
@@ -545,7 +673,7 @@ async function criar(div, aoMudar) {
       for (const b of ws.getAllBlocks(false)) {
         if (!b.isEnabled() || b.getRootBlock().type !== 'robo_inicio') continue;
         if (b.inputList.some(i => i.connection && i.connection.type === Blockly.ConnectionType.INPUT_VALUE &&
-                                  !i.connection.targetBlock())) {
+                                  !i.connection.targetBlock() && !(b.type === 'robo_painel' && i.name !== 'V1'))) {
           return {id: b.id, texto: b.toString().split('?')[0].trim() || b.toString()};
         }
       }
