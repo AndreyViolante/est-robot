@@ -89,11 +89,12 @@ diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bate
 primeiros vão de andar e virar até seguir linha com falha; do 7 ao 9, cruzamentos, verde e obstáculo; do
 10 ao 13, os mais difíceis: volta rápida no oval (pede um seguidor proporcional), chegada na faixa
 vermelha, beco sem saída e o percurso completo da OBR. Todos têm solução conferida no simulador. O progresso
-fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar. Para mostrar por que
+fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar, e em "Progresso" o aluno salva
+um arquivo com os desafios cumpridos e as pistas que montou, para continuar em outro computador. Para mostrar por que
 confirmar a leitura importa, ligue "Sensores com ruído" e rode um programa que decide com uma leitura
 só. Para depurar, use "Próxima linha" ou um ponto de parada: o robô congela e os sensores e as
-variáveis ficam à mostra. Com "Minha pista" você monta a pista da sua escola, mas ela fica só no
-navegador onde foi desenhada.
+variáveis ficam à mostra. Com "Minha pista" você monta a pista da sua escola; ela fica no navegador onde
+foi desenhada, e vai para outro computador pelo "Progresso", Salvar em arquivo.
 
 **Sem instalar nada:** a página [programar](https://andreyviolante.github.io/est-robot/programar/)
 roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou monta com blocos

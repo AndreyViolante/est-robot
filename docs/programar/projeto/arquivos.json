@@ -50,6 +50,7 @@
   "simulador/mundo.js",
   "simulador/obr.js",
   "simulador/programa.js",
+  "simulador/progresso.js",
   "simulador/robo.js",
   "simulador/vm.js",
   "versoes.js"

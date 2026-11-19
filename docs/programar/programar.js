@@ -675,6 +675,20 @@ $('btBaixar').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 $('btAbrir').addEventListener('click', () => $('arquivo').click());
+
+// progresso num arquivo (simulador/progresso.js): o programa, os blocos, as versões e o progresso do simulador
+$('btSalvarProgresso').addEventListener('click', () => {
+  if (blocos) blocos.salvar();
+  if (!salvar()) {
+    mensagem('erro', 'Não salvei', '<p>Este navegador não deixa guardar nada (janela anônima?). Use Baixar .py.</p>');
+    return;
+  }
+  const partes = EST.Progresso.baixar();
+  mensagem('ok', 'Progresso salvo', `<p>${escapar(EST.Progresso.juntarComVirgulas(partes))}. Para continuar em outro `
+           + 'computador, abra a página lá e use Arquivo, Carregar o progresso.</p>');
+});
+$('btCarregarProgresso').addEventListener('click', () => EST.Progresso.escolherECarregar(
+  texto => mensagem('erro', 'Não carreguei', `<p>${escapar(texto)}</p>`)));
 $('arquivo').addEventListener('change', async () => {
   const arq = $('arquivo').files[0];
   $('arquivo').value = '';

@@ -38,6 +38,8 @@ jobs:
         run: node ferramentas/teste_protocolo.js
       - name: Versões do programa guardadas na página de programar
         run: node ferramentas/teste_versoes.js
+      - name: Salvar e carregar o progresso num arquivo
+        run: node ferramentas/teste_progresso.js
       - name: Simulador (giroscópio, motor, cronômetro, mensagens, caminho do Dirigir, seguidor, gráfico dos sensores)
         run: python ferramentas/teste_simulador.py
       - name: Ida e volta Python -> blocos -> Python (mesmos bytes)

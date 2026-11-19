@@ -2224,6 +2224,20 @@ $('btZerar').addEventListener('click', () => {
   else { montarSeletorDesafio(); mostrarDesafio(); }
 });
 
+// progresso num arquivo (progresso.js): para levar a outro computador ou guardar antes de limpar o navegador
+$('btSalvarProgresso').addEventListener('click', () => {
+  salvar();
+  if (semGuardar) { window.alert('Este navegador não deixa guardar nada (janela anônima?): não há progresso para salvar.'); return; }
+  const partes = EST.Progresso.baixar();
+  avisarProgresso(`Progresso salvo: ${EST.Progresso.juntarComVirgulas(partes) || 'as configurações'}.`);
+});
+$('btCarregarProgresso').addEventListener('click', () => EST.Progresso.escolherECarregar());
+function avisarProgresso(texto) {
+  const el = $('avisoDesafio');
+  if (el) el.textContent = texto;
+  $('btSalvarProgresso').title = texto;
+}
+
 $('pista').innerHTML = [...EST.PISTAS, {id: MINHA, nome: 'Minha pista'}, ...EST.OBR.ARENAS,
                         {id: SORTEADA, nome: 'Arena OBR sorteada'}, {id: MINHA_OBR, nome: 'Minha arena OBR (ladrilhos)'}]
   .map(p => `<option value="${p.id}">${escapar(p.nome)}</option>`).join('') +

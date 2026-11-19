@@ -111,6 +111,13 @@
       <button id="btLimparRastro" class="bt pequeno" type="button">Limpar rastro</button>
       <label class="marcar"><input type="checkbox" id="somLigado" checked> Som</label>
       <label class="marcar" title="A luz refletida varia alguns pontos a cada leitura, como num sensor de verdade"><input type="checkbox" id="ruido"> Sensores com ruído</label>
+      <details class="professor progresso">
+        <summary>Progresso</summary>
+        <button id="btSalvarProgresso" class="bt pequeno" type="button"
+                title="Baixa um arquivo com os desafios cumpridos, a Minha pista, a Minha arena OBR e as medidas do robô">Salvar em arquivo</button>
+        <button id="btCarregarProgresso" class="bt pequeno" type="button"
+                title="Abre o arquivo do Salvar em arquivo, neste ou em outro computador">Carregar de arquivo</button>
+      </details>
     </div>
     <div class="editor" id="editor" hidden>
       <button id="btEditar" class="bt pequeno" type="button" aria-pressed="false">Desenhar a pista</button>
@@ -251,6 +258,7 @@
 <script src="grafico.js"></script>
 <script src="desafios.js"></script>
 <script src="obr.js"></script>
+<script src="progresso.js"></script>
 <script src="programa.js"></script>
 <script src="app.js"></script>
 <script>
