@@ -79,6 +79,19 @@ def _argumentos(chamada, nomes, padroes=None):
     return valores
 
 
+def _tem_break(corpo):
+    """Algum break do próprio laço (fora dos laços e funções de dentro)."""
+    for no in corpo:
+        if isinstance(no, ast.Break):
+            return True
+        if not isinstance(no, (ast.For, ast.While, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            if any(_tem_break(getattr(no, campo, None) or []) for campo in ('body', 'orelse', 'finalbody')):
+                return True
+            if any(_tem_break(h.body) for h in getattr(no, 'handlers', None) or []):
+                return True
+    return False
+
+
 def _sombra_numero(v):
     return {'shadow': {'type': 'math_number', 'fields': {'NUM': v}}}
 
@@ -406,7 +419,8 @@ class Tradutor:
                      'inputs': {'DELTA': {'block': self.valor(no.value, 'Number')}}}], False
         if isinstance(no, ast.While) and not no.orelse:
             corpo = self.cadeia(no.body, no.lineno + 1)
-            if isinstance(no.test, ast.Constant) and no.test.value is True:
+            # o "repetir para sempre" não tem encaixe embaixo: um while True com break vira "repetir enquanto verdadeiro"
+            if isinstance(no.test, ast.Constant) and no.test.value is True and not _tem_break(no.body):
                 bloco = {'type': 'robo_para_sempre', 'inputs': {}}
             else:
                 ate = isinstance(no.test, ast.UnaryOp) and isinstance(no.test.op, ast.Not)

@@ -436,7 +436,9 @@ acontecer, pergunta se aconteceu e no fim grava o resumo em `resultado_teste_ger
 A versão instalada fica no arquivo [VERSAO](VERSAO) e o que mudou em cada uma, no
 [NOVIDADES.md](NOVIDADES.md). A cada envio para o GitHub, os testes rodam sozinhos
 ([.github/workflows/testes.yml](.github/workflows/testes.yml)): conferência com a IDE, testes da
-linguagem e erros de escrita nos arquivos Python e JavaScript. Uma vez por mês o Dependabot do GitHub
+linguagem e erros de escrita nos arquivos Python e JavaScript, o simulador, os blocos e a página inteira num
+Chrome sem janela (compila com o Python do navegador, simula, mostra um erro, passa para blocos e salva e
+carrega o progresso, em [ferramentas/teste_pagina.js](ferramentas/teste_pagina.js)). Uma vez por mês o Dependabot do GitHub
 confere se saíram versões novas das peças desses workflows e abre um Pull Request para aprovar
 ([.github/dependabot.yml](.github/dependabot.yml)).
 
