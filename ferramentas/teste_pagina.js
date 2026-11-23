@@ -2,7 +2,8 @@
 /* Teste da página inteira, num Chrome sem janela: abre a página de programar (servida da pasta docs/, como no
    site), compila com o Python do navegador, abre o simulador e executa, mostra um erro em português, passa o
    programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), liga a tela cheia, manda o programa por
-   link (com o modo blocos e o desafio aberto), salva e carrega o progresso e abre o simulador sozinho. Depois, num celular (390 x 844, toque): a página começa nos blocos, não
+   link (com o modo blocos e o desafio aberto), salva e carrega o progresso e abre o simulador sozinho (grava um
+   vídeo da pista). Depois, num celular (390 x 844, toque): a página começa nos blocos, não
    rola para o lado, o teclado de programação aparece no código, o menu Arquivo cabe na tela e o simulador roda.
    Precisa de internet (Python do navegador, Blockly e o editor vêm da CDN) e do pacote playwright-core, que usa o
    Chrome instalado (não baixa navegador).
@@ -252,6 +253,17 @@ async function main() {
     await pagina.waitForTimeout(2000);
     const relogio2 = await pagina.locator('#relogio').innerText();
     confere('o simulador do site abre e executa o exemplo', !/^0,0 s$/.test(relogio2.trim()), relogio2);
+
+    // ---- gravar a pista em vídeo: baixa um mp4 (ou webm) com alguma coisa dentro
+    await pagina.click('#btGravar');
+    await pagina.waitForTimeout(2000);
+    const [video] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#btGravar')]);
+    const arqVideo = path.join(os.tmpdir(), `video-teste-${process.pid}-${video.suggestedFilename()}`);
+    await video.saveAs(arqVideo);
+    const tamanho = fs.statSync(arqVideo).size;
+    confere('"Gravar vídeo" baixa o vídeo da pista', /\.(mp4|webm)$/.test(video.suggestedFilename()) && tamanho > 5000,
+            `${video.suggestedFilename()} ${tamanho} bytes`);
+    fs.rmSync(arqVideo, {force: true});
 
     // ---- um seletor só para a pista ou o desafio, e o menu Opções
     const grupos = await pagina.$$eval('#onde optgroup', gs => gs.map(g => g.label));

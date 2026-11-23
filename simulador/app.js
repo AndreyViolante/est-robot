@@ -2478,6 +2478,55 @@ $('btEsconderPainel').addEventListener('click', () => { mostrarPainel(false); $(
 $('btMostrarPainel').addEventListener('click', () => { mostrarPainel(true); $('btEsconderPainel').focus(); });
 if (salvo.semPainel === true) { document.documentElement.classList.add('sem-painel'); $('btMostrarPainel').hidden = false; }
 
+// ---------------------------------------------------------------- gravar a pista em vídeo
+// O canvas da pista vira um vídeo (MediaRecorder): mp4 quando o navegador grava mp4 (abre no WhatsApp), senão webm.
+const VIDEO_MAXIMO = 180;            // s: para sozinho, para o arquivo não ficar enorme
+const TIPOS_VIDEO = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+let gravacao = null;                 // {gravador, inicio, relogio}
+function tipoDeVideo() {
+  return (window.MediaRecorder && TIPOS_VIDEO.find(t => MediaRecorder.isTypeSupported(t))) || '';
+}
+function textoGravando() {
+  const s = Math.floor((performance.now() - gravacao.inicio) / 1000);
+  $('btGravar').textContent = `Parar e baixar (${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')})`;
+  if (s >= VIDEO_MAXIMO) pararVideo();
+}
+function gravarVideo() {
+  const tipo = tipoDeVideo();
+  if (!tipo || !cena.captureStream) {
+    $('estado').textContent = 'Este navegador não grava vídeo da pista: use o Chrome ou o Edge.';
+    return;
+  }
+  const fluxo = cena.captureStream(30), pedacos = [];
+  const gravador = new MediaRecorder(fluxo, {mimeType: tipo, videoBitsPerSecond: 2500000});
+  gravador.ondataavailable = ev => { if (ev.data.size) pedacos.push(ev.data); };
+  gravador.onstop = () => {
+    fluxo.getTracks().forEach(t => t.stop());
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(pedacos, {type: tipo.split(';')[0]}));
+    const nome = String((P && P.nome) || 'simulador').replace(/\.py$/, '').replace(/[^\w-]+/g, '_');
+    a.download = `${nome}-${String(pista.id).replace(/[^\w-]+/g, '_')}.${tipo.startsWith('video/mp4') ? 'mp4' : 'webm'}`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  };
+  gravador.start(1000);
+  gravacao = {gravador, inicio: performance.now(), relogio: setInterval(textoGravando, 500)};
+  $('btGravar').setAttribute('aria-pressed', 'true');
+  textoGravando();
+}
+function pararVideo() {
+  if (!gravacao) return;
+  clearInterval(gravacao.relogio);
+  gravacao.gravador.stop();
+  gravacao = null;
+  $('btGravar').setAttribute('aria-pressed', 'false');
+  $('btGravar').textContent = 'Gravar vídeo';
+}
+$('btGravar').addEventListener('click', () => (gravacao ? pararVideo() : gravarVideo()));
+if (!tipoDeVideo()) $('btGravar').hidden = true;           // navegador sem gravação: o botão nem aparece
+
 // ---------------------------------------------------------------- menu Opções
 function abrirOpcoes(abrir) {
   $('menuOpcoes').classList.toggle('aberto', abrir);
@@ -2499,7 +2548,12 @@ document.addEventListener('keydown', e => {
 // código; com "Lembrar", o código fica neste navegador e os extras abrem sozinhos da próxima vez.
 // O que os extras podem usar da página:
 EST.app = {robo, pista: () => pista, pistaGuardada: () => PISTA_DO_COMECO, trocarPista, montarSeletorPista, reiniciar,
-           desafio: () => desafio, desafiosExtras};
+           desafio: () => desafio, desafiosExtras,
+           // falha de progresso: o robô vai para a largada dada e o programa recomeça (o tempo e a pista continuam)
+           falhaDeProgresso: largada => falhaDeProgresso({largada}),
+           // fim de uma rodada dos extras: o robô para onde está
+           pausar: () => { if (estado === 'rodando') { estado = 'pausado'; if (audio) audio.suspend(); } silenciar(); atualizarTudo(); },
+           rodando: () => estado === 'rodando'};
 /* Uma trilha de desafios a mais: {id, titulo, desafios: [{id, titulo, objetivo, dica, pista, largada, limite,
    verificar, ...}]}, como os de desafios.js. Se a página abriu num desafio dela (da última vez, ou pelo link de um
    programa), entra nele agora. Devolve true quando entrou. */

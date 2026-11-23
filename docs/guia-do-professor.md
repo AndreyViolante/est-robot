@@ -105,8 +105,10 @@ foi desenhada, e vai para outro computador pelo mesmo Salvar o progresso.
 **Como o simulador é organizado:** em cima, o que se usa o tempo todo (Executar, Reiniciar, Próxima linha,
 Velocidade, Dirigir) e o menu **Opções** (som, sensores com ruído, modo projetor, progresso e Professor). Logo
 abaixo, **Pista ou desafio**, um campo só com as pistas para treinar, as arenas da OBR, as pistas feitas por você e
-os desafios. Embaixo da pista ficam **Seguir o robô**, **Rastro** e o que o robô está fazendo; as ferramentas de
-desenhar a pista ou montar a arena aparecem só quando servem.
+os desafios. Embaixo da pista ficam **Seguir o robô**, **Rastro**, **Gravar vídeo** e o que o robô está fazendo; as
+ferramentas de desenhar a pista ou montar a arena aparecem só quando servem. **Gravar vídeo** grava a pista (até 3
+minutos) e baixa um vídeo (mp4 no Chrome e no Edge) para o aluno mandar pelo WhatsApp ou para mostrar na aula.
+**Esconder o painel** tira a coluna da direita e deixa a pista maior.
 
 **Sem instalar nada:** a página [programar](https://andreyviolante.github.io/est-robot/programar/)
 roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou monta com blocos
