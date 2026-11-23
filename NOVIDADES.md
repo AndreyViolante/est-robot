@@ -3,6 +3,20 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.11 (23/11/2026)
+
+- **Página de programar mais organizada.** Uma barra só no editor: as abas Python e Blocos, o nome, o menu
+  **Arquivo** (exemplos, abrir, baixar, salvar para a IDE EST, versões do programa, link e progresso), o menu
+  **Exibir** (tela cheia e modo projetor) e, à direita, **Simular** e **Enviar ao robô**. Nos blocos, os botões
+  agora dizem o que fazem: **Trazer da aba Python** e **Copiar para a aba Python**.
+- **Simulador mais organizado.** Em cima, o que se usa o tempo todo: Executar, Reiniciar, Próxima linha,
+  Velocidade, Dirigir e o menu **Opções** (som, sensores com ruído, modo projetor, progresso e, para o
+  professor, liberar ou zerar os desafios). **Pista ou desafio** virou um campo só, com as pistas para treinar,
+  as arenas da OBR, as pistas feitas por você e os desafios. Embaixo da pista ficam **Seguir o robô** (era a
+  "Lupa"), o rastro e o que o robô está fazendo; as ferramentas de desenhar ou montar a pista só aparecem nela.
+- Aberto pela página de programar, o simulador não repete o topo: a barra diz o programa e o tamanho.
+- Fotos do site novas, com a tela de agora.
+
 ## 0.1.10 (23/11/2026)
 
 - **Tela cheia na página de programar.** O botão **Tela cheia**, na barra do editor, faz o Python ou os blocos
