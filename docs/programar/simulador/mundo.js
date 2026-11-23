@@ -134,8 +134,19 @@ const BRANCO = [1, 1, 1], PRETO = [0, 0, 0], FORA = [0.05, 0.05, 0.05], VERDE = 
 
 /* Cor do chão no ponto (x, y). Fora da mesa é quase preto (nada reflete). A linha preta fica por cima do verde;
    a faixa vermelha de chegada da arena da OBR (pista.vermelhos) fica por cima de tudo. */
+/* Extras: uma pista pode ter partes que não são linha, verde, caixa nem parede (os extras com código, cifra.js).
+   EXTRAS[id da pista] = {chao(x, y) -> cor ou null, raio(x, y, dx, dy) -> distância, desenhar(c, robo),
+   desenharPorCima(c, robo), passo(robo, dt, t), reiniciar(robo), ativar(robo), desativar(), robo: medidas}.
+   Fica fora da pista porque a pista é copiada como dados (copiaPista) e as funções não iriam junto. */
+const EXTRAS = {};
+
 function corDoChao(pista, x, y) {
   if (x < 0 || y < 0 || x > pista.largura || y > pista.altura) return FORA;
+  const extra = EXTRAS[pista.id];
+  if (extra && extra.chao) {
+    const c = extra.chao(x, y);
+    if (c) return c;
+  }
   for (const q of pista.vermelhos || []) {
     if (x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h) return EST.OBR.VERMELHO;
   }
@@ -181,6 +192,8 @@ function raio(pista, x, y, dx, dy) {
     const u = ((x1 - x) * dy - (y1 - y) * dx) / den;
     if (t >= 0 && u >= 0 && u <= 1 && t < melhor) melhor = t;
   }
+  const extra = EXTRAS[pista.id];
+  if (extra && extra.raio) melhor = Math.min(melhor, extra.raio(x, y, dx, dy));
   return melhor;
 }
 
@@ -197,6 +210,7 @@ EST.quadradoVerde = verde;
 EST.corDoChao = corDoChao;
 EST.FORA = FORA;
 EST.solidos = solidos;
+EST.EXTRAS = EXTRAS;
 EST.raio = raio;
 EST.distSegmento = distSegmento;
 EST.distLinha = distLinha;

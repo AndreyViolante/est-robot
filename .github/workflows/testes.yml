@@ -38,6 +38,8 @@ jobs:
         run: node ferramentas/teste_surpresa.js
       - name: Imprimir a arena da OBR em tamanho real
         run: node ferramentas/teste_impressao.js
+      - name: Extras com código (arquivo cifrado e ganchos do simulador)
+        run: node ferramentas/teste_extras.js
       - name: Protocolo da página de programar (USB e Bluetooth)
         run: node ferramentas/teste_protocolo.js
       - name: Versões do programa guardadas na página de programar

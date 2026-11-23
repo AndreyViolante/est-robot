@@ -291,3 +291,11 @@ kbd { font: 0.78rem var(--mono); border: 1px solid var(--line); border-bottom-wi
   .comandos { gap: 6px 8px; }
   .bt.principal { min-width: 0; }
 }
+
+/* janela do código dos extras */
+.janela-codigo { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); padding: 16px 18px; }
+.janela-codigo::backdrop { background: rgba(0, 0, 0, 0.45); }
+.janela-codigo h2 { margin: 0 0 10px; font-size: 1rem; }
+.janela-codigo input[type="password"] { font: inherit; padding: 6px 8px; width: 16em; display: block; margin-bottom: 8px; }
+.erro-codigo { color: var(--erro, #c4252b); min-height: 1.2em; margin: 6px 0; font-size: 0.9rem; }
+.botoes-codigo { display: flex; gap: 8px; justify-content: flex-end; }

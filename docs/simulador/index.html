@@ -263,6 +263,18 @@
   teclado andam com o robô. No celular, dois dedos aproximam e afastam a pista.
 </footer>
 
+<dialog class="janela-codigo" id="janelaCodigo" aria-labelledby="tituloCodigo">
+  <form id="formCodigo" method="dialog">
+    <h2 id="tituloCodigo">Código</h2>
+    <input type="password" id="campoCodigo" autocomplete="off" aria-label="Código" required>
+    <label class="marcar"><input type="checkbox" id="lembrarCodigo"> Lembrar neste computador</label>
+    <p class="erro-codigo" id="erroCodigo" aria-live="polite"></p>
+    <div class="botoes-codigo">
+      <button class="bt pequeno" type="button" id="btCancelarCodigo">Cancelar</button>
+      <button class="bt pequeno principal" type="submit" value="abrir">Abrir</button>
+    </div>
+  </form>
+</dialog>
 <script src="vm.js"></script>
 <script src="mundo.js"></script>
 <script src="robo.js"></script>
@@ -270,6 +282,7 @@
 <script src="desafios.js"></script>
 <script src="obr.js"></script>
 <script src="progresso.js"></script>
+<script src="cifra.js"></script>
 <script src="imprimir.js"></script>
 <script src="programa.js"></script>
 <script src="app.js"></script>

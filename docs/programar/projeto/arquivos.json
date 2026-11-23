@@ -43,6 +43,7 @@
   "projeto/simular.py",
   "protocolo.js",
   "simulador/app.js",
+  "simulador/cifra.js",
   "simulador/desafios.js",
   "simulador/estilo.css",
   "simulador/grafico.js",

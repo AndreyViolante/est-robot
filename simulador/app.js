@@ -216,13 +216,16 @@ let desafio = null, prova = null;     // desafio escolhido e a tentativa em anda
 let placar = null;                    // rodada da OBR em andamento (ver "arena da OBR")
 let editandoOBR = false, escolhidoOBR = -1;     // montando a "Minha arena OBR" e o ladrilho escolhido nela
 let pista = montarPista((P && P.pista) || salvo.pista);     // o exemplo da demonstração já diz a pista
+const PISTA_DO_COMECO = salvo.pista;     // a pista de um extra só existe depois que o extra abre
 // programa do VS Code (simular.py): as medidas do calibracao.py valem por cima das guardadas na página, porque o
 // programa foi compilado com elas (o andar_cm vira graus com aquela roda)
 const robo = new EST.Robo(mesclar(mesclar(copia(EST.ROBO_PADRAO), salvo.robo), P && P.robo), pista);
 // as medidas do aluno; num desafio com robô próprio (giroscópio, derrapagem), o robô usa uma cópia com as do desafio
 const configDoAluno = robo.config;
 function aplicarRoboDoDesafio() {
-  robo.config = desafio && desafio.robo ? EST.roboDoDesafio(desafio, configDoAluno) : configDoAluno;
+  const extra = EST.EXTRAS[pista.id];       // uma pista dos extras também pode trazer o próprio robô
+  robo.config = desafio && desafio.robo ? EST.roboDoDesafio(desafio, configDoAluno)
+    : extra && extra.robo ? EST.roboDoDesafio(extra, configDoAluno) : configDoAluno;
   robo.cache.clear();
   montarMedidas();
 }
@@ -293,6 +296,8 @@ function reiniciar() {
   colocarNaLargada();
   if (vm) vm.reiniciar();
   tSim = 0; tFim = 0; acumulado = 0; somAte = -1; sonsTocados = 0;
+  const extra = EST.EXTRAS[pista.id];
+  if (extra && extra.reiniciar) extra.reiniciar(robo);
   registro.limpar();
   apontado = null;
   passoAPasso = false; motivoParada = null;
@@ -354,6 +359,8 @@ function passo() {
     }
   }
   robo.avancar(DT, tSim + DT, arraste !== null && (arraste.tipo === 'mover' || arraste.tipo === 'girar'));
+  const extra = EST.EXTRAS[pista.id];
+  if (extra && extra.passo) extra.passo(robo, DT, tSim);
   tSim += DT;
   if (estado === 'rodando') anotarSensores();
   if (soltarPendente && tSim >= soltarPendente.t) { const f = soltarPendente.soltar; soltarPendente = null; f(); }
@@ -508,6 +515,8 @@ function desenharPista(c) {
     c.strokeRect(cx.x, cx.y, cx.w, cx.h);
     linha(c, cx.x + cx.w / 2, cx.y, cx.x + cx.w / 2, cx.y + cx.h, '#e0c08d', 1.6, 'butt');
   }
+  const extra = EST.EXTRAS[pista.id];
+  if (extra && extra.desenhar) { c.save(); extra.desenhar(c, robo); c.restore(); }
   if (desafio) desenharDesafio(c);
   // régua de 10 cm na margem de baixo
   const ry = H + MARGEM * 0.45;
@@ -672,6 +681,8 @@ function desenhar() {
   desenharEditor(ctx);
   desenharRastro(ctx);
   desenharRobo(ctx);
+  const extra = EST.EXTRAS[pista.id];
+  if (extra && extra.desenharPorCima) { ctx.save(); extra.desenharPorCima(ctx, robo); ctx.restore(); }
   desenharAlca(ctx);
   // texto da régua em pixels de tela, para ficar nítido
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1741,8 +1752,13 @@ $('btPadrao').addEventListener('click', () => {
 // ---------------------------------------------------------------- controles
 
 function trocarPista(id) {
+  const antes = EST.EXTRAS[pista.id];
+  if (antes && antes.desativar) antes.desativar();
   pista = montarPista(id);
   robo.pista = pista;
+  const extra = EST.EXTRAS[pista.id];
+  if (extra && extra.ativar) extra.ativar(robo);
+  if (!desafio) aplicarRoboDoDesafio();
   if (!P || !P.pista) {             // a pista de um exemplo da demonstração não fica guardada
     salvo.pista = pista.id;
     salvar();
@@ -2340,11 +2356,58 @@ function avisarProgresso(texto) {
   $('btSalvarProgresso').title = texto;
 }
 
-$('pista').innerHTML = [...EST.PISTAS, {id: MINHA, nome: 'Minha pista'}, ...EST.OBR.ARENAS,
-                        {id: SORTEADA, nome: 'Arena OBR sorteada'}, {id: MINHA_OBR, nome: 'Minha arena OBR (ladrilhos)'}]
-  .map(p => `<option value="${p.id}">${escapar(p.nome)}</option>`).join('') +
-  '<option value="desafio" hidden>Pista do desafio</option>';
-$('pista').value = pista.id;
+function montarSeletorPista() {
+  $('pista').innerHTML = [...EST.PISTAS, {id: MINHA, nome: 'Minha pista'}, ...EST.OBR.ARENAS,
+                          {id: SORTEADA, nome: 'Arena OBR sorteada'}, {id: MINHA_OBR, nome: 'Minha arena OBR (ladrilhos)'}]
+    .map(p => `<option value="${p.id}">${escapar(p.nome)}</option>`).join('') +
+    '<option value="desafio" hidden>Pista do desafio</option>';
+  $('pista').value = desafio ? 'desafio' : pista.id;
+}
+montarSeletorPista();
+
+// ---------------------------------------------------------------- extras com código (cifra.js)
+// Um arquivo cifrado (extras.dat) que só abre com o código de quem o fez. Endereço com #codigo mostra a janela do
+// código; com "Lembrar", o código fica neste navegador e os extras abrem sozinhos da próxima vez.
+// O que os extras podem usar da página:
+EST.app = {robo, pista: () => pista, pistaGuardada: () => PISTA_DO_COMECO, trocarPista, montarSeletorPista, reiniciar,
+           desafio: () => desafio};
+const CHAVE_CODIGO = 'est-codigo-extras';
+let extrasAbertos = false;
+async function abrirExtras(codigo) {
+  const resposta = await fetch('extras.dat', {cache: 'no-cache'});
+  if (!resposta.ok) throw new Error('não há extras neste simulador');
+  const texto = await EST.Cifra.abrir(await resposta.json(), codigo);
+  new Function(texto)();
+  extrasAbertos = true;
+  montarSeletorPista();
+}
+function janelaDoCodigo() {
+  if (extrasAbertos || !$('janelaCodigo').showModal) return;
+  $('erroCodigo').textContent = '';
+  $('campoCodigo').value = '';
+  $('janelaCodigo').showModal();
+}
+$('formCodigo').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  try {
+    await abrirExtras($('campoCodigo').value);
+    try { if ($('lembrarCodigo').checked) localStorage.setItem(CHAVE_CODIGO, $('campoCodigo').value); } catch (e) { /* nada */ }
+    $('janelaCodigo').close();
+    history.replaceState(null, '', location.pathname + location.search);
+  } catch (e) {
+    $('erroCodigo').textContent = e.message === 'código errado' ? 'Código errado.' : `Não abriu: ${e.message}.`;
+  }
+});
+$('btCancelarCodigo').addEventListener('click', () => $('janelaCodigo').close());
+window.addEventListener('hashchange', () => { if (location.hash === '#codigo') janelaDoCodigo(); });
+(async () => {
+  let guardado = null;
+  try { guardado = localStorage.getItem(CHAVE_CODIGO); } catch (e) { /* sem armazenamento */ }
+  if (guardado) {
+    try { await abrirExtras(guardado); } catch (e) { try { localStorage.removeItem(CHAVE_CODIGO); } catch (e2) { /* nada */ } }
+  }
+  if (location.hash === '#codigo') janelaDoCodigo();
+})();
 $('pista').addEventListener('change', ev => { if (!desafio) trocarPista(ev.target.value); });
 $('btExecutar').addEventListener('click', executarOuPausar);
 $('btProxima').addEventListener('click', proximaLinha);
