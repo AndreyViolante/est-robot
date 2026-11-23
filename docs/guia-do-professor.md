@@ -84,22 +84,29 @@ Arraste o robô para a largada (a bolinha azul gira) e escolha a pista. Antes, m
 (roda, distância entre as rodas, posição dos sensores) e ajuste na aba **Medidas** do simulador. O simulador
 não tem escorregão, bateria fraca nem variação de luz: o teste final é sempre no robô.
 
-**Desafios:** escolha um desafio no campo "Desafio": o robô sai sempre da largada marcada e a página
+**Desafios:** escolha um desafio em "Pista ou desafio" (o mesmo campo das pistas, no grupo Desafios): o robô sai
+sempre da largada marcada e a página
 diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bateu na caixa). São 15: os 6
 primeiros vão de andar e virar até seguir linha com falha; do 7 ao 9, cruzamentos, verde e obstáculo; do
 10 ao 13, os mais difíceis: volta rápida no oval (pede um seguidor proporcional), chegada na faixa
 vermelha, beco sem saída e o percurso completo da OBR. O 14 e o 15 são com giroscópio e abrem logo depois do
 2: um quadrado e um triângulo com um robô que derrapa nas viradas, e no 15 o giroscópio desvia sozinho (zere
-antes de cada virada). Todos têm solução conferida no simulador. O progresso fica no navegador; em
-"Professor" dá para liberar todos os desafios ou zerar. Quem cumpre o 13 ganha o
+antes de cada virada). Todos têm solução conferida no simulador. O progresso fica no navegador; no menu
+**Opções**, em Professor, dá para liberar todos os desafios ou zerar. Quem cumpre o 13 ganha o
 **Desafio surpresa**: uma arena sorteada e uma tarefa a mais para mudar no programa (bips no gap, luz vermelha
 no desvio, parar no verde, FIM na tela na chegada...), como o desafio surpresa da OBR. Combine um número de
-arena com a turma ("Arena nº") e todos tentam a mesma tarefa. Em "Progresso", o aluno salva
-um arquivo com os desafios cumpridos e as pistas que montou, para continuar em outro computador. Para mostrar por que
-confirmar a leitura importa, ligue "Sensores com ruído" e rode um programa que decide com uma leitura
+arena com a turma ("Arena nº") e todos tentam a mesma tarefa. Em **Opções → Salvar o progresso em arquivo**, o
+aluno guarda os desafios cumpridos e as pistas que montou, para continuar em outro computador. Para mostrar por que
+confirmar a leitura importa, ligue **Opções → Sensores com ruído** e rode um programa que decide com uma leitura
 só. Para depurar, use "Próxima linha" ou um ponto de parada: o robô congela e os sensores e as
 variáveis ficam à mostra. Com "Minha pista" você monta a pista da sua escola; ela fica no navegador onde
-foi desenhada, e vai para outro computador pelo "Progresso", Salvar em arquivo.
+foi desenhada, e vai para outro computador pelo mesmo Salvar o progresso.
+
+**Como o simulador é organizado:** em cima, o que se usa o tempo todo (Executar, Reiniciar, Próxima linha,
+Velocidade, Dirigir) e o menu **Opções** (som, sensores com ruído, modo projetor, progresso e Professor). Logo
+abaixo, **Pista ou desafio**, um campo só com as pistas para treinar, as arenas da OBR, as pistas feitas por você e
+os desafios. Embaixo da pista ficam **Seguir o robô**, **Rastro** e o que o robô está fazendo; as ferramentas de
+desenhar a pista ou montar a arena aparecem só quando servem.
 
 **Sem instalar nada:** a página [programar](https://andreyviolante.github.io/est-robot/programar/)
 roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou monta com blocos
@@ -114,11 +121,11 @@ roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou
   em nenhum servidor. Se o aluno programa em blocos, o link abre nos blocos; se ele está num desafio, o link
   abre o simulador nesse desafio (mesmo que ele ainda esteja trancado no computador de quem recebe). Dentro de
   um desafio, o botão **Copiar link do programa** do cartão do desafio faz o mesmo sem sair do simulador.
-- **Tela cheia** (na barra do editor): o Python ou os blocos ocupam a tela inteira, sem o topo e sem o painel da
+- **Exibir → Tela cheia**: o Python ou os blocos ocupam a tela inteira, sem o topo e sem o painel da
   direita. Os erros e o resultado do envio aparecem num canto, por cima, e somem no **Fechar**. Fica guardada naquele
   navegador; para sair, o mesmo botão ou Esc.
-- **Projetor** (no topo): letras, blocos e simulador maiores, para a turma ver de longe. Dá para usar junto com a
-  tela cheia.
+- **Exibir → Modo projetor**: letras, blocos e simulador maiores, para a turma ver de longe. Dá para usar junto
+  com a tela cheia. No simulador, fica em **Opções**.
 
 ---
 

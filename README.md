@@ -18,7 +18,7 @@ independente, sem relação com o fabricante do robô.
 
 **Sem instalar nada:** abra [andreyviolante.github.io/est-robot/programar](https://andreyviolante.github.io/est-robot/programar/)
 no Chrome ou no Edge (Windows, Mac, Linux ou Chromebook). Dá para escrever em Python ou montar o
-programa com blocos, vendo ao lado o Python que os blocos geram; **Trazer do Python** faz o caminho de
+programa com blocos, vendo ao lado o Python que os blocos geram; **Trazer da aba Python** faz o caminho de
 volta e transforma o programa escrito em blocos (o que ainda não tem bloco vira um bloco cinza "Python",
 com a linha como está, e o programa continua fazendo o mesmo). A página compila no próprio
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
@@ -26,12 +26,13 @@ portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi t
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
 navegador, e **Arquivo → Copiar link do programa** gera um link com o programa dentro (quem abre já vê o
 programa no simulador, nos blocos se ele foi feito em blocos e no desafio que estava aberto; nada fica guardado
-em servidor). O botão **Versões** mostra as versões do programa
+em servidor). **Arquivo → Versões do programa** mostra as versões do programa
 guardadas no navegador (a cada simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5
 minutos enquanto o aluno escreve; ficam as últimas 30) e deixa voltar para qualquer uma. **Arquivo → Salvar o
 progresso** baixa um `.json` com o programa, os blocos, as versões e o progresso do simulador (desafios, Minha
 pista, Minha arena OBR); **Carregar o progresso** continua dele em outro computador. O simulador tem os mesmos
-botões em "Progresso".
+botões no menu **Opções**. O menu **Exibir** tem a **Tela cheia** (o Python ou os blocos ocupam a tela) e o
+**Modo projetor** (tudo maior, para a turma ver de longe).
 
 **No celular e no tablet Android** (Chrome), a mesma página:
 - **📲 Instalar** põe a página na tela inicial, como um aplicativo, e ela abre sem internet;
@@ -409,7 +410,7 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/teste_protocolo.js](ferramentas/teste_protocolo.js) | testa o protocolo da página de programar (USB e Bluetooth) sem o robô |
 | [ferramentas/teste_simulador.py](ferramentas/teste_simulador.py) | roda programas no simulador (pelo node) e confere giroscópio, motor, cronômetro, mensagens, o caminho do Dirigir e o seguidor |
 | [ferramentas/teste_blocos.py](ferramentas/teste_blocos.py) | ida e volta Python → blocos → Python da página: os dois têm que compilar para os mesmos bytes (precisa do Blockly do npm) |
-| [docs/programar/para_blocos.py](docs/programar/para_blocos.py) | o "Trazer do Python" da página: lê o programa com o `ast` e monta os blocos |
+| [docs/programar/para_blocos.py](docs/programar/para_blocos.py) | o "Trazer da aba Python" da página: lê o programa com o `ast` e monta os blocos |
 | [avisos.py](avisos.py) | os avisos antes de enviar: variável sem uso, laço sem fim sem espera, motor ligado no fim |
 | [importar_est.py](importar_est.py) / [exportar_est.py](exportar_est.py) | abre um projeto da IDE EST em Python / salva o programa no formato da IDE |
 | [simulador/grafico.js](simulador/grafico.js) | guarda a leitura dos sensores no tempo e prepara os pontos do gráfico do simulador |

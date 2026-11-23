@@ -268,7 +268,7 @@ function definir() {
     leitura('robo_ler', CORES.variaveis, 'ler %1', [{type: 'field_input', name: 'NOME', text: 'contador'}], 'Number',
       "ler('contador'): o número guardado na variável do robô"),
 
-    // uma linha em Python que ainda não tem bloco (o "Trazer do Python" cria estes): vai para o programa como está
+    // uma linha em Python que ainda não tem bloco (o "Trazer da aba Python" cria estes): vai para o programa como está
     comando('robo_python', CORES.python, 'Python %1', [{type: 'field_input', name: 'CODIGO', text: 'bip()'}],
       'Uma linha em Python, escrita como está (para o que ainda não tem bloco)'),
     leitura('robo_python_valor', CORES.python, 'Python %1', [{type: 'field_input', name: 'CODIGO', text: '0'}], null,
@@ -754,7 +754,7 @@ async function criar(div, aoMudar) {
     salvar,
     /** A área de blocos como dados (para guardar uma versão e voltar para ela depois com carregar). */
     estado: () => Blockly.serialization.workspaces.save(ws),
-    /** Troca os blocos pela área estado (do "Trazer do Python", para_blocos.py). */
+    /** Troca os blocos pela área estado (do "Trazer da aba Python", para_blocos.py). */
     carregar(estado) {
       Blockly.serialization.workspaces.load(estado, ws);
       apagarSoltos();

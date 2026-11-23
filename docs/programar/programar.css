@@ -51,7 +51,6 @@ html.travado { overflow: hidden; }
 /* modo projetor: tudo que é em rem cresce junto (editor, botões, mensagens); os blocos crescem pelo zoom do Blockly */
 html.projetor { font-size: 125%; }
 html.projetor body { font-size: 19px; }
-#btProjetor[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---- topo ---- */
@@ -101,14 +100,20 @@ html.projetor body { font-size: 19px; }
 .aba:hover:not([aria-selected="true"]) { color: var(--fg); }
 
 /* menus (Arquivo e as outras opções de envio) */
-.menu-arquivo, .menu-envio { position: relative; }
-.menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 250px; display: none; padding: 4px;
+.menu-arquivo, .menu-exibir, .menu-envio { position: relative; }
+.menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 250px; width: max-content;
+        max-width: min(380px, calc(100vw - 24px)); display: none; padding: 4px;
         background: var(--panel); border: 1px solid var(--line); border-radius: var(--raio);
         box-shadow: 0 6px 20px rgba(13, 18, 34, 0.16); }
 .menu-envio .menu { left: auto; right: 0; min-width: 210px; }
 .menu.aberto { display: grid; }
-.menu .exemplo { display: grid; gap: 4px; padding: 6px 8px 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
-.menu .exemplo select { max-width: none; width: 100%; padding: 5px 8px; }
+.menu .grupo { display: block; padding: 6px 10px 2px; font-size: 0.78rem; color: var(--muted); }
+.menu .separador { display: block; height: 1px; background: var(--line); margin: 4px 6px; }
+.lista-exemplos { display: grid; }
+/* itens que ligam e desligam (Tela cheia, Modo projetor): a marca de ligado na frente */
+.menu .item[aria-pressed] { display: flex; align-items: center; gap: 8px; }
+.menu .item[aria-pressed]::before { content: ""; width: 13px; flex: none; font-weight: 700; color: var(--led-azul); text-align: center; }
+.menu .item[aria-pressed="true"]::before { content: "✓"; }
 .menu .item { display: block; text-align: left; width: 100%; border: 0; background: transparent; padding: 7px 10px;
               border-radius: 4px; cursor: pointer; }
 .menu .item:hover, .menu .item:focus-visible { background: var(--bg); }
@@ -285,7 +290,6 @@ body.com-teclado { padding-bottom: 104px; }          /* o fim do código não fi
 
 /* ---- tela cheia: o editor (Python ou Blocos) ocupa a janela; as mensagens aparecem por cima, num canto, só quando
    há alguma (o simulador, z-index 10, continua por cima de tudo) ---- */
-#btTelaCheia[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .console-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .console-topo h2 { margin-bottom: 8px; }
 .fechar-mensagens { display: none; margin-bottom: 8px; }

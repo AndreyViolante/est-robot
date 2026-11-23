@@ -23,11 +23,8 @@
   <nav class="links" aria-label="Ajuda e atalhos">
     <button id="btInstalar" class="bt pequeno instalar" type="button" hidden
             title="Põe a página na tela inicial, como um aplicativo (funciona sem internet)">Instalar</button>
-    <a href="../simulador/index.html" target="_blank" rel="noopener" class="so-largo">Simulador</a>
     <a href="../cola-do-aluno.pdf" target="_blank" rel="noopener">Cola<span class="so-largo"> de comandos</span></a>
     <a href="#ajuda">Ajuda</a>
-    <button id="btProjetor" class="bt pequeno" type="button" aria-pressed="false"
-            title="Letras, blocos e simulador maiores, para a aula no projetor (fica guardado neste navegador)">Projetor</button>
   </nav>
 </header>
 
@@ -46,21 +43,32 @@
         <div class="menu-arquivo">
           <button id="btExtras" class="bt pequeno" type="button" aria-expanded="false" aria-controls="extras">Arquivo ▾</button>
           <div class="menu" id="extras">
-            <label class="campo exemplo">Abrir um exemplo <select id="exemplo"><option value="">Escolha…</option></select></label>
-            <button id="btAbrir" class="item" type="button" title="Do computador; um projeto da IDE EST vira Python">Abrir .py ou .est…</button>
+            <span class="grupo">Exemplos</span>
+            <div id="listaExemplos" class="lista-exemplos"></div>
+            <span class="separador" role="separator"></span>
+            <button id="btAbrir" class="item" type="button" title="Do computador; um projeto da IDE EST vira Python">Abrir do computador (.py ou .est)…</button>
             <button id="btBaixar" class="item" type="button" title="Para guardar ou abrir no VS Code">Baixar .py</button>
             <button id="btSalvarEst" class="item" type="button" title="Para abrir na IDE EST, com os mesmos blocos">Salvar para a IDE EST (.est)</button>
+            <span class="separador" role="separator"></span>
+            <button id="btVersoes" class="item" type="button"
+                    title="As versões do programa guardadas neste navegador: veja e volte para qualquer uma">Versões do programa…</button>
             <button id="btLink" class="item" type="button" title="O programa vai dentro do link, para mandar a outra pessoa">Copiar link do programa</button>
+            <span class="separador" role="separator"></span>
             <button id="btSalvarProgresso" class="item" type="button"
                     title="Um arquivo com o programa, os blocos, as versões e o progresso do simulador, para levar a outro computador">Salvar o progresso (.json)</button>
             <button id="btCarregarProgresso" class="item" type="button"
                     title="Abre o arquivo do Salvar o progresso: troca o que está guardado neste navegador">Carregar o progresso…</button>
           </div>
         </div>
-        <button id="btVersoes" class="bt pequeno" type="button"
-                title="As versões do programa guardadas neste navegador: veja e volte para qualquer uma">Versões</button>
-        <button id="btTelaCheia" class="bt pequeno" type="button" aria-pressed="false"
-                title="O Python ou os blocos ocupam a tela inteira (para sair: este botão ou Esc)">Tela cheia</button>
+        <div class="menu-exibir">
+          <button id="btExibir" class="bt pequeno" type="button" aria-expanded="false" aria-controls="menuExibir">Exibir ▾</button>
+          <div class="menu" id="menuExibir">
+            <button id="btTelaCheia" class="item" type="button" aria-pressed="false"
+                    title="O Python ou os blocos ocupam a tela inteira (para sair: de novo aqui ou Esc)">Tela cheia</button>
+            <button id="btProjetor" class="item" type="button" aria-pressed="false"
+                    title="Letras, blocos e simulador maiores, para a aula no projetor (fica guardado neste navegador)">Modo projetor</button>
+          </div>
+        </div>
       </div>
       <div class="executar">
         <button id="btSimular" class="bt" type="button" title="Compila e mostra o robô andando no simulador">Simular</button>
@@ -87,10 +95,10 @@
       <div class="blockly" id="blockly"></div>
       <div class="espelho">
         <div class="espelho-barra">
-          <span>Python dos blocos</span>
+          <span>Python destes blocos</span>
           <button id="btVerPython" class="bt pequeno ver-python" type="button" aria-expanded="false" aria-controls="espelhoCodigo">Ver</button>
-          <button id="btTrazer" class="bt pequeno" type="button" title="Monta os blocos a partir do programa da aba Python (o que não tem bloco vira um bloco Python, com a linha como está)">Trazer do Python</button>
-          <button id="btLevar" class="bt pequeno" type="button" title="Copia este Python para a aba Python, para continuar escrevendo">Levar para o Python</button>
+          <button id="btTrazer" class="bt pequeno" type="button" title="Troca estes blocos pelo programa da aba Python (o que não tem bloco vira um bloco Python, com a linha como está)">Trazer da aba Python</button>
+          <button id="btLevar" class="bt pequeno" type="button" title="Copia este Python para a aba Python, para continuar escrevendo em texto">Copiar para a aba Python</button>
         </div>
         <div class="espelho-codigo" id="espelhoCodigo">
           <textarea id="pythonBlocos" spellcheck="false" aria-label="Python gerado pelos blocos (só leitura)"></textarea>
@@ -121,7 +129,7 @@
     </section>
 
     <section class="cartao conexao" aria-labelledby="tituloConexao">
-      <h2 id="tituloConexao">Robô e navegador</h2>
+      <h2 id="tituloConexao">Conexão</h2>
       <p class="python" id="estadoPython" role="status">Preparando o Python do navegador…</p>
       <p class="robo" id="estadoRobo" role="status"></p>
       <p class="robo" id="estadoBluetooth" role="status" hidden>Pareie o robô no Bluetooth do aparelho antes (senha 1234).</p>
@@ -150,12 +158,13 @@
         alto, põe esta página na tela inicial, como um aplicativo.</p>
       <h3>Blocos e Python</h3>
       <p>Na aba <b>Blocos</b> o programa é montado arrastando blocos, e ao lado aparece o Python que eles geram.
-        <b>Levar para o Python</b> copia esse código para a aba Python, para continuar escrevendo, e
-        <b>Trazer do Python</b> faz o caminho de volta: o programa da aba Python vira blocos. O que ainda não tem
+        <b>Copiar para a aba Python</b> leva esse código para a aba Python, para continuar escrevendo, e
+        <b>Trazer da aba Python</b> faz o caminho de volta: o programa da aba Python vira blocos. O que ainda não tem
         bloco vira um bloco cinza "Python", com a linha como está.</p>
       <h3>Arquivos e versões</h3>
-      <p>O programa fica guardado neste navegador, e <b>Versões</b> deixa voltar para o que estava antes (a cada
-        simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5 minutos). No menu <b>Arquivo</b>:
+      <p>O programa fica guardado neste navegador, e <b>Arquivo → Versões do programa</b> deixa voltar para o que
+        estava antes (a cada simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5 minutos). No
+        menu <b>Arquivo</b> também:
         <b>Baixar .py</b> leva o programa para outro computador (o mesmo arquivo funciona no
         <a href="https://github.com/AndreyViolante/est-robot">EST-LAB do VS Code</a>); <b>Abrir .py ou .est</b> também
         abre um projeto da IDE EST, com os Meus Blocos como funções; <b>Salvar para a IDE EST</b> faz o caminho de
@@ -184,7 +193,7 @@
 <div class="sim" id="sim" hidden role="dialog" aria-modal="true" aria-label="Simulador">
   <div class="sim-barra">
     <button id="btFecharSim" class="bt" type="button">Voltar ao código</button>
-    <span class="sim-titulo">Simulador</span>
+    <span class="sim-titulo" id="simTitulo">Simulador</span>
   </div>
   <iframe id="quadroSim" title="Simulador do robô EST"></iframe>
 </div>

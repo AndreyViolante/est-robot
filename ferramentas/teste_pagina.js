@@ -181,9 +181,11 @@ async function main() {
       largura: Math.round(100 * document.querySelector('.editor').getBoundingClientRect().width / innerWidth),
       blocos: Math.round(100 * document.getElementById('blockly').getBoundingClientRect().height / innerHeight),
       guardada: localStorage.getItem('est-tela-cheia')}));
+    await pagina.click('#btExibir');
     await pagina.click('#btTelaCheia');
     await pagina.waitForTimeout(400);
     const cheia = await medir();
+    await pagina.click('#btExibir');
     await pagina.click('#btTelaCheia');
     await pagina.waitForTimeout(400);
     const normal = await medir();
@@ -250,6 +252,22 @@ async function main() {
     await pagina.waitForTimeout(2000);
     const relogio2 = await pagina.locator('#relogio').innerText();
     confere('o simulador do site abre e executa o exemplo', !/^0,0 s$/.test(relogio2.trim()), relogio2);
+
+    // ---- um seletor só para a pista ou o desafio, e o menu Opções
+    const grupos = await pagina.$$eval('#onde optgroup', gs => gs.map(g => g.label));
+    await pagina.selectOption('#onde', 'd:andar30');
+    const noDesafio1 = await pagina.isVisible('#cartaoDesafio');
+    await pagina.selectOption('#onde', 'p:oval');
+    const naPista = await pagina.evaluate(() => ({cartao: !document.getElementById('cartaoDesafio').hidden,
+                                                 pista: document.getElementById('pista').value, desafio: document.getElementById('desafio').value}));
+    confere('"Pista ou desafio": grupos, entra no desafio e volta para uma pista',
+            grupos.join('|') === 'Pistas para treinar|Arena da OBR|Feitas por você|Desafios' && noDesafio1
+            && !naPista.cartao && naPista.pista === 'oval' && naPista.desafio === '', JSON.stringify({grupos, noDesafio1, naPista}));
+    await pagina.click('#btOpcoes');
+    const opcoes = await pagina.isVisible('#btZerar') && await pagina.isVisible('#somLigado');
+    await pagina.keyboard.press('Escape');
+    confere('menu Opções do simulador abre (som, ruído, projetor, progresso, professor) e fecha no Esc',
+            opcoes && !(await pagina.isVisible('#btZerar')));
 
     await celular(navegador, base, erros);
   } catch (e) {

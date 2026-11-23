@@ -52,7 +52,6 @@ html, body { margin: 0; }
 html.projetor { font-size: 125%; }
 html.projetor body { font-size: 19px; }
 html.projetor .layout { grid-template-columns: minmax(0, 1fr) minmax(380px, 520px); }
-#btProjetor[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 body { background: var(--bg); color: var(--fg); font: 400 15px/1.5 var(--body); }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--led-azul); outline-offset: 2px; border-radius: 4px; }
@@ -69,6 +68,8 @@ button, select, input { font: inherit; color: inherit; }
 .led.azul { background: var(--led-azul); } .led.roxo { background: var(--led-roxo); } .led.vermelho { background: var(--led-vermelho); }
 .arquivo { font: 0.85rem var(--mono); color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
 .arquivo strong { color: var(--fg); }
+/* dentro da página de programar, a barra dela já diz o programa: o topo do simulador sai */
+html.embutido .topo { display: none; }
 
 /* ---- layout ---- */
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 20px;
@@ -79,7 +80,30 @@ button, select, input { font: inherit; color: inherit; }
   .palco { position: sticky; top: 8px; }          /* a pista fica à vista ao rolar o painel */
 }
 @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
-.comandos, .opcoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.comandos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.comandos-fim { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* menu Opções: som, ruído, projetor, progresso e o que é do professor */
+.menu-opcoes { position: relative; display: inline-flex; }
+.menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; min-width: 260px; display: none; padding: 4px;
+        background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+        box-shadow: 0 6px 20px rgba(13, 18, 34, 0.16); }
+.menu.aberto { display: grid; }
+.menu .item { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: transparent; padding: 7px 10px;
+              border-radius: 4px; cursor: pointer; text-align: left; font: inherit; font-size: 0.92rem; color: var(--fg); }
+.menu .item:hover, .menu .item:focus-visible, .menu .item:focus-within { background: var(--bg); }
+.menu .item.marcar input { margin: 0; }
+/* botões que ligam e desligam (Modo projetor): a marca de ligado no lugar da caixinha */
+.menu button.item[aria-pressed]::before { content: ""; display: inline-block; width: 13px; flex: none; font-weight: 700;
+                                          color: var(--led-azul); text-align: center; }
+.menu button.item[aria-pressed="true"]::before { content: "✓"; }
+.menu .separador { display: block; height: 1px; background: var(--line); margin: 4px 6px; }
+.menu .grupo { display: block; padding: 6px 10px 2px; font-size: 0.78rem; color: var(--muted); }
+
+/* onde o programa roda: um seletor só, com os grupos (pistas, arena da OBR, desafios) */
+.onde-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.campo.onde { color: var(--fg); font-weight: 600; flex: 0 1 auto; min-width: 0; }
+.campo.onde select { min-width: min(22em, 100%); max-width: 100%; font-weight: 400; padding: 5px 8px; }
 .bt { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; cursor: pointer;
       border: 1px solid var(--line); background: var(--panel); font-weight: 600; }
 .bt:hover:not(:disabled) { border-color: var(--fg); }
@@ -94,7 +118,12 @@ button, select, input { font: inherit; color: inherit; }
 .estado { font-size: 0.9rem; color: var(--muted); }
 .estado.ok { color: var(--ok); } .estado.erro { color: var(--erro); font-weight: 600; }
 
-.quadro { position: relative; background: var(--mesa); border-radius: 12px; overflow: hidden; touch-action: none; }
+/* a pista e a barra de como ver (seguir o robô, rastro), numa peça só */
+.vista { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); }
+.quadro { position: relative; background: var(--mesa); overflow: hidden; touch-action: none; }
+.vista-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 6px 12px;
+               border-top: 1px solid var(--line); }
+.vista-barra .estado { margin-left: auto; text-align: right; }
 /* aproximar a pista: botões no canto (no celular também dá com dois dedos) */
 .zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; }
 .zoom button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel);
@@ -131,14 +160,14 @@ button, select, input { font: inherit; color: inherit; }
 #linkDesafio input.link { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; padding: 6px 8px;
                           font: 0.8rem var(--mono); color: var(--fg); background: var(--panel);
                           border: 1px solid var(--line); border-radius: 4px; }
-.professor summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
-.professor[open] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .campo select:disabled { opacity: 0.6; }
 
-/* editor da "Minha pista" */
-.editor { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px;
-          border: 1px dashed var(--line); border-radius: 12px; }
+/* ferramentas da pista escolhida (Minha pista, arena sorteada, Minha arena OBR): uma faixa só, quando houver */
+.ferramentas-pista { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 8px 12px;
+                     background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.ferramentas-pista:not(:has(> .editor:not([hidden]))) { display: none; }
+.editor { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .editor .itens { display: contents; }
 .bt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 .ferramentas { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
@@ -173,7 +202,7 @@ button, select, input { font: inherit; color: inherit; }
 .cartao summary { cursor: pointer; margin: 0; }
 details.cartao[open] summary { margin-bottom: 8px; }
 
-.lcd-moldura { background: var(--lcd-edge); padding: 8px; border-radius: 8px; }
+.lcd-moldura { background: var(--lcd-edge); padding: 8px; border-radius: 8px; max-width: 300px; margin: 0 auto; }
 #lcd { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; image-rendering: pixelated; border-radius: 3px; background: var(--lcd-bg); }
 .luz-som { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.9rem; min-height: 1.6em; }
 .luz { width: 16px; height: 16px; border-radius: 50%; background: #6b7280; opacity: 0.35; flex: none; }
@@ -274,6 +303,7 @@ details.cartao[open] summary { margin-bottom: 8px; }
 .medidas td.rotulo { font: inherit; white-space: normal; }
 
 .rodape { padding: 8px clamp(16px, 3vw, 28px) 24px; font-size: 0.82rem; color: var(--muted); max-width: 90ch; }
+.rodape p { margin: 0 0 6px; }
 .rodape .demo { margin: 0 0 8px; font-size: 0.9rem; color: var(--fg); }
 .rodape a { color: var(--led-azul); }
 kbd { font: 0.78rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
@@ -293,6 +323,12 @@ kbd { font: 0.78rem var(--mono); border: 1px solid var(--line); border-bottom-wi
   .layout { padding-inline: 10px; gap: 12px; }
   .comandos { gap: 6px 8px; }
   .bt.principal { min-width: 0; }
+  .rotulo-vel { display: none; }                   /* o seletor mostra "1×": cabe Dirigir e Opções na mesma linha */
+  .campo.onde { flex: 1 1 100%; display: grid; gap: 4px; }
+  .campo.onde select { width: 100%; min-width: 0; }
+  .vista-barra .estado { margin-left: 0; text-align: left; flex-basis: 100%; }
+  .lcd-moldura { max-width: 240px; }
+  .menu { right: 0; max-width: calc(100vw - 20px); }
 }
 
 /* janela do código dos extras */

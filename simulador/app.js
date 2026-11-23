@@ -23,6 +23,9 @@ const MAX_ITENS = 500;            // linhas, quadrados ou caixas guardados na "M
 const COR_VERDE = `rgb(${EST.VERDE.slice(0, 3).map(v => Math.round(v * 255)).join(', ')})`;     // a mesma cor que o sensor vê
 
 const $ = id => document.getElementById(id);
+// dentro da página de programar (que deixa o programa em window.ESTPROGRAMA), a barra dela já diz o programa
+try { if (window.parent !== window && window.parent.ESTPROGRAMA) document.documentElement.classList.add('embutido'); }
+catch (e) { /* outra origem: página sozinha */ }
 const copia = o => JSON.parse(JSON.stringify(o));
 const num = (v, casas = 1) => v.toLocaleString('pt-BR', {minimumFractionDigits: casas, maximumFractionDigits: casas});
 
@@ -1769,6 +1772,7 @@ function trocarPista(id) {
     salvar();
   }
   $('pista').value = pista.id;
+  marcarOnde();
   if (pista.id === MINHA && !pista.linhas.length) editando = true;      // pista em branco: já abre desenhando
   if (pista.id === MINHA_OBR && !pista.obr.arena.percurso.length) editandoOBR = true;
   pararDirigir();
@@ -2154,6 +2158,7 @@ function montarSeletorDesafio() {
       `<option value="${d.id}"${liberadoNa(t.desafios, i) ? '' : ' disabled'}>${i + 1}. ${escapar(d.titulo)}`
       + `${cumprido(d.id) ? ' ✓' : ''}</option>`).join('') + '</optgroup>').join('');
   $('desafio').value = desafio ? desafio.id : '';
+  montarOnde();
 }
 
 /* doLink: o desafio veio no link de um programa (a página de programar), e abre mesmo que ainda não esteja
@@ -2420,8 +2425,60 @@ function montarSeletorPista() {
     .map(p => `<option value="${p.id}">${escapar(p.nome)}</option>`).join('') +
     '<option value="desafio" hidden>Pista do desafio</option>';
   $('pista').value = desafio ? 'desafio' : pista.id;
+  montarOnde();
 }
+
+/* O seletor "Pista ou desafio": as pistas (de treino, da arena da OBR e as feitas pelo aluno), os desafios e as
+   trilhas dos extras, cada grupo com o seu título. Os seletores #pista e #desafio continuam guardando o estado. */
+function montarOnde() {
+  const opcao = (valor, texto, trancado) => `<option value="${valor}"${trancado ? ' disabled' : ''}>${escapar(texto)}</option>`;
+  const pistas = [...$('pista').options].filter(o => o.value !== 'desafio');
+  const daTrilha = id => trilhasExtras.some(t => t.id === id);
+  const feitas = [MINHA, MINHA_OBR];
+  const grupos = [
+    ['Pistas para treinar', pistas.filter(o => !ehOBR(o.value) && !feitas.includes(o.value) && !daTrilha(o.value))
+      .map(o => opcao('p:' + o.value, o.textContent))],
+    ['Arena da OBR', pistas.filter(o => ehOBR(o.value) && !feitas.includes(o.value)).map(o => opcao('p:' + o.value, o.textContent))],
+    ['Feitas por você', pistas.filter(o => feitas.includes(o.value)).map(o => opcao('p:' + o.value, o.textContent))],
+    ['Desafios', [...$('desafio').children].filter(o => o.tagName === 'OPTION' && o.value)
+      .map(o => opcao('d:' + o.value, o.textContent, o.disabled))],
+    ...[...$('desafio').querySelectorAll('optgroup')].map(g => {
+      const t = trilhasExtras.find(x => x.titulo === g.label);
+      const treino = t && pistas.some(o => o.value === t.id) ? [opcao('p:' + t.id, 'Treino livre')] : [];
+      return [g.label, [...treino, ...[...g.querySelectorAll('option')].map(o => opcao('d:' + o.value, o.textContent, o.disabled))]];
+    }),
+  ];
+  $('onde').innerHTML = grupos.filter(([, itens]) => itens.length)
+    .map(([rotulo, itens]) => `<optgroup label="${escapar(rotulo)}">${itens.join('')}</optgroup>`).join('');
+  marcarOnde();
+}
+function marcarOnde() {
+  $('onde').value = desafio ? 'd:' + (desafio.surpresa ? 'surpresa' : desafio.id) : 'p:' + pista.id;
+}
+$('onde').addEventListener('change', ev => {
+  const valor = ev.target.value, id = valor.slice(2);
+  if (valor.startsWith('d:')) entrarDesafio(id);
+  else if (desafio) { sairDesafio(); if (pista.id !== id) trocarPista(id); }
+  else trocarPista(id);
+  marcarOnde();                    // se não deu para entrar, volta a mostrar onde está
+});
 montarSeletorPista();
+
+// ---------------------------------------------------------------- menu Opções
+function abrirOpcoes(abrir) {
+  $('menuOpcoes').classList.toggle('aberto', abrir);
+  $('btOpcoes').setAttribute('aria-expanded', String(abrir));
+  $('btOpcoes').textContent = `Opções ${abrir ? '▴' : '▾'}`;
+  if (abrir) $('menuOpcoes').querySelector('input, button').focus();
+}
+$('btOpcoes').addEventListener('click', () => abrirOpcoes(!$('menuOpcoes').classList.contains('aberto')));
+for (const b of $('menuOpcoes').querySelectorAll('button')) b.addEventListener('click', () => abrirOpcoes(false));
+document.addEventListener('click', e => {
+  if ($('menuOpcoes').classList.contains('aberto') && !e.target.closest('.menu-opcoes')) abrirOpcoes(false);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('menuOpcoes').classList.contains('aberto')) { abrirOpcoes(false); $('btOpcoes').focus(); }
+});
 
 // ---------------------------------------------------------------- extras com código (cifra.js)
 // Um arquivo cifrado (extras.dat) que só abre com o código de quem o fez. Endereço com #codigo mostra a janela do

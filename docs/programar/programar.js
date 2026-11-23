@@ -173,11 +173,14 @@ const nomeDoArquivo = () => `${limparNome($('nome').value)}.py`;
 // ---------------------------------------------------------------- mensagens
 
 const caixaMsg = $('mensagens');
-function limparMensagens() { caixaMsg.innerHTML = ''; }
+// sem mensagens, a caixa volta a dizer para que serve
+function limparMensagens() { caixaMsg.innerHTML = '<p class="vazio">Erros, avisos e o resultado do envio aparecem aqui.</p>'; }
 function mensagem(tipo, titulo, corpo = '') {
   const div = document.createElement('div');
   div.className = `msg ${tipo}`;
   div.innerHTML = `<b>${titulo}</b>${corpo}`;
+  const vazio = caixaMsg.querySelector('.vazio');
+  if (vazio) vazio.remove();
   caixaMsg.append(div);
   return div;
 }
@@ -376,6 +379,7 @@ function abrirSimulador(r) {
                         variaveis: r.variaveis, avisos: avisosEmTexto(r), ...(desafioDoLink || {})};
   desafioDoLink = null;
   mostrarTeclado(false);
+  $('simTitulo').textContent = `Simulador · ${r.nome} · ${Math.round(r.bytes.length / 2)} bytes`;
   $('sim').hidden = false;
   document.documentElement.classList.add('travado');
   quadro.src = `simulador/index.html?${Date.now()}`;     // carrega de novo: o programa.js lê o ESTPROGRAMA
@@ -890,13 +894,17 @@ const exemplos = [{arquivo: '', titulo: 'Primeiro programa (luz, som e Funcionou
 fetch('projeto/arquivos.json', {cache: 'no-cache'}).then(r => r.json()).then(lista => {
   exemplos.push(...(lista.exemplos || []));
 }).catch(() => { /* sem a lista: fica só o primeiro programa */ }).finally(() => {
-  $('exemplo').innerHTML = '<option value="">Escolha…</option>' +
-    exemplos.map((e, i) => `<option value="${i}">${escapar(e.titulo)}</option>`).join('');
+  // um item do menu Arquivo para cada exemplo
+  $('listaExemplos').replaceChildren(...exemplos.map(e => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'item';
+    b.textContent = e.titulo;
+    b.addEventListener('click', () => { abrirMenu(MENUS[0], false); abrirExemplo(e); });
+    return b;
+  }));
 });
-$('exemplo').addEventListener('change', async () => {
-  const e = exemplos[$('exemplo').value];
-  $('exemplo').value = '';
-  if (!e) return;
+async function abrirExemplo(e) {
   const atual = editor.valor().trim();
   if (atual && atual !== INICIAL.trim() &&
       !confirm(`Trocar o programa do editor por "${e.titulo}"? O que está escrito agora some (use Baixar .py para guardar).`)) return;
@@ -909,7 +917,7 @@ $('exemplo').addEventListener('change', async () => {
     limparMensagens();
     mensagem('erro', 'Não consegui abrir o exemplo', '<p>Confira a internet e tente de novo.</p>');
   }
-});
+}
 
 // ---------------------------------------------------------------- abas Python | Blocos
 
@@ -1176,7 +1184,8 @@ guardarVersao('ao abrir a página', {fonte: editor.valor(), nome: limparNome($('
 // ---------------------------------------------------------------- celular: arquivos e Python dos blocos recolhidos
 
 // menus (Arquivo e as outras opções de envio): abrem e fecham no botão; fecham ao escolher, ao clicar fora e no Esc
-const MENUS = [{botao: 'btExtras', menu: 'extras', texto: 'Arquivo'}, {botao: 'btMaisEnvio', menu: 'opcoesEnvio'}];
+const MENUS = [{botao: 'btExtras', menu: 'extras', texto: 'Arquivo'}, {botao: 'btExibir', menu: 'menuExibir', texto: 'Exibir'},
+               {botao: 'btMaisEnvio', menu: 'opcoesEnvio'}];
 function abrirMenu(m, abrir) {
   $(m.menu).classList.toggle('aberto', abrir);
   $(m.botao).setAttribute('aria-expanded', String(abrir));
@@ -1191,7 +1200,6 @@ for (const m of MENUS) {
   });
   for (const item of $(m.menu).querySelectorAll('button')) item.addEventListener('click', () => abrirMenu(m, false));
 }
-$('exemplo').addEventListener('change', () => abrirMenu(MENUS[0], false));
 document.addEventListener('click', e => {
   for (const m of MENUS) {
     if ($(m.menu).classList.contains('aberto') && !$(m.menu).parentElement.contains(e.target)) abrirMenu(m, false);
