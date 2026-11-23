@@ -3,6 +3,32 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.9 (23/11/2026)
+
+- **Robô do simulador com dois sensores de cor.** Por padrão, S1 e S2 de cor, a porta 3 vazia e o ultrassom na
+  porta 4. Em **Medidas do robô**, a porta 3 pode virar giroscópio ou um terceiro sensor de cor. Pelo VS Code,
+  as portas com preto no `calibracao.py` viram sensores de cor.
+- **15 desafios e o desafio surpresa.** Entraram dois desafios de giroscópio: o quadrado, com um robô que
+  derrapa nas viradas, e o triângulo, com um giroscópio que desvia sozinho. Depois do percurso da OBR vem a
+  **surpresa**: uma arena sorteada e uma tarefa a mais. Com **Sensores com ruído**, o giroscópio também desvia um
+  pouco. A **arena da OBR sorteada** tem um número, para a turma toda correr na mesma.
+- **Linguagem:** `break` e `continue` com sensor, `a if c else b`, `abs`, `min`, `max` e `round` com leituras.
+  `media(leitura, 5)` e `confirmado(lambda: ..., 3)` deixam as leituras mais confiáveis (ainda não conferidos
+  no robô).
+- **Blocos:** as funções viram **Meus blocos**, e entraram blocos para sair do repetir, valor absoluto,
+  menor e maior, se/senão, média, confirmado, motores sozinhos, esperas e os de competição.
+- **Link do programa** (menu **Arquivo**): leva também o desafio aberto no simulador e abre nos blocos se o
+  programa foi feito em blocos. No cartão do desafio há o botão **Copiar link do programa**.
+- **Salvar e carregar o progresso** num arquivo, no simulador e na página de programar: os desafios cumpridos,
+  o programa e as versões passam de um computador para outro.
+- **Imprimir a arena da OBR** em tamanho real: cada ladrilho em 4 folhas A4.
+- **Modo projetor** nas duas páginas: letras, controles e blocos maiores para a turma ver de longe.
+- A página de programar confere a resposta do robô a cada pacote e diz qual ficou sem resposta.
+- O simulador usa as medidas do `calibracao.py` quando o programa vem do VS Code.
+- Programa grande demais (mais de 255 partes de repetição e de decisão) dá uma mensagem em português dizendo
+  como fazer caber.
+- A página do projeto tem uma versão em inglês.
+
 ## 0.1.8 (17/11/2026)
 
 - **Botões da controladora funcionando.** O `botao_apertado()` ficava sempre no zero porque lia os botões pela
