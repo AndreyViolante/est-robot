@@ -3,6 +3,13 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.10 (23/11/2026)
+
+- **Tela cheia na página de programar.** O botão **Tela cheia**, na barra do editor, faz o Python ou os blocos
+  ocuparem a tela inteira, sem o topo e sem o painel da direita. Os erros e o resultado do envio aparecem num
+  canto, por cima, e somem no **Fechar**. A escolha fica guardada no navegador; para sair, o mesmo botão ou Esc.
+  No celular, os blocos ocupam a tela e o Python deles fica no **Ver**.
+
 ## 0.1.9 (23/11/2026)
 
 - **Robô do simulador com dois sensores de cor.** Por padrão, S1 e S2 de cor, a porta 3 vazia e o ultrassom na
