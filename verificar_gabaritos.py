@@ -916,6 +916,28 @@ def verificar_espaco():
         certo = porcento in texto and (obtido is None if aviso is None else aviso in obtido)
         ok &= certo
         print(f'  {"OK   " if certo else "FALHA"} espaço: {nome}' + ('' if certo else f' -> {texto} / {obtido}'))
+    # partes de repetição e de decisão (tarefas da controladora): até 255, com mensagem que explica
+    import robo
+    def ifs(n):                                      # n decisões do robô: 2n tarefas
+        robo.novo_programa()
+        for _ in range(n):
+            with robo.se(robo.luz_refletida(1) < 50):
+                robo.bip()
+        return robo.programa()
+    try:
+        compilar(ifs(127))
+        cabe = True
+    except ValueError:
+        cabe = False
+    try:
+        compilar(ifs(128))
+        msg = ''
+    except ValueError as e:
+        msg = str(e)
+    certo = cabe and '256 partes de repetição e de decisão' in msg and 'até 255' in msg
+    ok &= certo
+    print(f'  {"OK   " if certo else "FALHA"} espaço: até {estc.LIMITE_TAREFAS} partes de repetição e de decisão, com mensagem'
+          + ('' if certo else f' -> cabe {cabe}, {msg!r}'))
     try:
         import est_protocol
     except (ImportError, AttributeError, OSError):                  # fora do Windows: sem o protocolo USB

@@ -1751,13 +1751,18 @@ $('btPadrao').addEventListener('click', () => {
 
 // ---------------------------------------------------------------- controles
 
-function trocarPista(id) {
+// troca a pista do robô, avisando os extras da pista que sai e da que entra
+function usarPista(nova) {
   const antes = EST.EXTRAS[pista.id];
   if (antes && antes.desativar) antes.desativar();
-  pista = montarPista(id);
+  pista = nova;
   robo.pista = pista;
   const extra = EST.EXTRAS[pista.id];
   if (extra && extra.ativar) extra.ativar(robo);
+}
+
+function trocarPista(id) {
+  usarPista(montarPista(id));
   if (!desafio) aplicarRoboDoDesafio();
   if (!P || !P.pista) {             // a pista de um exemplo da demonstração não fica guardada
     salvo.pista = pista.id;
@@ -2099,9 +2104,25 @@ let ultimoMovimento = 0, posAnterior = null;      // para saber há quanto tempo
 
 const cumprido = id => !!(salvo.desafios[id] && salvo.desafios[id].feito);
 // um desafio destrava quando o anterior é cumprido (ou quando o professor libera todos); o que já foi cumprido fica
-// liberado mesmo se um desafio novo entrar antes dele na trilha
-const liberado = i => i === 0 || salvo.desafiosLivres === true || cumprido(EST.DESAFIOS[i].id)
-  || cumprido(EST.DESAFIOS[i].depois || EST.DESAFIOS[i - 1].id);     // depois: o desafio que abre este
+// liberado mesmo se um desafio novo entrar antes dele na trilha. O desafio que veio num link de programa também.
+const liberadoNa = (lista, i) => i === 0 || salvo.desafiosLivres === true || cumprido(lista[i].id)
+  || lista[i].id === salvo.desafioDoLink || cumprido(lista[i].depois || lista[i - 1].id);     // depois: o que abre este
+const liberado = i => liberadoNa(EST.DESAFIOS, i);
+
+/* Trilhas a mais, que os extras com código acrescentam (EST.app.desafiosExtras): aparecem separadas no seletor, com
+   a própria numeração, e cada uma destrava na ordem dela. */
+const trilhasExtras = [];
+function acharDesafio(id) {
+  for (const t of [{titulo: '', desafios: EST.DESAFIOS}, ...trilhasExtras]) {
+    const i = t.desafios.findIndex(d => d.id === id);
+    if (i >= 0) return {d: t.desafios[i], lista: t.desafios, i, trilha: t};
+  }
+  return null;
+}
+const proximoDesafio = d => {
+  const a = !d || d.surpresa ? null : acharDesafio(d.id);
+  return a ? a.lista[a.i + 1] || null : null;
+};
 // o desafio surpresa (arena sorteada e uma tarefa a mais) abre depois do percurso completo da OBR
 const surpresaLiberada = () => salvo.desafiosLivres === true || cumprido('obr');
 const surpresasCumpridas = () => Object.values(salvo.surpresas && typeof salvo.surpresas === 'object' ? salvo.surpresas : {})
@@ -2128,24 +2149,31 @@ function montarSeletorDesafio() {
     const livre = liberado(i);
     return `<option value="${d.id}"${livre ? '' : ' disabled'}>${i + 1}. ${escapar(d.titulo)}${cumprido(d.id) ? ' ✓' : ''}</option>`;
   }).join('') + `<option value="surpresa"${surpresaLiberada() ? '' : ' disabled'}>Surpresa: tarefa sorteada na arena da OBR`
-    + `${surpresasCumpridas() ? ` (${surpresasCumpridas()} ✓)` : ''}</option>`;
+    + `${surpresasCumpridas() ? ` (${surpresasCumpridas()} ✓)` : ''}</option>`
+    + trilhasExtras.map(t => `<optgroup label="${escapar(t.titulo)}">` + t.desafios.map((d, i) =>
+      `<option value="${d.id}"${liberadoNa(t.desafios, i) ? '' : ' disabled'}>${i + 1}. ${escapar(d.titulo)}`
+      + `${cumprido(d.id) ? ' ✓' : ''}</option>`).join('') + '</optgroup>').join('');
   $('desafio').value = desafio ? desafio.id : '';
 }
 
-function entrarDesafio(id) {
+/* doLink: o desafio veio no link de um programa (a página de programar), e abre mesmo que ainda não esteja
+   destravado aqui; semente: o número da arena do desafio surpresa; forcar: já estava nele (os extras trocaram a
+   trilha). */
+function entrarDesafio(id, {doLink = false, semente = 0, forcar = false} = {}) {
   if (id === 'surpresa') {
-    if (!surpresaLiberada()) return;
+    if (!surpresaLiberada() && !doLink && !forcar) return;
+    if (Number.isInteger(semente) && semente >= 1 && semente <= 9999) salvo.sementeOBR = semente;
     desafio = EST.desafioSurpresa(sementeOBR());
   } else {
-    const i = EST.DESAFIOS.findIndex(d => d.id === id);
-    if (i < 0 || !liberado(i)) return;
-    desafio = EST.DESAFIOS[i];
+    const a = acharDesafio(id);
+    if (!a || !(doLink || forcar || liberadoNa(a.lista, a.i))) return;
+    desafio = a.d;
   }
+  if (doLink) salvo.desafioDoLink = id;
   salvo.desafio = id;                       // o simular.py abre a página de novo: volta neste desafio
   salvar();
+  usarPista(pistaDoDesafio(desafio));
   aplicarRoboDoDesafio();
-  pista = pistaDoDesafio(desafio);
-  robo.pista = pista;
   $('pista').value = 'desafio';
   montarSeletorDesafio();
   pararDirigir();
@@ -2197,16 +2225,18 @@ function mostrarDesafio() {
   $('pista').disabled = !!desafio;
   $('btLargada').hidden = !!desafio || !!pista.obr;
   if (!desafio) return;
-  const i = EST.DESAFIOS.indexOf(desafio), total = EST.DESAFIOS.length;
   $('surpresaOpcoes').hidden = !desafio.surpresa;
   if (desafio.surpresa) {
     $('desafioNum').textContent = `Desafio surpresa · arena nº ${desafio.semente}`;
     $('desafioProgresso').textContent = surpresasCumpridas() ? `surpresas cumpridas: ${surpresasCumpridas()}` : '';
     $('sementeSurpresa').value = desafio.semente;
   } else {
-    $('desafioNum').textContent = `Desafio ${i + 1} de ${total}`;
-    $('desafioProgresso').textContent = `cumpridos: ${EST.DESAFIOS.filter(d => cumprido(d.id)).length} de ${total}`;
+    const {lista, i, trilha} = acharDesafio(desafio.id), total = lista.length;
+    $('desafioNum').textContent = `${trilha.titulo ? `${trilha.titulo} · desafio` : 'Desafio'} ${i + 1} de ${total}`;
+    $('desafioProgresso').textContent = `cumpridos: ${lista.filter(d => cumprido(d.id)).length} de ${total}`;
   }
+  $('btLinkDesafio').hidden = !paginaDeProgramar();
+  $('linkDesafio').hidden = true;
   $('desafioTitulo').textContent = desafio.titulo;
   $('desafioObjetivo').textContent = desafio.objetivo;
   $('desafioDica').hidden = !desafio.dica;
@@ -2216,7 +2246,7 @@ function mostrarDesafio() {
 
 function atualizarStatusDesafio() {
   if (!desafio || !prova) return;
-  const r = prova.resultado, proximo = desafio.surpresa ? null : EST.DESAFIOS[EST.DESAFIOS.indexOf(desafio) + 1];
+  const r = prova.resultado, proximo = proximoDesafio(desafio);
   let texto, classe = 'desafio-status';
   if (r && r.ok) {
     texto = `Desafio cumprido em ${num(prova.tempo)} s!` + (proximo || desafio.surpresa ? '' : ' Você completou a trilha!')
@@ -2314,8 +2344,34 @@ $('sementeSurpresa').addEventListener('change', ev => {
   else ev.target.value = desafio && desafio.surpresa ? desafio.semente : sementeOBR();
 });
 $('btProximoDesafio').addEventListener('click', () => {
-  const proximo = EST.DESAFIOS[EST.DESAFIOS.indexOf(desafio) + 1];
+  const proximo = proximoDesafio(desafio);
   if (proximo) entrarDesafio(proximo.id);
+});
+
+// dentro da página de programar: o link do programa leva junto o desafio aberto (quem abrir vê o programa nele)
+function paginaDeProgramar() {
+  try { return window.parent !== window && typeof window.parent.ESTLinkDoPrograma === 'function' ? window.parent : null; }
+  catch (e) { return null; }       // outra origem
+}
+$('btLinkDesafio').addEventListener('click', async () => {
+  const pai = paginaDeProgramar(), caixa = $('linkDesafio');
+  if (!pai || !desafio) return;
+  let link;
+  try {
+    link = await pai.ESTLinkDoPrograma(desafio.surpresa ? {desafio: 'surpresa', semente: desafio.semente} : {desafio: desafio.id});
+  } catch (e) {
+    caixa.textContent = 'Não consegui criar o link. Feche o simulador e use Baixar .py no menu Arquivo.';
+    caixa.hidden = false;
+    return;
+  }
+  let copiou = false;
+  try { await navigator.clipboard.writeText(link); copiou = true; } catch (e) { /* sem permissão: mostra o link */ }
+  caixa.innerHTML = copiou
+    ? 'Link copiado. Cole no WhatsApp ou no e-mail: quem abrir vê este programa neste desafio.'
+    : 'Copie o link: <input class="link" type="text" readonly aria-label="Link do programa">';
+  const campo = caixa.querySelector('input');
+  if (campo) { campo.value = link; campo.addEventListener('focus', () => campo.select()); }
+  caixa.hidden = false;
 });
 $('btLiberar').addEventListener('click', () => {
   salvo.desafiosLivres = true;
@@ -2326,8 +2382,10 @@ $('btZerar').addEventListener('click', () => {
   if (!window.confirm('Apagar o progresso dos desafios guardado neste navegador?')) return;
   salvo.desafios = {};
   salvo.desafiosLivres = false;
+  delete salvo.desafioDoLink;
   salvar();
-  if (desafio && !liberado(EST.DESAFIOS.indexOf(desafio))) sairDesafio();
+  const a = desafio && !desafio.surpresa ? acharDesafio(desafio.id) : null;
+  if (desafio && (desafio.surpresa ? !surpresaLiberada() : !liberadoNa(a.lista, a.i))) sairDesafio();
   else { montarSeletorDesafio(); mostrarDesafio(); }
 });
 
@@ -2370,7 +2428,21 @@ montarSeletorPista();
 // código; com "Lembrar", o código fica neste navegador e os extras abrem sozinhos da próxima vez.
 // O que os extras podem usar da página:
 EST.app = {robo, pista: () => pista, pistaGuardada: () => PISTA_DO_COMECO, trocarPista, montarSeletorPista, reiniciar,
-           desafio: () => desafio};
+           desafio: () => desafio, desafiosExtras};
+/* Uma trilha de desafios a mais: {id, titulo, desafios: [{id, titulo, objetivo, dica, pista, largada, limite,
+   verificar, ...}]}, como os de desafios.js. Se a página abriu num desafio dela (da última vez, ou pelo link de um
+   programa), entra nele agora. Devolve true quando entrou. */
+function desafiosExtras(trilha) {
+  const i = trilhasExtras.findIndex(t => t.id === trilha.id);
+  if (i >= 0) trilhasExtras[i] = trilha; else trilhasExtras.push(trilha);
+  montarSeletorDesafio();
+  if (desafio && trilha.desafios.some(d => d.id === desafio.id)) { entrarDesafio(desafio.id, {forcar: true}); return true; }
+  if (desafio || !desafioPendente.id || !trilha.desafios.some(d => d.id === desafioPendente.id)) return false;
+  const {id, doLink} = desafioPendente;
+  desafioPendente.id = '';
+  entrarDesafio(id, {doLink});
+  return desafio !== null;
+}
 const CHAVE_CODIGO = 'est-codigo-extras';
 let extrasAbertos = false;
 async function abrirExtras(codigo) {
@@ -2534,10 +2606,18 @@ montarMedidas();
 new ResizeObserver(dimensionar).observe($('quadro'));
 window.addEventListener('resize', dimensionar);
 montarSeletorDesafio();
-const ultimoDesafio = EST.DESAFIOS.findIndex(d => d.id === salvo.desafio);
-if (salvo.desafio === 'surpresa' && surpresaLiberada()) entrarDesafio('surpresa');
-else if (ultimoDesafio >= 0 && liberado(ultimoDesafio)) entrarDesafio(salvo.desafio);      // abre no desafio da última vez
-else trocarPista(pista.id);
+// o desafio que a página abre: o do link do programa (página de programar) ou o da última vez
+const desafioPendente = P && typeof P.desafio === 'string' && P.desafio
+  ? {id: P.desafio, doLink: true} : {id: typeof salvo.desafio === 'string' ? salvo.desafio : '', doLink: false};
+const ultimoDesafio = desafioPendente.id && desafioPendente.id !== 'surpresa' ? acharDesafio(desafioPendente.id) : null;
+if (desafioPendente.id === 'surpresa' && (desafioPendente.doLink || surpresaLiberada())) {
+  entrarDesafio('surpresa', {doLink: desafioPendente.doLink, semente: P && P.semente});
+} else if (ultimoDesafio && (desafioPendente.doLink || liberadoNa(ultimoDesafio.lista, ultimoDesafio.i))) {
+  entrarDesafio(desafioPendente.id, {doLink: desafioPendente.doLink});
+} else {
+  trocarPista(pista.id);
+}
+if (desafio) desafioPendente.id = '';      // senão, pode ser um desafio dos extras, que abrem depois
 
 let anterior = null, ultimoPainel = 0;
 function quadro(agora) {

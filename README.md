@@ -25,7 +25,8 @@ navegador, com os mesmos arquivos do projeto, mostra os erros em português, sim
 portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
 navegador, e **Arquivo → Copiar link do programa** gera um link com o programa dentro (quem abre já vê o
-programa no simulador; nada fica guardado em servidor). O botão **Versões** mostra as versões do programa
+programa no simulador, nos blocos se ele foi feito em blocos e no desafio que estava aberto; nada fica guardado
+em servidor). O botão **Versões** mostra as versões do programa
 guardadas no navegador (a cada simulação ou envio, no Ctrl+S, antes de abrir outro programa e a cada 5
 minutos enquanto o aluno escreve; ficam as últimas 30) e deixa voltar para qualquer uma. **Arquivo → Salvar o
 progresso** baixa um `.json` com o programa, os blocos, as versões e o progresso do simulador (desafios, Minha

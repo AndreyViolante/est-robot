@@ -1,8 +1,8 @@
 'use strict';
 /* Teste da página inteira, num Chrome sem janela: abre a página de programar (servida da pasta docs/, como no
    site), compila com o Python do navegador, abre o simulador e executa, mostra um erro em português, passa o
-   programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), salva e carrega o
-   progresso e abre o simulador sozinho. Depois, num celular (390 x 844, toque): a página começa nos blocos, não
+   programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), manda o programa por
+   link (com o modo blocos e o desafio aberto), salva e carrega o progresso e abre o simulador sozinho. Depois, num celular (390 x 844, toque): a página começa nos blocos, não
    rola para o lado, o teclado de programação aparece no código, o menu Arquivo cabe na tela e o simulador roda.
    Precisa de internet (Python do navegador, Blockly e o editor vêm da CDN) e do pacote playwright-core, que usa o
    Chrome instalado (não baixa navegador).
@@ -174,6 +174,35 @@ async function main() {
     const okBlocos = await ultimaMensagem('ok', 'bytes');
     confere('os blocos compilam com os mesmos bytes do Python', bytesDe(okBlocos) === bytesPython, `${okBlocos} / Python ${bytesPython}`);
     await pagina.click('#btFecharSim');
+
+    // ---- link do programa: leva o modo blocos e o desafio aberto no simulador; quem abre vê o programa nele
+    await pagina.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem('est-simulador-v1') || '{}');
+      localStorage.setItem('est-simulador-v1', JSON.stringify({...s, desafio: 'quadrado'}));
+    });
+    await limpar();
+    await pagina.click('#btExtras');
+    await pagina.click('#btLink');
+    const link = await pagina.locator('#mensagens input.link').inputValue();
+    confere('o link do programa leva o modo blocos e o desafio aberto', link.includes('&modo=blocos') && link.includes('&desafio=quadrado'),
+            link.slice(-80));
+    await pagina.evaluate(() => localStorage.setItem('est-simulador-v1', '{}'));     // quem recebe não destravou o desafio 2
+    const outra = await contexto.newPage();
+    outra.on('dialog', d => d.accept());
+    outra.setDefaultTimeout(30000);
+    await outra.goto(link);
+    await outra.locator('#sim').waitFor({state: 'visible', timeout: 150000});
+    const quadro2 = outra.frameLocator('#quadroSim');
+    await quadro2.locator('#cartaoDesafio:not([hidden])').waitFor();
+    const noDesafio = await outra.frame({url: /simulador\/index\.html/}).evaluate(() => document.getElementById('desafio').value);
+    confere('quem abre o link vê o programa nos blocos e no simulador, no desafio (mesmo sem ter destravado)',
+            noDesafio === 'quadrado' && await outra.getAttribute('#abaBlocos', 'aria-selected') === 'true', noDesafio);
+    await quadro2.locator('#btLinkDesafio').click();
+    await quadro2.locator('#linkDesafio:not([hidden])').waitFor();
+    const campo = quadro2.locator('#linkDesafio input');
+    const doCartao = (await quadro2.locator('#linkDesafio').innerText()) + (await campo.count() ? await campo.inputValue() : '');
+    confere('o botão do cartão do desafio dá o link do programa', /Link copiado|desafio=quadrado/.test(doCartao), doCartao.slice(0, 120));
+    await outra.close();
     await pagina.click('#abaPython');
 
     // ---- progresso: salvar num arquivo e carregar de volta

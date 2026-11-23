@@ -25,6 +25,8 @@ TEXTO_VAZIO = b'\x0d\x0d\x00'
 PEDACO = 1014                              # bytes de programa por pacote (est_protocol.PEDACO)
 LIMITE_CODIGO = 255 * PEDACO
 LIMITE_MEMORIA = TEXTO_BASE
+#  - cada corpo de laco e cada ramo de decisao vira uma tarefa (thread), com o numero num byte: ate 255
+LIMITE_TAREFAS = 255
 
 # tipos de registrador: (tamanho, tipo do dado) e como inicializar
 PORTA, FLOAT, BYTE, LOGICO, MASCARA, TEXTO, ZERO_F, ZERO_B = (
@@ -253,6 +255,12 @@ class _Programa:
                     self.tids[id(b)] = list(range(proximo, proximo + len(ramos)))
                     fila += [(proximo + i, r) for i, r in enumerate(ramos)]
                     proximo += len(ramos)
+        if proximo - 1 > LIMITE_TAREFAS:
+            raise ValueError(
+                f'o programa tem {proximo - 1} partes de repetição e de decisão, e o robô aceita até {LIMITE_TAREFAS}. '
+                'Cada laço conta 1 e cada if conta 2 (abs, min, max, and e or também viram if), e uma função conta de '
+                'novo a cada lugar em que é chamada. Para caber: troque contas que viram if por contas simples, '
+                'chame as funções grandes em menos lugares (dentro de um laço) ou divida em dois programas')
 
     def blocos(self):
         return [b for _, ch in self.segmentos for b in ch if b.t != '2001']

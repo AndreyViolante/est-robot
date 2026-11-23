@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="EST-LAB lets students program the EST educational robotics controller in Python, from VS Code or the browser, without the vendor's IDE. Built by Andrey Violante.">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>EST-LAB</title>
+<link rel="alternate" hreflang="pt-BR" href="https://andreyviolante.github.io/est-robot/">
+<link rel="alternate" hreflang="en" href="https://andreyviolante.github.io/est-robot/en/">
+<link rel="icon" href="../programar/icones/icone-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../programar/icones/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* The project page in English, for people who don't read Portuguese: same look as the Portuguese page (real
+   screenshots, no decoration), plus how the tool was built and tested. */
+:root {
+  --bg: #f6f7fb;
+  --fg: #0d1222;
+  --muted: #586079;
+  --line: #d9dde7;
+  --panel: #ffffff;
+  --led-azul: #2250ff;
+  --led-roxo: #7a3ee3;
+  --led-vermelho: #e2363a;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0d16; --fg: #e7ebf6; --muted: #98a1b8; --line: #232a3e; --panel: #121727;
+    --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0d16; --fg: #e7ebf6; --muted: #98a1b8; --line: #232a3e; --panel: #121727;
+  --led-azul: #6187ff; --led-roxo: #a57dff; --led-vermelho: #ff6064;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 400 1.05rem/1.6 var(--body); }
+a { color: var(--led-azul); text-underline-offset: 3px; }
+a:focus-visible { outline: 3px solid var(--led-azul); outline-offset: 3px; border-radius: 4px; }
+code { font: 400 0.88em var(--mono); background: color-mix(in srgb, var(--fg) 7%, transparent); padding: 1px 5px;
+       border-radius: 4px; overflow-wrap: anywhere; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
+
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; padding-block: 18px;
+       border-bottom: 1px solid var(--line); }
+.mark { display: flex; align-items: center; gap: 10px; font: 600 1rem var(--mono); color: var(--fg); text-decoration: none; }
+.leds { display: inline-flex; gap: 5px; }
+.led { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.led.azul { background: var(--led-azul); } .led.roxo { background: var(--led-roxo); } .led.vermelho { background: var(--led-vermelho); }
+.nav { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; font-size: 0.95rem; }
+.nav a { color: var(--muted); text-decoration: none; }
+.nav a:hover { color: var(--fg); text-decoration: underline; }
+@media (max-width: 700px) { .nav .secao { display: none; } }
+
+.abertura { padding-block: clamp(32px, 6vw, 64px) clamp(32px, 5vw, 56px); }
+.abertura > div { max-width: 760px; }
+.abertura figure.tela { margin-top: clamp(28px, 4vw, 44px); }
+h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); line-height: 1.15; margin: 0 0 18px; text-wrap: balance; }
+.lede { font-size: 1.12rem; margin: 0 0 24px; }
+.botoes { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+.btn { display: inline-flex; align-items: center; padding: 10px 18px; border-radius: 6px; font-weight: 700; text-decoration: none;
+       border: 1px solid var(--line); color: var(--fg); background: var(--panel); }
+.btn:hover { border-color: var(--fg); }
+.btn.solid { background: var(--led-azul); border-color: var(--led-azul); color: #fff; }
+.btn.solid:hover { filter: brightness(1.1); }
+.pequeno { font-size: 0.92rem; color: var(--muted); margin: 0; }
+
+figure.tela { margin: 0; }
+.tela img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.tela figcaption { font-size: 0.88rem; color: var(--muted); margin-top: 8px; }
+
+section { padding-block: clamp(40px, 6vw, 72px); border-top: 1px solid var(--line); }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; margin: 0 0 8px; }
+h3 { font-size: 1.15rem; margin: 0 0 8px; }
+.intro { color: var(--muted); max-width: 64ch; margin: 0 0 32px; }
+.par { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 20px 44px; align-items: start; margin-bottom: 48px; }
+.par.invertido { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); }
+.par.invertido > :first-child { order: 2; }
+.par.exemplo-par { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); }
+.par p { margin: 0 0 12px; }
+
+/* how it was built: one block per part, two columns on wide screens */
+.partes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 44px; }
+.partes div { padding-block: 18px; border-top: 1px solid var(--line); }
+.partes p { margin: 0 0 10px; max-width: 62ch; }
+.partes p:last-child { margin-bottom: 0; }
+
+pre.exemplo { margin: 0; padding: 14px 16px; border-radius: 8px; background: #0f1424; color: #dfe5f5; overflow-x: auto;
+              font: 400 0.86rem/1.55 var(--mono); }
+pre.exemplo .c { color: #8a94b3; }
+pre.exemplo code { background: none; padding: 0; font: inherit; }
+
+footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 6px; }
+
+@media (max-width: 860px) {
+  .par, .par.exemplo-par, .partes { grid-template-columns: minmax(0, 1fr); }
+  .par.invertido { grid-template-columns: minmax(0, 1fr); }
+  .par.invertido > :first-child { order: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <a class="mark" href="./"><span class="leds" aria-hidden="true"><i class="led azul"></i><i class="led roxo"></i><i class="led vermelho"></i></span>EST-LAB</a>
+    <nav class="nav" aria-label="Sections">
+      <a class="secao" href="#what">What it does</a>
+      <a class="secao" href="#how">How it was built</a>
+      <a href="../" hreflang="pt-BR" lang="pt-BR">Português</a>
+      <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="abertura">
+    <div>
+      <h1>Program the EST robotics controller in Python, without the vendor's IDE.</h1>
+      <p class="lede">EST is an educational robot used in Brazilian schools, similar to LEGO EV3. Its official
+        software is a closed block editor for Windows. EST-LAB compiles Python to the controller's own bytecode and
+        sends it over USB, from VS Code or from a web page, with commands in Portuguese like <code>andar_cm(30)</code>
+        (move 30 cm) and <code>virar_direita(90)</code> (turn right 90°).</p>
+      <p class="lede">I'm Andrey Violante, a robotics teacher in Maricá, Rio de Janeiro, and a software engineering
+        student. I built EST-LAB for my own classes; it is free and open source.</p>
+      <p class="botoes">
+        <a class="btn solid" href="../programar/">Open the programming page</a>
+        <a class="btn" href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">Source code</a>
+      </p>
+      <p class="pequeno">The interface is in Portuguese, because it is made for Brazilian students. No robot? Try the
+        line follower in the <a href="../simulador/index.html">simulator</a>.</p>
+    </div>
+    <figure class="tela">
+      <img src="../img/programar.webp" width="1920" height="1080" alt="The programming page: a line follower in Python on the left and, on the right, the message that it compiled to 414 bytes, 0.2% of the robot's space.">
+      <figcaption>The programming page, with the line follower example compiled.</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="wrap">
+  <section id="what">
+    <h2>What it does</h2>
+    <p class="intro">The compiler produces, byte for byte, the same programs the official IDE produces for the same
+      blocks. What changes is everything around it: students write text in their own language, watch the robot run
+      before sending, and get errors they can understand.</p>
+
+    <div class="par">
+      <div>
+        <h3>Write, and understand the error</h3>
+        <p>Python's <code>if</code>, <code>while</code> and <code>for</code> work with sensor readings. Errors point to
+          the line and say what to do, in Portuguese; a typo like <code>andr</code> gets "did you mean
+          <code>andar</code>?".</p>
+        <p>Before sending, it also warns about likely mistakes: a variable that is never used, a loop that never
+          waits, a motor left running when the program ends.</p>
+      </div>
+      <figure class="tela">
+        <img src="../img/erro.webp" width="1770" height="495" loading="lazy" alt="A program with andr(rotacoes=2) on line 5: the line is highlighted in red and the message asks whether the student meant andar.">
+        <figcaption>A typo on line 5, with the suggestion.</figcaption>
+      </figure>
+    </div>
+
+    <div class="par invertido">
+      <div>
+        <h3>Test in the simulator</h3>
+        <p>The simulator runs the exact bytes that go to the robot, on a track seen from above, with the screen, the
+          light, the motors and every sensor reading. It steps through the program one Python line at a time.</p>
+        <p>It has line-following tracks, an arena with the scoring rules of the Brazilian Robotics Olympiad (OBR),
+          15 automatically graded challenges, and a Drive mode where the student steers with the arrow keys and the
+          program writes itself.</p>
+      </div>
+      <figure class="tela">
+        <img src="../img/simulador.webp" width="1920" height="1410" loading="lazy" alt="The simulator: the robot taking a corner of a black square, with the readings of sensors S1 to S4 and a graph of reflected light next to it.">
+        <figcaption>The line follower paused on a corner, with the sensor readings.</figcaption>
+      </figure>
+    </div>
+
+    <div class="par">
+      <div>
+        <h3>Blocks, with the Python next to them</h3>
+        <p>For students coming from block programming: drag blocks and see the Python they generate. It also goes
+          the other way, turning a Python program into blocks, and both compile to the same bytes.</p>
+        <p>On Android phones and tablets the page installs to the home screen and works offline.</p>
+      </div>
+      <figure class="tela">
+        <img src="../img/blocos.webp" width="1920" height="1080" loading="lazy" alt="The Blocks tab: the line follower built with colored blocks, with the same program in Python beside it.">
+        <figcaption>The same line follower, in blocks.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it was built</h2>
+    <p class="intro">There was no documentation, SDK or source code for the controller. Everything below came from
+      observing what the official IDE sends to the robot and reading what its executable does.</p>
+
+    <div class="partes">
+      <div>
+        <h3>Reverse engineering</h3>
+        <p>I captured the USB traffic of the official IDE and the files it writes while sending a program, and
+          decompiled its executable with Ghidra to read the compiler's tables and the upload code.</p>
+        <p>From that came the USB HID protocol (frames, checksums, the upload sequence, programs split in 1014-byte
+          chunks), the bytecode format (instructions, registers, and one thread per loop body and branch) and the
+          IDE's project file format. EST-LAB uses none of the vendor's code and the robot's firmware is not changed.</p>
+      </div>
+      <div>
+        <h3>The compiler</h3>
+        <p>The student's file runs once on the computer. Each command adds a block to the program; an AST rewrite
+          turns <code>if</code>, <code>while</code>, <code>for</code>, <code>break</code>, <code>and</code> and
+          <code>or</code> on sensor readings into decisions and loops that run on the robot, and arithmetic on
+          readings becomes the robot's own math blocks.</p>
+        <p>The blocks are compiled to bytecode by a Python module that reproduces the IDE's output exactly. A test
+          compares it, byte for byte, with 13 programs compiled by the official IDE.</p>
+      </div>
+      <div>
+        <h3>The simulator</h3>
+        <p>A JavaScript virtual machine executes the same bytecode, with simple physics for the motors
+          (acceleration, braking, wheel geometry), a color sensor that averages a small spot on the floor, and an
+          ultrasonic sensor that casts a cone of rays.</p>
+        <p>The challenges are graded by watching the run (checkpoints, time, stopping on the finish line), so the
+          same program can be checked in the browser and in the automated tests.</p>
+      </div>
+      <div>
+        <h3>In the browser</h3>
+        <p>The same Python compiler runs in the browser through Pyodide (Python compiled to WebAssembly) in a Web
+          Worker, so the page needs no server. Programs go to the robot over WebHID, and Bluetooth on Android uses Web
+          Serial (still being tested on the robot).</p>
+        <p>Blocks use Blockly, with a converter from Python to blocks. A program can be shared as a link: it is
+          compressed into the part of the URL after <code>#</code>, which never reaches a server.</p>
+      </div>
+      <div>
+        <h3>Tests and releases</h3>
+        <p>Every push runs the test suite on GitHub Actions, on Windows: byte-exact compiler checks, the language and
+          error messages, the simulator, the challenges, and an end-to-end test of the whole page in headless Chrome,
+          including a phone-sized screen.</p>
+        <p>Pushing a version tag builds the Windows package (with an embedded Python, so schools need no admin
+          rights), tests it and publishes the release. Installed copies update themselves from VS Code.</p>
+      </div>
+      <div>
+        <h3>For the classroom</h3>
+        <p>The project includes a teacher's guide with eight lessons, a two-page command sheet, a guide for the OBR
+          competition, and a tutorial that teaches AI assistants the language, so they stop inventing commands.</p>
+        <p>The code is MIT-licensed and has a permanent DOI on Zenodo:
+          <a href="https://doi.org/10.5281/zenodo.23692767" target="_blank" rel="noopener">10.5281/zenodo.23692767</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="example">
+    <h2>A short example</h2>
+    <p class="intro">A line follower with two color sensors. <code>motores</code> sets the left and right wheels,
+      <code>cor_vista</code> reads the color under a sensor and <code>PRETO</code> is black.</p>
+    <div class="par exemplo-par">
+      <pre class="exemplo"><code>from robo import *
+
+while True:
+    if cor_vista(1) == PRETO:       <span class="c"># left sensor on the line</span>
+        motores(-15, 30)
+    elif cor_vista(2) == PRETO:     <span class="c"># right sensor on the line</span>
+        motores(30, -15)
+    else:
+        motores(30, 30)</code></pre>
+      <div>
+        <p>The <code>while</code> becomes a loop on the robot, and each <code>if</code> becomes a decision on a
+          sensor reading. The result is a 516-byte program that runs on the controller without a computer attached.</p>
+        <p class="pequeno"><a href="../programar/#programa=zSyvKz1Uoyk_KV8jMLcgvKlHQ4uIqz8jMSVUIKSpNteJSAILMNIXk_KL4sszikkQNQ00FW1uFgCDXEH-ILAjk5pfkF6UWa-gamuooGBtogiVSc1A0GuHTaGygowDUDNNYnIpdCchoAA&amp;nome=seguidor">Open this example in the programming page</a>: it compiles in the
+          browser and opens the simulator. The program travels inside the link.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>EST-LAB · built by Andrey Violante · MIT license · <a href="https://github.com/AndreyViolante/est-robot" target="_blank" rel="noopener">github.com/AndreyViolante/est-robot</a></span>
+    <span>An independent educational project, not affiliated with the robot's manufacturer. EST is mentioned only to indicate compatibility.</span>
+  </footer>
+</div>
+</body>
+</html>

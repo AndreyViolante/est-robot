@@ -133,6 +133,10 @@ números: o robô guarda o número escolhido numa variável). Cada um vira algun
 12. Nas comparações escritas como texto (`esperar_luz(1, '<', 30)`, `se_distancia(4, '>=', 20)`), as
     opções são `'<'`, `'<='`, `'>'`, `'>='`, `'='` (um igual só) e `'!='`. No `if` e no `while`, use os
     operadores normais do Python (`==` com dois iguais).
+13. Um programa cabe no robô com até 255 partes de repetição e de decisão: cada laço conta 1 e cada `if` conta 2
+    (`abs`, `min`, `max`, `and` e `or` com leituras também viram `if`), e uma função conta de novo em cada lugar
+    em que é chamada. Num programa muito grande, prefira contas simples e chame as funções grandes dentro de um
+    laço.
 
 ## 4. Comandos
 

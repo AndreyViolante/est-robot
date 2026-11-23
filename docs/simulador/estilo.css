@@ -128,6 +128,9 @@ button, select, input { font: inherit; color: inherit; }
 .desafio-status.ok { color: var(--ok); font-size: 1.05rem; }
 .desafio-status.falhou { color: var(--erro); }
 .desafio-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+#linkDesafio input.link { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; padding: 6px 8px;
+                          font: 0.8rem var(--mono); color: var(--fg); background: var(--panel);
+                          border: 1px solid var(--line); border-radius: 4px; }
 .professor summary { cursor: pointer; font-size: 0.8rem; color: var(--muted); }
 .professor[open] { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

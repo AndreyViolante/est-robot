@@ -111,7 +111,9 @@ roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou
 - **Copiar link do programa** (menu **Arquivo**): gera um link com o programa dentro. O aluno manda pelo WhatsApp e o
   professor abre e já vê o programa rodando no simulador, sem baixar arquivo. Serve também para o
   professor mandar o programa da aula para a turma. O programa vai no próprio link e não fica guardado
-  em nenhum servidor.
+  em nenhum servidor. Se o aluno programa em blocos, o link abre nos blocos; se ele está num desafio, o link
+  abre o simulador nesse desafio (mesmo que ele ainda esteja trancado no computador de quem recebe). Dentro de
+  um desafio, o botão **Copiar link do programa** do cartão do desafio faz o mesmo sem sair do simulador.
 
 ---
 

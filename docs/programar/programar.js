@@ -370,9 +370,11 @@ quadro.addEventListener('load', () => {
   quadro.focus();
 });
 
+let desafioDoLink = null;        // {desafio, semente}: o simulador abre nele, na primeira vez depois do link
 function abrirSimulador(r) {
   window.ESTPROGRAMA = {nome: r.nome, gerado: agora(), bytes: r.bytes, fonte: r.fonte, linhas: r.linhas,
-                        variaveis: r.variaveis, avisos: avisosEmTexto(r)};
+                        variaveis: r.variaveis, avisos: avisosEmTexto(r), ...(desafioDoLink || {})};
+  desafioDoLink = null;
   mostrarTeclado(false);
   $('sim').hidden = false;
   document.documentElement.classList.add('travado');
@@ -779,6 +781,8 @@ function trocarPrograma(texto, nome) {
 // ---------------------------------------------------------------- compartilhar por link
 // O programa vai comprimido dentro do próprio link, depois do # (essa parte nunca vai para o servidor):
 // #programa=<z ou t><base64url>&nome=<nome>. z = comprimido (deflate), t = texto puro (navegador sem compressão).
+// Opcionais: &modo=blocos (abre na aba Blocos), &desafio=<id> (o simulador abre nesse desafio) e &arena=<nº> (o
+// número da arena do desafio surpresa).
 
 function paraBase64url(bytes) {
   let s = '';
@@ -789,13 +793,25 @@ const deBase64url = t => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g,
 const passarPor = async (bytes, fluxo) =>
   new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(fluxo)).arrayBuffer());
 
-async function linkDoPrograma(fonte, nome) {
+async function linkDoPrograma(fonte, nome, {desafio = '', semente = 0} = {}) {
   let dados = new TextEncoder().encode(fonte), tipo = 't';
   if (globalThis.CompressionStream) { dados = await passarPor(dados, new CompressionStream('deflate-raw')); tipo = 'z'; }
   const url = new URL(location.href);
-  url.hash = `programa=${tipo}${paraBase64url(dados)}&nome=${encodeURIComponent(nome)}`;
+  url.hash = `programa=${tipo}${paraBase64url(dados)}&nome=${encodeURIComponent(nome)}` +
+    (modo === 'blocos' ? '&modo=blocos' : '') + (desafio ? `&desafio=${encodeURIComponent(desafio)}` : '') +
+    (desafio === 'surpresa' && semente ? `&arena=${semente}` : '');
   return url.href;
 }
+
+// o desafio aberto no simulador (ele guarda neste navegador), para ir junto no link
+function desafioDoSimulador() {
+  try {
+    const s = JSON.parse(localStorage.getItem('est-simulador-v1')) || {};
+    return typeof s.desafio === 'string' && s.desafio ? {desafio: s.desafio, semente: s.sementeOBR} : {};
+  } catch (e) { return {}; }
+}
+// o botão "Copiar link do programa" do simulador, num desafio
+window.ESTLinkDoPrograma = extra => linkDoPrograma(fonteAtual(), limparNome($('nome').value), extra);
 
 async function programaDoLink(hash) {
   const p = new URLSearchParams(hash.replace(/^#/, ''));
@@ -803,14 +819,17 @@ async function programaDoLink(hash) {
   let dados = deBase64url(valor.slice(1));
   if (valor[0] === 'z') dados = await passarPor(dados, new DecompressionStream('deflate-raw'));
   else if (valor[0] !== 't') throw new Error('link sem programa');
-  return {fonte: new TextDecoder('utf-8', {fatal: true}).decode(dados), nome: p.get('nome') || 'meu_programa'};
+  const semente = Number(p.get('arena'));
+  return {fonte: new TextDecoder('utf-8', {fatal: true}).decode(dados), nome: p.get('nome') || 'meu_programa',
+          blocos: p.get('modo') === 'blocos', desafio: (p.get('desafio') || '').slice(0, 40),
+          semente: Number.isInteger(semente) && semente >= 1 && semente <= 9999 ? semente : 0};
 }
 
 $('btLink').addEventListener('click', async () => {
   limparMensagens();
   let link;
   try {
-    link = await linkDoPrograma(fonteAtual(), limparNome($('nome').value));
+    link = await linkDoPrograma(fonteAtual(), limparNome($('nome').value), desafioDoSimulador());
   } catch (e) {
     mensagem('erro', 'Não consegui criar o link', '<p>Use <b>Baixar .py</b> e mande o arquivo.</p>');
     return;
@@ -818,7 +837,8 @@ $('btLink').addEventListener('click', async () => {
   let copiou = false;
   try { await navigator.clipboard.writeText(link); copiou = true; } catch (e) { /* sem permissão: o link fica na caixa */ }
   const div = mensagem('ok', copiou ? 'Link copiado!' : 'Link do programa',
-    `<p>${copiou ? 'Cole no WhatsApp ou no e-mail.' : 'Copie o link abaixo.'} Quem abrir vê este programa e o simulador.
+    `<p>${copiou ? 'Cole no WhatsApp ou no e-mail.' : 'Copie o link abaixo.'} Quem abrir vê este programa no simulador` +
+    `${link.includes('&desafio=') ? ', no desafio que está aberto aqui' : ''}.
      O programa vai dentro do próprio link: não fica guardado em nenhum servidor.</p>
      <input class="link" type="text" readonly aria-label="Link do programa" value="${escapar(link)}">` +
     (link.length > 8000 ? '<p>O programa é grande: se o link não abrir do outro lado, use <b>Baixar .py</b>.</p>' : ''));
@@ -843,12 +863,27 @@ async function abrirDoLink() {
       !confirm(`Abrir o programa "${limparNome(veio.nome)}" que veio no link? O que está no editor agora some ` +
                '(clique em Cancelar e use Baixar .py antes, se quiser guardar).')) return;
   trocarPrograma(veio.fonte, veio.nome);
+  if (veio.blocos) await abrirEmBlocos(veio.fonte);
   salvar();
   limparMensagens();
   mensagem('info', `Programa "${escapar(limparNome(veio.nome))}" aberto do link`, '<p>Abrindo o simulador…</p>');
+  desafioDoLink = veio.desafio ? {desafio: veio.desafio, semente: veio.semente} : null;
   simular();
 }
 window.addEventListener('hashchange', abrirDoLink);       // link colado com a página já aberta
+
+// o link veio de quem programava em blocos: abre nos blocos (se alguma linha não virar bloco, fica no Python)
+async function abrirEmBlocos(fonte) {
+  try {
+    await abrirBlocos();
+    const r = await blocosDoPython(fonte);
+    if (r.erro || r.python) return;
+    guardarVersao('antes de abrir outro programa', {fonte: blocos.codigo(), nome: limparNome($('nome').value),
+                                                    modo: 'blocos', blocos: blocos.estado()});
+    blocos.carregar(r.estado);
+    await trocarModo('blocos');
+  } catch (e) { /* fica na aba Python, com o mesmo programa */ }
+}
 
 // exemplos (lista gravada por ferramentas/publicar_programar.py)
 const exemplos = [{arquivo: '', titulo: 'Primeiro programa (luz, som e Funcionou!)', nome: 'meu_programa'}];
