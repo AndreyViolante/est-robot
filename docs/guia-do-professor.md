@@ -32,9 +32,6 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
   Para enviar, pareie o robô no Bluetooth do aparelho (senha 1234) e use **Enviar por Bluetooth**. O envio
   por Bluetooth ainda não foi conferido no robô: antes da aula, confira com a tarefa **Testar o Bluetooth do
   robô** num computador.
-- Para os mais novos, antes de digitar: no simulador, **🎮 Dirigir** deixa o aluno levar o robô pelas setas
-  enquanto a página escreve o programa (`andar_cm(20)`, `virar_direita(90)`). Peça o caminho de um quadrado
-  dirigindo, leve para o código e mostre que o robô faz igual sozinho; depois o desafio é mudar os números.
 - Descubra em que porta está cada sensor do seu robô (S1, S2, S3, S4) e anote no quadro: os
   programas deste guia usam S1 e S2 para os sensores de cor e S4 para toque e ultrassom.
 - Rode o quadrado da aula 2. Os valores do `calibracao.py` foram medidos num robô EST e fazem o
@@ -102,8 +99,8 @@ só. Para depurar, use "Próxima linha" ou um ponto de parada: o robô congela e
 variáveis ficam à mostra. Com "Minha pista" você monta a pista da sua escola; ela fica no navegador onde
 foi desenhada, e vai para outro computador pelo mesmo Salvar o progresso.
 
-**Como o simulador é organizado:** em cima, o que se usa o tempo todo (Executar, Reiniciar, Próxima linha,
-Velocidade, Dirigir) e o menu **Opções** (som, sensores com ruído, modo projetor, progresso e Professor). Logo
+**Como o simulador é organizado:** em cima, o que se usa o tempo todo (Executar, Reiniciar, Próxima linha e
+Velocidade) e o menu **Opções** (som, sensores com ruído, modo projetor, progresso e Professor). Logo
 abaixo, **Pista ou desafio**, um campo só com as pistas para treinar, as arenas da OBR, as pistas feitas por você e
 os desafios. Embaixo da pista ficam **Seguir o robô**, **Rastro**, **Gravar vídeo** e o que o robô está fazendo; as
 ferramentas de desenhar a pista ou montar a arena aparecem só quando servem. **Gravar vídeo** grava a pista (até 3

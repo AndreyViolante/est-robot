@@ -308,11 +308,6 @@ function reiniciar() {
   novaProva();
   placar = pista.obr && !editandoOBR && pista.obr.arena.percurso.length >= 2 && !pista.obr.erros.length
     ? new EST.OBR.Placar(pista) : null;
-  if (dirigir.ativo) {                      // dirigindo, reiniciar começa o caminho de novo
-    dirigir.toques = [];
-    dirigir.poses = [];
-    mostrarDirigindo();
-  }
   desenharLcd(true);
   atualizarTudo();
 }
@@ -663,7 +658,6 @@ function posicaoAlca() {
 
 function desenharAlca(c) {
   if (desafio || (estado === 'rodando' && !(arraste && arraste.tipo === 'girar'))) return;     // no desafio não gira
-  if (dirigir.ativo && dirigir.toques.length) return;      // dirigindo, o robô só anda pelas setas
   const [ax, ay] = posicaoAlca(), [fx, fy] = robo.ponto(robo.config.corpo.frente, 0);
   linha(c, fx, fy, ax, ay, 'rgba(34, 80, 255, 0.55)', 0.35);
   c.fillStyle = '#ffffff';
@@ -972,7 +966,7 @@ cena.addEventListener('pointerdown', ev => {
   const [x, y] = paraMundo(ev);
   const toque = ev.pointerType === 'touch';
   // com zoom, arrastar num lugar vazio da pista anda com a vista (também no desafio)
-  const vazio = !oQueTemAqui(x, y, toque) || desafio || (dirigir.ativo && dirigir.toques.length);
+  const vazio = !oQueTemAqui(x, y, toque) || desafio;
   if (zoom.fator > 1 && !comLupa() && vazio && !editando && !(pista.obr && editandoOBR)) {
     ajustarVista();
     arraste = {tipo: 'vista', px: ev.clientX, py: ev.clientY, cx: zoom.cx, cy: zoom.cy};
@@ -982,7 +976,6 @@ cena.addEventListener('pointerdown', ev => {
     return;
   }
   if (desafio) return;                      // no desafio o robô e a caixa ficam onde o desafio manda
-  if (dirigir.ativo && dirigir.toques.length) return;     // dirigindo: o robô só anda pelas setas
   if (pista.obr && editandoOBR) { cliqueOBR(x, y, ev.shiftKey); ev.preventDefault(); return; }
   let alvo = oQueTemAqui(x, y, toque);
   // editando: a alça de girar vale sempre; o robô e as caixas se arrastam, menos quando o "Apagar" pega algo
@@ -1092,127 +1085,6 @@ cena.addEventListener('wheel', ev => {
   const r = cena.getBoundingClientRect(), k = cena.width / r.width;
   zoomEm(zoom.fator * Math.exp(-ev.deltaY * 0.01), (ev.clientX - r.left) * k, (ev.clientY - r.top) * k);
 }, {passive: false});
-
-// ---------------------------------------------------------------- dirigir: o aluno anda com o robô e a página escreve o programa
-// Cada toque numa seta liga os motores simulados como o andar_cm / virar_direita do robo.py ligariam (mesma conta de
-// graus da roda), e o toque vira uma linha do programa; toques seguidos no mesmo sentido se juntam numa linha só.
-
-const dirigir = {ativo: false, toques: [], poses: []};     // toques: {tipo: 'andar' | 'virar', v}; poses: antes de cada um
-
-const motoresParados = () => Object.values(robo.motores).every(m => m.feito);
-
-function juntarToques(toques) {
-  const linhas = [];
-  for (const t of toques) {
-    const ult = linhas[linhas.length - 1];
-    if (ult && ult.tipo === t.tipo) {
-      ult.v += t.v;
-      if (Math.abs(ult.v) < 1e-9) linhas.pop();          // foi e voltou: some
-    } else {
-      linhas.push({...t});
-    }
-  }
-  return linhas;
-}
-
-function codigoDirigindo() {
-  const n = v => String(Math.round(v * 10) / 10);
-  const linhas = juntarToques(dirigir.toques).map(t => (t.tipo === 'andar' ? `andar_cm(${n(t.v)})`
-    : t.v > 0 ? `virar_direita(${n(t.v)})` : `virar_esquerda(${n(-t.v)})`));
-  return `from robo import *\n\n${linhas.length ? linhas.join('\n') : '# use as setas: cada toque vira uma linha aqui'}\n`;
-}
-
-function mostrarDirigindo() {
-  $('codigoDirigir').textContent = codigoDirigindo();
-  $('codigoDirigir').scrollTop = $('codigoDirigir').scrollHeight;
-  $('btDesfazerDirigir').disabled = !dirigir.toques.length;
-  $('btRecomecarDirigir').disabled = !dirigir.toques.length;
-  $('btLevarDirigir').disabled = !dirigir.toques.length;
-}
-
-function moverDirigindo(tipo) {
-  if (!dirigir.ativo || !motoresParados()) return;         // espera o movimento anterior acabar
-  const cfg = robo.config, k = robo.k, s = cfg.invertido ? -1 : 1;
-  const esq = robo.motores[cfg.motor_esquerdo], dir = robo.motores[cfg.motor_direito];
-  dirigir.poses.push({x: robo.x, y: robo.y, ang: robo.angGraus});
-  if (tipo === 'frente' || tipo === 're') {
-    const cm = +$('passoCm').value * (tipo === 're' ? -1 : 1);
-    const graus = Math.abs(cm) / (Math.PI * cfg.roda_cm) * 360, p = 50 * Math.sign(cm) * s;
-    esq.curso(p, graus, true, k);
-    dir.curso(p, graus, true, k);
-    dirigir.toques.push({tipo: 'andar', v: cm});
-  } else {
-    const g = +$('passoGraus').value * (tipo === 'esquerda' ? -1 : 1);          // + = direita, como o ângulo da pista
-    const graus = Math.abs(g) * cfg.entre_rodas_cm / cfg.roda_cm, p = 30 * s;
-    esq.curso(g > 0 ? p : -p, graus, true, k);
-    dir.curso(g > 0 ? -p : p, graus, true, k);
-    dirigir.toques.push({tipo: 'virar', v: g});
-  }
-  mostrarDirigindo();
-}
-
-function voltarDirigindo(pose) {
-  for (const m of Object.values(robo.motores)) m.parar(true);
-  robo.colocar(pose.x, pose.y, pose.ang);
-  if (robo.rastro[robo.rastro.length - 1] !== null) robo.rastro.push(null);
-  robo.rastro.push([robo.x, robo.y]);
-}
-
-function entrarDirigir() {
-  if (desafio) return;
-  reiniciar();                              // robô na largada, programa parado
-  dirigir.ativo = true;
-  dirigir.toques = [];
-  dirigir.poses = [];
-  $('btDirigir').setAttribute('aria-pressed', 'true');
-  $('cartaoDirigir').hidden = false;
-  mostrarDirigindo();
-  atualizarEstado();
-}
-
-function pararDirigir() {
-  dirigir.ativo = false;
-  $('btDirigir').setAttribute('aria-pressed', 'false');
-  $('cartaoDirigir').hidden = true;
-}
-
-function sairDirigir() {
-  if (!dirigir.ativo) return;
-  pararDirigir();
-  reiniciar();                              // de volta para a largada
-}
-
-$('btDirigir').addEventListener('click', () => (dirigir.ativo ? sairDirigir() : entrarDirigir()));
-for (const b of document.querySelectorAll('[data-mover]')) b.addEventListener('click', () => moverDirigindo(b.dataset.mover));
-$('btDesfazerDirigir').addEventListener('click', () => {
-  if (!dirigir.toques.length) return;
-  dirigir.toques.pop();
-  voltarDirigindo(dirigir.poses.pop());
-  mostrarDirigindo();
-});
-$('btRecomecarDirigir').addEventListener('click', () => {
-  if (!dirigir.poses.length) return;
-  const inicio = dirigir.poses[0];
-  dirigir.toques = [];
-  dirigir.poses = [];
-  voltarDirigindo(inicio);
-  robo.rastro = [[robo.x, robo.y]];
-  mostrarDirigindo();
-});
-$('btLevarDirigir').addEventListener('click', async () => {
-  const codigo = codigoDirigindo();
-  // dentro da página de programar, o programa vai direto para o editor dela
-  let pai = null;
-  try { pai = window.parent !== window && typeof window.parent.ESTDoSimulador === 'function' ? window.parent : null; } catch (e) { /* outra origem */ }
-  if (pai) { pai.ESTDoSimulador(codigo); return; }
-  try {
-    await navigator.clipboard.writeText(codigo);
-    $('btLevarDirigir').textContent = 'Copiado! Cole no seu programa';
-  } catch (e) {
-    $('btLevarDirigir').textContent = 'Selecione o programa acima e copie';
-  }
-  setTimeout(() => { $('btLevarDirigir').textContent = 'Levar para o código'; }, 2500);
-});
 
 // ---------------------------------------------------------------- painel
 
@@ -1359,7 +1231,7 @@ function ligarMira(canvas, g) {
     const novo = {ArrowLeft: agora - passo, ArrowRight: agora + passo, Home: t0, End: registro.fim}[ev.key];
     if (novo === undefined) return;
     ev.preventDefault();
-    ev.stopPropagation();                            // com o gráfico em foco, as setas não dirigem o robô
+    ev.stopPropagation();                            // com o gráfico em foco, as setas são só dele
     apontar(Math.max(t0, Math.min(t1, novo)));
   });
 }
@@ -1626,9 +1498,8 @@ const TEXTO_ESTADO = {
 
 function atualizarEstado() {
   const bt = $('btExecutar');
-  bt.disabled = !vm || dirigir.ativo;
-  $('btProxima').disabled = !vm || !marcas.length || dirigir.ativo;
-  $('btDirigir').hidden = !!desafio;
+  bt.disabled = !vm;
+  $('btProxima').disabled = !vm || !marcas.length;
   bt.textContent = {rodando: 'Pausar', pausado: 'Continuar', terminou: 'Executar de novo', erro: 'Executar de novo'}[estado] || 'Executar';
   const el = $('estado');
   el.className = 'estado' + (estado === 'terminou' ? ' ok' : estado === 'erro' ? ' erro' : '');
@@ -1643,7 +1514,6 @@ function atualizarEstado() {
     el.textContent = motivoParada.tipo === 'parada' ? `Ponto de parada: pausado na linha ${motivoParada.linha}`
       : `Pausado na linha ${motivoParada.linha}: aperte Próxima linha ou Continuar`;
   } else if (estado === 'rodando' && passoAPasso) el.textContent = 'Executando até a próxima linha';
-  else if (dirigir.ativo) el.textContent = 'Dirigindo: use as setas (no teclado também: ↑ ↓ ← →)';
   else el.textContent = TEXTO_ESTADO[estado];
   if (erroCarga) el.className = 'estado erro';
 }
@@ -1777,7 +1647,6 @@ function trocarPista(id) {
   marcarOnde();
   if (pista.id === MINHA && !pista.linhas.length) editando = true;      // pista em branco: já abre desenhando
   if (pista.id === MINHA_OBR && !pista.obr.arena.percurso.length) editandoOBR = true;
-  pararDirigir();
   zoom.fator = 1;                           // pista nova: vista inteira
   limitarZoom();
   atualizarEditor();
@@ -2183,7 +2052,6 @@ function entrarDesafio(id, {doLink = false, semente = 0, forcar = false} = {}) {
   aplicarRoboDoDesafio();
   $('pista').value = 'desafio';
   montarSeletorDesafio();
-  pararDirigir();
   zoom.fator = 1;
   limitarZoom();
   atualizarEditor();
@@ -2680,12 +2548,6 @@ document.addEventListener('keydown', ev => {
   }
   if (ev.key === 'Escape' && arraste && arraste.tipo === 'linha') { arraste = null; return; }   // desiste da linha
   if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
-  const SETAS = {ArrowUp: 'frente', ArrowDown: 're', ArrowLeft: 'esquerda', ArrowRight: 'direita'};
-  if (dirigir.ativo && SETAS[ev.key] && !digitando && tag !== 'SELECT') {
-    moverDirigindo(SETAS[ev.key]);
-    ev.preventDefault();
-    return;
-  }
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SUMMARY') return;
   if (ev.key === ' ') { executarOuPausar(); ev.preventDefault(); }
   else if (ev.key === 'r' || ev.key === 'R') reiniciar();
@@ -2754,11 +2616,6 @@ function quadro(agora) {
     while (acumulado >= DT && n < MAX_PASSOS && estado !== 'pausado') { passo(); acumulado -= DT; n++; }
     if (n >= MAX_PASSOS || estado === 'pausado') acumulado = 0;
     desenharLcd();
-  } else if (dirigir.ativo && !motoresParados()) {     // dirigindo: só a física, sem programa
-    acumulado += real * velocidade;
-    let n = 0;
-    while (acumulado >= DT && n < MAX_PASSOS) { robo.avancar(DT, tSim + DT); tSim += DT; anotarSensores(); acumulado -= DT; n++; }
-    if (motoresParados()) acumulado = 0;
   }
   desenhar();
   if (agora - ultimoPainel > 100) { ultimoPainel = agora; atualizarPainel(); }

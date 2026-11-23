@@ -42,8 +42,7 @@ botões no menu **Opções**. O menu **Exibir** tem a **Tela cheia** (o Python o
 - **Enviar por Bluetooth**, com o robô pareado no aparelho (senha 1234). A página faz o que a IDE faz pelo
   Bluetooth (se apresenta ao robô e manda os mesmos pacotes do USB), mas **ainda não foi testado no robô**;
   a tarefa **Testar o Bluetooth do robô** confere pelo computador, só com perguntas;
-- no simulador, **🎮 Dirigir**: o aluno anda com o robô pelas setas e a página escreve o programa
-  (`andar_cm(20)`, `virar_direita(90)`), que vai para o editor com um toque; dois dedos aproximam a pista.
+- no simulador, dois dedos aproximam a pista.
 
 ```python
 from robo import *
@@ -408,7 +407,7 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [ferramentas/programas_no_robo.py](ferramentas/programas_no_robo.py) | lista, apaga, roda, baixa e copia os programas gravados no robô e mostra a bateria |
 | [ferramentas/bluetooth.py](ferramentas/bluetooth.py) | conecta ao robô pelo Bluetooth (como a IDE) e só pergunta firmware, portas e bateria; `--escutar` mostra o que o robô mandar |
 | [ferramentas/teste_protocolo.js](ferramentas/teste_protocolo.js) | testa o protocolo da página de programar (USB e Bluetooth) sem o robô |
-| [ferramentas/teste_simulador.py](ferramentas/teste_simulador.py) | roda programas no simulador (pelo node) e confere giroscópio, motor, cronômetro, mensagens, o caminho do Dirigir e o seguidor |
+| [ferramentas/teste_simulador.py](ferramentas/teste_simulador.py) | roda programas no simulador (pelo node) e confere giroscópio, motor, cronômetro, mensagens, o caminho de andar e virar e o seguidor |
 | [ferramentas/teste_blocos.py](ferramentas/teste_blocos.py) | ida e volta Python → blocos → Python da página: os dois têm que compilar para os mesmos bytes (precisa do Blockly do npm) |
 | [docs/programar/para_blocos.py](docs/programar/para_blocos.py) | o "Trazer da aba Python" da página: lê o programa com o `ast` e monta os blocos |
 | [avisos.py](avisos.py) | os avisos antes de enviar: variável sem uso, laço sem fim sem espera, motor ligado no fim |

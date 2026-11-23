@@ -393,19 +393,6 @@ function fecharSimulador() {
 }
 $('btFecharSim').addEventListener('click', fecharSimulador);
 
-// "Levar para o código" do Dirigir, no simulador: o caminho feito com as setas vira o programa do editor
-window.ESTDoSimulador = codigo => {
-  const atual = editor.valor().trim();
-  if (atual && atual !== INICIAL.trim() && atual !== codigo.trim() &&
-      !confirm('Trocar o programa do editor pelo caminho que você fez dirigindo o robô? O que está escrito agora some ' +
-               '(clique em Cancelar e use Baixar .py antes, se quiser guardar).')) return;
-  fecharSimulador();
-  trocarPrograma(codigo, $('nome').value);
-  salvar();
-  limparMensagens();
-  mensagem('ok', 'Programa escrito dirigindo o robô',
-    '<p>Aperte <b>Simular</b> para ver o robô fazer o mesmo caminho sozinho. Depois é só mudar os números.</p>');
-};
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sim').hidden) fecharSimulador(); });
 
 // ---------------------------------------------------------------- envio pelo USB (WebHID)

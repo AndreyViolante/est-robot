@@ -1,6 +1,6 @@
 """Testes do simulador: compila programas com os comandos do robo.py, roda no simulador (ferramentas/simulacao.js,
-com o node) e confere como o robô terminou: ângulo do giroscópio, graus do motor, cronômetro, mensagens, o caminho
-que o Dirigir escreve e o seguidor do exemplo. Roda no GitHub a cada mudança.
+com o node) e confere como o robô terminou: ângulo do giroscópio, graus do motor, cronômetro, mensagens, um caminho
+de andar_cm e virar e o seguidor do exemplo. Roda no GitHub a cada mudança.
 Uso: python ferramentas/teste_simulador.py      (precisa do node)
 """
 import json, os, subprocess, sys, tempfile
@@ -56,8 +56,8 @@ enviar_mensagem('dobro', luz_refletida(1) * 2)""", 2, 'livre',
      lambda r: r['mensagens'] == {'tempo': {'para': 'EST-LAB', 'valor': 2.5}, 'oi': {'para': 'robo2', 'valor': 'ola'},
                                   'pronto': {'para': 'EST-LAB', 'valor': True},
                                   'dobro': {'para': 'EST-LAB', 'valor': 200}}),
-    # o Dirigir do simulador escreve andar_cm e virar_*: o programa tem que refazer o mesmo caminho
-    ('caminho do Dirigir: 20 cm e vira 90 à direita', """andar_cm(20)
+    # andar_cm e virar_*: o robô tem que terminar no lugar certo
+    ('caminho de andar e virar: 20 cm e vira 90 à direita', """andar_cm(20)
 virar_direita(90)""", 8, 'livre',
      lambda r: perto(r['x'], 20, 1.5) and perto(r['y'], 0, 1.5) and perto(r['ang'], 90, 3)),
     ('seguidor do exemplo 11 anda pela pista', open(os.path.join(RAIZ, 'exemplos', '11_seguidor_dois_sensores.py'),
