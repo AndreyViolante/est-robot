@@ -52,6 +52,7 @@ const resultado = casos.map(caso => {
   const pista = EST.copiaPista(base);
   const config = JSON.parse(JSON.stringify(EST.ROBO_PADRAO));
   for (const [p, s] of Object.entries(caso.portas || {})) Object.assign(config.portas[p], s);     // ex.: {3: {tipo: 'giroscopio'}}
+  Object.assign(config, caso.robo || {});                                                            // ex.: {deriva_giro: 2}
   const robo = new EST.Robo(config, pista);
   robo.colocar(pista.largada.x, pista.largada.y, pista.largada.ang);
   robo.botao = caso.botao || 0;                  // botão da controladora apertado o tempo todo

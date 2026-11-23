@@ -219,6 +219,13 @@ let pista = montarPista((P && P.pista) || salvo.pista);     // o exemplo da demo
 // programa do VS Code (simular.py): as medidas do calibracao.py valem por cima das guardadas na página, porque o
 // programa foi compilado com elas (o andar_cm vira graus com aquela roda)
 const robo = new EST.Robo(mesclar(mesclar(copia(EST.ROBO_PADRAO), salvo.robo), P && P.robo), pista);
+// as medidas do aluno; num desafio com robô próprio (giroscópio, derrapagem), o robô usa uma cópia com as do desafio
+const configDoAluno = robo.config;
+function aplicarRoboDoDesafio() {
+  robo.config = desafio && desafio.robo ? EST.roboDoDesafio(desafio, configDoAluno) : configDoAluno;
+  robo.cache.clear();
+  montarMedidas();
+}
 let vm = novaVM();
 
 function largada() {
@@ -1691,10 +1698,16 @@ function montarMedidas() {
   html += '</tbody></table><table class="medidas"><thead><tr><th>Corpo</th>' + CAMPOS_CORPO.map(c => `<th>${c[1]}</th>`).join('') + '</tr></thead><tbody><tr><td></td>';
   for (const [k] of CAMPOS_CORPO) html += `<td><input type="number" data-corpo="${k}" min="1" max="60" step="0.5" value="${cfg.corpo[k]}"></td>`;
   html += '</tr></tbody></table>';
+  const doDesafio = robo.config !== configDoAluno;
+  if (doDesafio) html = '<p class="nota">Neste desafio o robô é o do desafio (veja o objetivo). As suas medidas voltam quando ' +
+    'você sai dele.</p>' + html;
   $('formMedidas').innerHTML = html;
+  for (const el of $('formMedidas').querySelectorAll('input, select')) if (doDesafio) el.disabled = true;
+  $('btPadrao').disabled = doDesafio;
 }
 
 $('formMedidas').addEventListener('change', ev => {
+  if (robo.config !== configDoAluno) { montarMedidas(); return; }      // no desafio com robô próprio, não muda
   const el = ev.target, cfg = robo.config, chave = el.dataset.chave;
   let v = el.type === 'checkbox' ? el.checked : el.tagName === 'SELECT' ? el.value : parseFloat(el.value);
   if (typeof v === 'number') {
@@ -1717,12 +1730,11 @@ $('formMedidas').addEventListener('change', ev => {
 
 $('btPadrao').addEventListener('click', () => {
   const padrao = copia(EST.ROBO_PADRAO);
-  for (const k of Object.keys(robo.config)) delete robo.config[k];
-  Object.assign(robo.config, padrao);
+  for (const k of Object.keys(configDoAluno)) delete configDoAluno[k];
+  Object.assign(configDoAluno, padrao);
   delete salvo.robo;
   salvar();
-  robo.cache.clear();
-  montarMedidas();
+  aplicarRoboDoDesafio();
   atualizarPainel();
 });
 
@@ -2073,7 +2085,7 @@ const cumprido = id => !!(salvo.desafios[id] && salvo.desafios[id].feito);
 // um desafio destrava quando o anterior é cumprido (ou quando o professor libera todos); o que já foi cumprido fica
 // liberado mesmo se um desafio novo entrar antes dele na trilha
 const liberado = i => i === 0 || salvo.desafiosLivres === true || cumprido(EST.DESAFIOS[i].id)
-  || cumprido(EST.DESAFIOS[i - 1].id);
+  || cumprido(EST.DESAFIOS[i].depois || EST.DESAFIOS[i - 1].id);     // depois: o desafio que abre este
 // o desafio surpresa (arena sorteada e uma tarefa a mais) abre depois do percurso completo da OBR
 const surpresaLiberada = () => salvo.desafiosLivres === true || cumprido('obr');
 const surpresasCumpridas = () => Object.values(salvo.surpresas && typeof salvo.surpresas === 'object' ? salvo.surpresas : {})
@@ -2115,6 +2127,7 @@ function entrarDesafio(id) {
   }
   salvo.desafio = id;                       // o simular.py abre a página de novo: volta neste desafio
   salvar();
+  aplicarRoboDoDesafio();
   pista = pistaDoDesafio(desafio);
   robo.pista = pista;
   $('pista').value = 'desafio';
@@ -2131,6 +2144,7 @@ function sairDesafio() {
   desafio = null;
   salvo.desafio = '';
   salvar();
+  aplicarRoboDoDesafio();
   montarSeletorDesafio();
   trocarPista((P && P.pista) || salvo.pista);
 }
@@ -2300,6 +2314,17 @@ $('btZerar').addEventListener('click', () => {
   if (desafio && !liberado(EST.DESAFIOS.indexOf(desafio))) sairDesafio();
   else { montarSeletorDesafio(); mostrarDesafio(); }
 });
+
+// modo projetor: letras e controles maiores (a página de programar usa a mesma chave)
+function modoProjetor(ligar) {
+  document.documentElement.classList.toggle('projetor', ligar);
+  $('btProjetor').setAttribute('aria-pressed', String(ligar));
+  try { localStorage.setItem('est-projetor', ligar ? '1' : ''); } catch (e) { /* sem armazenamento */ }
+  dimensionar();
+}
+$('btProjetor').addEventListener('click', () => modoProjetor(!document.documentElement.classList.contains('projetor')));
+try { if (localStorage.getItem('est-projetor') === '1') document.documentElement.classList.add('projetor'); } catch (e) { /* nada */ }
+$('btProjetor').setAttribute('aria-pressed', String(document.documentElement.classList.contains('projetor')));
 
 // progresso num arquivo (progresso.js): para levar a outro computador ou guardar antes de limpar o navegador
 $('btSalvarProgresso').addEventListener('click', () => {

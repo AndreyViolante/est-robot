@@ -85,11 +85,13 @@ Arraste o robô para a largada (a bolinha azul gira) e escolha a pista. Antes, m
 não tem escorregão, bateria fraca nem variação de luz: o teste final é sempre no robô.
 
 **Desafios:** escolha um desafio no campo "Desafio": o robô sai sempre da largada marcada e a página
-diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bateu na caixa). São 13: os 6
+diz na hora se o aluno cumpriu ou por que não (parou longe, saiu da linha, bateu na caixa). São 15: os 6
 primeiros vão de andar e virar até seguir linha com falha; do 7 ao 9, cruzamentos, verde e obstáculo; do
 10 ao 13, os mais difíceis: volta rápida no oval (pede um seguidor proporcional), chegada na faixa
-vermelha, beco sem saída e o percurso completo da OBR. Todos têm solução conferida no simulador. O progresso
-fica no navegador; em "Professor" dá para liberar todos os desafios ou zerar. Quem cumpre os 13 ganha o
+vermelha, beco sem saída e o percurso completo da OBR. O 14 e o 15 são com giroscópio e abrem logo depois do
+2: um quadrado e um triângulo com um robô que derrapa nas viradas, e no 15 o giroscópio desvia sozinho (zere
+antes de cada virada). Todos têm solução conferida no simulador. O progresso fica no navegador; em
+"Professor" dá para liberar todos os desafios ou zerar. Quem cumpre o 13 ganha o
 **Desafio surpresa**: uma arena sorteada e uma tarefa a mais para mudar no programa (bips no gap, luz vermelha
 no desvio, parar no verde, FIM na tela na chegada...), como o desafio surpresa da OBR. Combine um número de
 arena com a turma ("Arena nº") e todos tentam a mesma tarefa. Em "Progresso", o aluno salva

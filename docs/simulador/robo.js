@@ -16,6 +16,7 @@ const ROBO_PADRAO = {
   motor_esquerdo: 'B',
   motor_direito: 'C',
   invertido: false,                   // true: potência positiva anda de ré (use com configurar(invertido=True))
+  deriva_giro: 0,                     // graus/s que o giroscópio anda sozinho, mesmo parado (o de verdade desvia um pouco)
   corpo: {frente: 13, tras: 7, largura: 15},
   portas: {
     1: {tipo: 'cor', frente: 7, esquerda: 1.6, preto: 18},
@@ -31,6 +32,7 @@ const RAIO_MANCHA = 0.5;      // cm: raio da área do chão que o sensor de cor 
 const ULTRASSOM_MAX = 255;    // cm: leitura quando não há nada na frente
 const CONE_ULTRASSOM = [-10, -5, 0, 5, 10];     // graus
 const RUIDO = 6;              // "Sensores com ruído": a luz refletida varia até 6 pontos para cima ou para baixo
+const DERIVA_RUIDO = 0.3;     // com ruído, o giroscópio também desvia 0,3 grau/s e a leitura varia 1 grau
 
 // pontos da mancha do sensor de cor (centro, 6 a meio raio, 12 na borda): pesa mais o centro, como o sensor real
 const MANCHA = [[0, 0]];
@@ -185,7 +187,7 @@ class Robo {
     this.rastro = [];
     this.batidas = 0;          // passos em que o robô encostou numa parede ou caixa
     this.zeroMotor = {};       // letra -> graus do motor no último "zerar"
-    this.giro = 0;             // radianos que o robô girou desde o começo ou o último "zerar" (giroscópio perfeito)
+    this.giro = 0;             // radianos que o giroscópio marca desde o começo ou o último "zerar" (o giro do robô + o desvio)
     this.giroVel = 0;          // graus/s no último passo
     this.cronos = {};          // número do cronômetro -> instante do último "zerar" (sem zerar, conta desde 0)
     this.mensagens = {};       // enviar_mensagem: título -> {para, valor} (o último enviado)
@@ -293,7 +295,8 @@ class Robo {
         return modo === 4 ? {byte: 0} : {float: 0};
       }
       if (modo === 4) { this.giro = 0; return {byte: 0}; }
-      return {float: modo === 1 ? Math.round(this.giro * 180 / Math.PI) : Math.round(this.giroVel)};
+      const variacao = this.ruido > 0 ? sorteio() : 0;
+      return {float: modo === 1 ? Math.round(this.giro * 180 / Math.PI + variacao) : Math.round(this.giroVel + variacao)};
     }
     if (tipo === 0x08) {
       const u = this.sensorUltrassom(porta);
@@ -417,7 +420,10 @@ class Robo {
     const giro = {};
     for (const m of Object.values(this.motores)) giro[m.nome] = m.atualizar(dt, t);
     this.passoN++;
-    this.giroVel = 0;
+    // o desvio do giroscópio: anda sozinho, mesmo com o robô parado (zerar antes de virar resolve)
+    const deriva = (this.config.deriva_giro || 0) + (this.ruido > 0 ? DERIVA_RUIDO : 0);
+    this.giro += deriva * Math.PI / 180 * dt;
+    this.giroVel = deriva;
     if (segurando) return;
     const r = this.config.roda_cm / 2, W = this.config.entre_rodas_cm;
     const e = this.config.motor_esquerdo, dd = this.config.motor_direito;
@@ -426,7 +432,7 @@ class Robo {
     if (!sl && !sr) return;
     const ds = (sl + sr) / 2, dth = (sl - sr) / W;
     this.giro += dth;
-    if (dt > 0) this.giroVel = dth / dt * 180 / Math.PI;
+    if (dt > 0) this.giroVel += dth / dt * 180 / Math.PI;
     const am = this.ang + dth / 2;
     this.x += ds * Math.cos(am);
     this.y += ds * Math.sin(am);

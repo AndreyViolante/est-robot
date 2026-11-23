@@ -57,6 +57,18 @@ function chegada(prova, s) {
   return tempo(this, s);
 }
 
+// figura fechada sem linha (quadrado, triângulo): passar pelos cantos na ordem e parar de volta na largada
+function figura(prova, s) {
+  const n = passarMarcos(this, prova, s), total = this.marcos[0].length;
+  const longe = Math.hypot(s.x - this.largada.x, s.y - this.largada.y);
+  prova.texto = `Cantos: ${n} de ${total}`;
+  if (n === total && s.parado >= 0.5 && longe <= 6) return {ok: true};
+  if (s.terminou && s.parado >= 0.5) {
+    return {ok: false, motivo: n < total ? `passou por ${n} de ${total} cantos` : `parou a ${cm(longe)} cm da largada`};
+  }
+  return tempo(this, s);
+}
+
 const PASSO = {N: [0, -1], S: [0, 1], L: [1, 0], O: [-1, 0]};
 
 /* Desafio numa arena da OBR (obr.js), pelo id de uma arena pronta (d.arena) ou por um percurso (d.percurso,
@@ -226,7 +238,43 @@ const DESAFIOS = [
           'qual chamar (veja o guia da OBR).',
     raio: 8, longe: 35, semBater: true, limite: 300, verificar: chegada,
   }),
+  // ---- com giroscópio: abrem depois do quadrado (desafio 2). O robô destes desafios é outro: tem giroscópio na
+  // porta 3 e derrapa nas viradas (entre rodas de 14,5 cm, e o programa calcula com 12: virar_esquerda(90) vira 74°)
+  {
+    id: 'giro-quadrado', titulo: 'Quadrado com giroscópio', depois: 'quadrado', pista: 'livre', largada: {x: 60, y: 75, ang: 0},
+    robo: {entre_rodas_cm: 14.5, portas: {3: {tipo: 'giroscopio'}}},
+    objetivo: 'O quadrado de 40 cm do desafio 2, mas este robô derrapa nas viradas: virar_esquerda(90) vira só uns 75°. ' +
+              'Ele tem um giroscópio na porta 3: vire pelo giroscópio, passe pelos 3 cantos e pare de volta na largada ' +
+              '(a menos de 6 cm dela).',
+    dica: 'zerar_giroscopio(3) e gire com motores(...) enquanto o giroscópio não chega em 90. Para a esquerda ele vai ' +
+          'para o negativo: while giroscopio(3) > -90. Perto do fim, gire mais devagar para não passar.',
+    marcos: [[[100, 75], [100, 35], [60, 35]], [[100, 75], [100, 115], [60, 115]]], raio: 7,
+    limite: 60, verificar: figura,
+  },
+  {
+    id: 'giro-triangulo', titulo: 'Triângulo com giroscópio que desvia', depois: 'giro-quadrado', pista: 'livre',
+    largada: {x: 50, y: 75, ang: 0},
+    robo: {entre_rodas_cm: 14.5, deriva_giro: 2, portas: {3: {tipo: 'giroscopio'}}},
+    objetivo: 'Um triângulo de 50 cm de lado (120° em cada canto) e volte para a largada (a menos de 6 cm). O giroscópio ' +
+              'deste robô desvia sozinho 2° por segundo, mesmo parado, como um giroscópio de verdade.',
+    dica: 'o desvio vai somando com o tempo: zere o giroscópio logo antes de cada virada, e não uma vez só no começo.',
+    marcos: [[[100, 75], [75, 31.7]], [[100, 75], [75, 118.3]]], raio: 7,
+    limite: 60, verificar: figura,
+  },
 ];
+
+/* As medidas do robô num desafio: as do aluno (base) com as do desafio por cima (giroscópio, derrapagem...). */
+function roboDoDesafio(d, base) {
+  const robo = JSON.parse(JSON.stringify(base));
+  for (const [k, v] of Object.entries((d && d.robo) || {})) {
+    if (k === 'portas') {
+      for (const [porta, cfg] of Object.entries(v)) robo.portas[porta] = Object.assign(robo.portas[porta] || {}, cfg);
+    } else {
+      robo[k] = v;
+    }
+  }
+  return robo;
+}
 
 // ---------------------------------------------------------------- desafio surpresa
 
@@ -350,6 +398,7 @@ function surpresa(semente) {
 }
 
 EST.DESAFIOS = DESAFIOS;
+EST.roboDoDesafio = roboDoDesafio;
 EST.TAREFAS_SURPRESA = TAREFAS;
 EST.desafioSurpresa = surpresa;
 })();

@@ -25,6 +25,10 @@ while giroscopio(3) < 90:
 parar()
 mostrar(giroscopio(3))""", 10, 'livre', lambda r: perto(r['giro'], 90, 3) and perto(r['tela'][-1], 90, 3),
      {'portas': {'3': {'tipo': 'giroscopio'}}}),
+    ('giroscópio que desvia: 2 s parado com 2 graus/s marca 4', """zerar_giroscopio(3)
+esperar(2)
+mostrar(giroscopio(3))""", 3, 'livre', lambda r: r['tela'][-1] in ('4', '3', '5'),
+     {'portas': {'3': {'tipo': 'giroscopio'}}, 'robo': {'deriva_giro': 2}}),
     ('giroscópio numa porta sem giroscópio: avisa e dá 0', """mostrar(giroscopio(3))""", 1, 'livre',
      lambda r: r['tela'][-1] == '0' and any('não tem giroscópio' in a for a in r.get('avisos', []))),
     ('graus do motor: uma volta = 360', """zerar_motor('B')

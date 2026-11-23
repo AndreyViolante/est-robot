@@ -62,6 +62,12 @@ const comando = (tipo, cor, mensagem, args, dica, extra = {}) => ({type: tipo, m
 const leitura = (tipo, cor, mensagem, args, saida, dica) => ({type: tipo, message0: mensagem, args0: args,
   output: saida, colour: cor, tooltip: dica});
 
+// o tamanho dos blocos: menor no celular, maior no modo projetor (o html ganha a classe "projetor")
+function escalaInicial() {
+  if (document.documentElement.classList.contains('projetor')) return 1.25;
+  return window.matchMedia('(max-width: 600px)').matches ? 0.62 : 0.8;
+}
+
 function nomeDeVariavel(texto) {      // as variáveis do robô: letras sem acento, números e _
   const limpo = String(texto).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]/g, '_').replace(/^(\d)/, '_$1');
   return limpo || null;
@@ -658,7 +664,7 @@ async function criar(div, aoMudar) {
   const ws = Blockly.inject(div, {
     toolbox: CAIXA, renderer: 'zelos', theme: escuro() ? temas.escuro : temas.claro,
     media: BASE + 'media/', sounds: false, trashcan: true,
-    zoom: {controls: true, wheel: false, startScale: window.matchMedia('(max-width: 600px)').matches ? 0.62 : 0.8,
+    zoom: {controls: true, wheel: false, startScale: escalaInicial(),
            maxScale: 2, minScale: 0.4, scaleSpeed: 1.15},
     move: {scrollbars: true, drag: true, wheel: true},
   });
@@ -743,6 +749,8 @@ async function criar(div, aoMudar) {
     mostrarBloco,
     limparAvisos,
     redimensionar: () => Blockly.svgResize(ws),
+    /** Volta ao tamanho de começo (o do modo projetor, se ele estiver ligado). */
+    ajustarEscala: () => { ws.setScale(escalaInicial()); Blockly.svgResize(ws); },
     salvar,
     /** A área de blocos como dados (para guardar uma versão e voltar para ela depois com carregar). */
     estado: () => Blockly.serialization.workspaces.save(ws),

@@ -880,6 +880,21 @@ $('exemplo').addEventListener('change', async () => {
 
 let blocos = null, espelho = null, abrindo = null;
 
+// ---------------------------------------------------------------- modo projetor
+// Letras, blocos e simulador maiores para a aula. Fica guardado neste navegador; o simulador (mesma origem) lê
+// a mesma chave quando abre.
+const CHAVE_PROJETOR = 'est-projetor';
+function modoProjetor(ligar) {
+  document.documentElement.classList.toggle('projetor', ligar);
+  $('btProjetor').setAttribute('aria-pressed', String(ligar));
+  try { localStorage.setItem(CHAVE_PROJETOR, ligar ? '1' : ''); } catch (e) { /* sem armazenamento: vale até fechar */ }
+  editor.atualizar();
+  if (espelho) espelho.atualizar();
+  if (blocos) blocos.ajustarEscala();
+}
+$('btProjetor').addEventListener('click', () => modoProjetor(!document.documentElement.classList.contains('projetor')));
+try { if (localStorage.getItem(CHAVE_PROJETOR) === '1') modoProjetor(true); } catch (e) { /* sem armazenamento */ }
+
 /** Baixa o Blockly (só na primeira vez) e monta a área de blocos, com o Python gerado ao lado. */
 function abrirBlocos() {
   if (!abrindo) {

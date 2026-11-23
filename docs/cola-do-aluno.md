@@ -38,7 +38,7 @@ Para mandar para o robô: **`Ctrl+Shift+B`**. O robô começa a andar logo: deix
 
 Ainda não vistos no robô: `arredondar(...)`, `media(...)`, `confirmado(...)` e as mensagens pelo Bluetooth.
 
-No simulador, **Dirigir** leva o robô pelas setas e o programa se escreve sozinho. Há 13 desafios, do
+No simulador, **Dirigir** leva o robô pelas setas e o programa se escreve sozinho. Há 15 desafios, do
 "andar 30 cm" ao percurso completo da OBR.
 
 ## Repetir e decidir

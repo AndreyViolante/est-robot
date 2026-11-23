@@ -48,6 +48,11 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+/* modo projetor: o que é em rem cresce junto; a coluna da direita fica mais larga para caber */
+html.projetor { font-size: 125%; }
+html.projetor body { font-size: 19px; }
+html.projetor .layout { grid-template-columns: minmax(0, 1fr) minmax(380px, 520px); }
+#btProjetor[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 body { background: var(--bg); color: var(--fg); font: 400 15px/1.5 var(--body); }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--led-azul); outline-offset: 2px; border-radius: 4px; }

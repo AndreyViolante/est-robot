@@ -197,8 +197,8 @@ e o som. Funciona sem internet e sem instalar nada. O exemplo do projeto está n
   também pode ser arrastada.
 - Na aba **Medidas** ficam a roda, a distância entre as rodas, o sensor de cada porta e a posição dele. O
   padrão do site tem dois sensores de cor (S1 e S2, um de cada lado da linha), nada na porta 3 e o ultrassom
-  na porta 4; na porta 3 dá para pôr um giroscópio ou um terceiro sensor de cor. Os 13 desafios têm solução
-  conferida com esse robô de dois sensores. Pelo VS Code, as portas com preto no `calibracao.py` viram
+  na porta 4; na porta 3 dá para pôr um giroscópio ou um terceiro sensor de cor. Os desafios têm solução
+  conferida com esse robô de dois sensores; o 14 e o 15 trazem o próprio robô, com giroscópio na porta 3. Pelo VS Code, as portas com preto no `calibracao.py` viram
   sensores de cor; meça o seu robô e ajuste.
 
 ```bash
@@ -210,9 +210,11 @@ refletida fica perto do preto) e um seguidor com uma caixa em cima da linha. A c
 ruído" faz a luz variar como num sensor de verdade. Em "Minha pista" dá para desenhar a sua pista com
 linhas, quadrados verdes e caixas (fica guardada no navegador). O botão "Próxima linha" executa o
 programa linha por linha, e clicar no número de uma linha põe um ponto de parada. A trilha de desafios
-traz 13 desafios, do "andar 30 cm" ao "percurso completo da OBR" (cruzamentos, verde, obstáculo, volta
+traz 15 desafios, do "andar 30 cm" ao "percurso completo da OBR" (cruzamentos, verde, obstáculo, volta
 rápida, faixa vermelha de chegada e beco sem saída no caminho), com verificação automática; cada um
-cumprido destrava o próximo. Depois do último vem o **Desafio surpresa**, como o da OBR: uma arena sorteada e
+cumprido destrava o próximo. O 14 e o 15, com giroscópio, abrem depois do 2: o robô deles derrapa nas
+viradas e, no 15, o giroscópio desvia 2° por segundo (com "Sensores com ruído", todo giroscópio desvia um
+pouco). Depois do 13 vem o **Desafio surpresa**, como o da OBR: uma arena sorteada e
 uma tarefa a mais sorteada junto (dois bips no gap, parar 2 s no gap, luz vermelha no desvio, luz roxa ou
 parar 3 s no verde, três bips no beco, FIM na tela ou três notas na chegada), conferida automaticamente; o
 mesmo número de arena dá a mesma tarefa para a turma toda. Os botões da controladora aparecem na tela do robô simulado quando o
