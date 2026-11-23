@@ -3,6 +3,11 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.13 (23/11/2026)
+
+- **Gravar vídeo** no simulador, na barra embaixo da pista: grava a pista enquanto o robô anda e, ao apertar de
+  novo, baixa o vídeo (mp4 no Chrome e no Edge, que abre no WhatsApp). Para sozinho em 3 minutos.
+
 ## 0.1.12 (23/11/2026)
 
 - **Simulador com menos texto.** A dica da pista fica recolhida em **Dica** (abre sozinha enquanto você desenha
