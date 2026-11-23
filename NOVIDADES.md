@@ -3,6 +3,11 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.14 (23/11/2026)
+
+- O simulador não tem mais o modo **Dirigir** (andar com o robô pelas setas e o programa se escrever): a barra de
+  cima ficou só com Executar, Reiniciar, Próxima linha, Velocidade e Opções.
+
 ## 0.1.13 (23/11/2026)
 
 - **Gravar vídeo** no simulador, na barra embaixo da pista: grava a pista enquanto o robô anda e, ao apertar de
