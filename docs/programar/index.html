@@ -59,6 +59,8 @@
         </div>
         <button id="btVersoes" class="bt pequeno" type="button"
                 title="As versões do programa guardadas neste navegador: veja e volte para qualquer uma">Versões</button>
+        <button id="btTelaCheia" class="bt pequeno" type="button" aria-pressed="false"
+                title="O Python ou os blocos ocupam a tela inteira (para sair: este botão ou Esc)">Tela cheia</button>
       </div>
       <div class="executar">
         <button id="btSimular" class="bt" type="button" title="Compila e mostra o robô andando no simulador">Simular</button>
@@ -108,7 +110,11 @@
 
   <aside class="painel">
     <section class="cartao console" aria-labelledby="tituloMensagens">
-      <h2 id="tituloMensagens">Mensagens</h2>
+      <div class="console-topo">
+        <h2 id="tituloMensagens">Mensagens</h2>
+        <button id="btFecharMensagens" class="bt pequeno fechar-mensagens" type="button"
+                title="Apaga as mensagens e esconde esta caixa (na tela cheia)">Fechar</button>
+      </div>
       <div id="mensagens" class="mensagens" aria-live="polite">
         <p class="vazio">Erros, avisos e o resultado do envio aparecem aqui.</p>
       </div>

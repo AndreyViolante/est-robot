@@ -1,7 +1,7 @@
 'use strict';
 /* Teste da página inteira, num Chrome sem janela: abre a página de programar (servida da pasta docs/, como no
    site), compila com o Python do navegador, abre o simulador e executa, mostra um erro em português, passa o
-   programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), manda o programa por
+   programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), liga a tela cheia, manda o programa por
    link (com o modo blocos e o desafio aberto), salva e carrega o progresso e abre o simulador sozinho. Depois, num celular (390 x 844, toque): a página começa nos blocos, não
    rola para o lado, o teclado de programação aparece no código, o menu Arquivo cabe na tela e o simulador roda.
    Precisa de internet (Python do navegador, Blockly e o editor vêm da CDN) e do pacote playwright-core, que usa o
@@ -174,6 +174,22 @@ async function main() {
     const okBlocos = await ultimaMensagem('ok', 'bytes');
     confere('os blocos compilam com os mesmos bytes do Python', bytesDe(okBlocos) === bytesPython, `${okBlocos} / Python ${bytesPython}`);
     await pagina.click('#btFecharSim');
+
+    // ---- tela cheia: os blocos ocupam a janela (sem o topo e o painel), fica guardada e o botão volta
+    const medir = () => pagina.evaluate(() => ({
+      topo: getComputedStyle(document.querySelector('.topo')).display,
+      largura: Math.round(100 * document.querySelector('.editor').getBoundingClientRect().width / innerWidth),
+      blocos: Math.round(100 * document.getElementById('blockly').getBoundingClientRect().height / innerHeight),
+      guardada: localStorage.getItem('est-tela-cheia')}));
+    await pagina.click('#btTelaCheia');
+    await pagina.waitForTimeout(400);
+    const cheia = await medir();
+    await pagina.click('#btTelaCheia');
+    await pagina.waitForTimeout(400);
+    const normal = await medir();
+    confere('tela cheia: os blocos ocupam a janela, fica guardada e o botão volta', cheia.topo === 'none' && cheia.largura >= 97
+            && cheia.blocos >= 80 && cheia.guardada === '1' && normal.topo !== 'none' && normal.guardada === '',
+            JSON.stringify({cheia, normal}));
 
     // ---- link do programa: leva o modo blocos e o desafio aberto no simulador; quem abre vê o programa nele
     await pagina.evaluate(() => {

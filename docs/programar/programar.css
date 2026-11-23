@@ -283,6 +283,37 @@ body.com-teclado { padding-bottom: 104px; }          /* o fim do código não fi
   .espelho.aberto .espelho-codigo { display: block; }
 }
 
+/* ---- tela cheia: o editor (Python ou Blocos) ocupa a janela; as mensagens aparecem por cima, num canto, só quando
+   há alguma (o simulador, z-index 10, continua por cima de tudo) ---- */
+#btTelaCheia[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.console-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.console-topo h2 { margin-bottom: 8px; }
+.fechar-mensagens { display: none; margin-bottom: 8px; }
+html.tela-cheia .topo { display: none; }
+html.tela-cheia .layout { display: block; padding: 8px; }
+html.tela-cheia .editor { height: calc(100dvh - 16px); grid-template-rows: auto minmax(0, 1fr); }
+html.tela-cheia body.com-teclado .editor { height: calc(100dvh - 16px - 104px); }
+html.tela-cheia .rodape-editor { display: none; }
+html.tela-cheia .area-codigo { min-height: 0; }
+html.tela-cheia .area-codigo textarea, html.tela-cheia .area-codigo .CodeMirror { height: 100%; }
+html.tela-cheia .area-blocos { height: auto; min-height: 0; }
+html.tela-cheia .painel { position: fixed; top: auto; right: 16px; bottom: 16px; z-index: 8; width: min(440px, calc(100vw - 32px));
+                          max-height: 45dvh; box-shadow: 0 8px 28px rgba(13, 18, 34, 0.28); border-radius: 8px; }
+html.tela-cheia .painel > :not(.console) { display: none; }
+html.tela-cheia .painel:not(:has(.msg)) { display: none; }
+html.tela-cheia .fechar-mensagens { display: inline-flex; }
+@media (max-width: 1100px) {
+  html.tela-cheia .area-blocos { grid-template-rows: minmax(0, 1fr) auto; }
+  html.tela-cheia .blockly { height: auto; }
+  html.tela-cheia .espelho-codigo { flex: none; height: 26dvh; }
+}
+@media (max-width: 600px) {
+  html.tela-cheia .layout { padding: 4px; }
+  html.tela-cheia .editor { height: calc(100dvh - 8px); }
+  html.tela-cheia body.com-teclado .editor { height: calc(100dvh - 8px - 104px); }
+  html.tela-cheia .painel { right: 8px; bottom: 8px; width: calc(100vw - 16px); }
+}
+
 /* ---- versões do programa (versoes.js) ---- */
 .versoes { width: min(680px, calc(100vw - 32px)); max-height: min(85vh, 760px); border: 1px solid var(--line);
            border-radius: 8px; background: var(--panel); color: var(--fg); padding: 16px 18px; }

@@ -114,6 +114,11 @@ roda no Chrome ou no Edge, inclusive em Chromebook: o aluno escreve em Python ou
   em nenhum servidor. Se o aluno programa em blocos, o link abre nos blocos; se ele está num desafio, o link
   abre o simulador nesse desafio (mesmo que ele ainda esteja trancado no computador de quem recebe). Dentro de
   um desafio, o botão **Copiar link do programa** do cartão do desafio faz o mesmo sem sair do simulador.
+- **Tela cheia** (na barra do editor): o Python ou os blocos ocupam a tela inteira, sem o topo e sem o painel da
+  direita. Os erros e o resultado do envio aparecem num canto, por cima, e somem no **Fechar**. Fica guardada naquele
+  navegador; para sair, o mesmo botão ou Esc.
+- **Projetor** (no topo): letras, blocos e simulador maiores, para a turma ver de longe. Dá para usar junto com a
+  tela cheia.
 
 ---
 

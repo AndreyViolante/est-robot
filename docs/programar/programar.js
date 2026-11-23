@@ -930,6 +930,47 @@ function modoProjetor(ligar) {
 $('btProjetor').addEventListener('click', () => modoProjetor(!document.documentElement.classList.contains('projetor')));
 try { if (localStorage.getItem(CHAVE_PROJETOR) === '1') modoProjetor(true); } catch (e) { /* sem armazenamento */ }
 
+// ---------------------------------------------------------------- tela cheia
+// O editor (Python ou Blocos) ocupa a janela, sem o topo e sem o painel da direita; as mensagens aparecem num canto,
+// por cima, só quando há alguma. O navegador também esconde as barras dele (só depois de um clique, por isso, ao
+// abrir a página de novo, volta só o jeito da página). Fica guardado neste navegador.
+const CHAVE_TELA_CHEIA = 'est-tela-cheia';
+const emTelaCheia = () => document.documentElement.classList.contains('tela-cheia');
+function arrumarEditor() {
+  requestAnimationFrame(() => {
+    editor.atualizar();
+    if (espelho) espelho.atualizar();
+    if (blocos && modo === 'blocos') blocos.redimensionar();
+  });
+}
+function telaCheia(ligar, {navegador = true} = {}) {
+  document.documentElement.classList.toggle('tela-cheia', ligar);
+  $('btTelaCheia').setAttribute('aria-pressed', String(ligar));
+  try { localStorage.setItem(CHAVE_TELA_CHEIA, ligar ? '1' : ''); } catch (e) { /* sem armazenamento: vale até fechar */ }
+  if (navegador) {
+    const raiz = document.documentElement;
+    if (ligar && !document.fullscreenElement && raiz.requestFullscreen) {
+      raiz.requestFullscreen({navigationUI: 'hide'}).catch(() => { /* o navegador não deixou: fica só o jeito da página */ });
+    } else if (!ligar && document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+  arrumarEditor();
+}
+$('btTelaCheia').addEventListener('click', () => telaCheia(!emTelaCheia()));
+// saiu da tela cheia do navegador (Esc ou F11): sai também da tela cheia da página
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && emTelaCheia()) telaCheia(false, {navegador: false});
+  else arrumarEditor();
+});
+// sem a tela cheia do navegador, o Esc também sai. Com o simulador aberto, o Esc fecha só o simulador: este ouvinte
+// roda antes (capture) do que fecha o simulador, então ainda o vê aberto.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && emTelaCheia() && !document.fullscreenElement && $('sim').hidden) telaCheia(false, {navegador: false});
+}, {capture: true});
+$('btFecharMensagens').addEventListener('click', limparMensagens);
+try { if (localStorage.getItem(CHAVE_TELA_CHEIA) === '1') telaCheia(true, {navegador: false}); } catch (e) { /* sem armazenamento */ }
+
 /** Baixa o Blockly (só na primeira vez) e monta a área de blocos, com o Python gerado ao lado. */
 function abrirBlocos() {
   if (!abrindo) {
