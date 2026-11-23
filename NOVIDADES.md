@@ -3,6 +3,13 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.12 (23/11/2026)
+
+- **Simulador com menos texto.** A dica da pista fica recolhida em **Dica** (abre sozinha enquanto você desenha
+  a Minha pista), as notas do painel ficaram de uma linha só e, no rodapé, atalhos e avisos ficam recolhidos.
+- **Esconder o painel**, no cartão do robô, tira a coluna da direita (tela do robô, programa e sensores): a pista
+  ocupa a largura toda. **Mostrar o painel**, na barra de cima, traz de volta. A escolha fica guardada no navegador.
+
 ## 0.1.11 (23/11/2026)
 
 - **Página de programar mais organizada.** Uma barra só no editor: as abas Python e Blocos, o nome, o menu
