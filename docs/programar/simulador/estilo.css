@@ -192,6 +192,13 @@ html.embutido .topo { display: none; }
 .erros-obr { flex-basis: 100%; margin: 0; font-size: 0.86rem; color: var(--erro); }
 
 .dica { margin: 0; font-size: 0.88rem; color: var(--muted); }
+.dica summary { cursor: pointer; width: max-content; }
+.dica p { margin: 4px 0 0; }
+/* painel da direita recolhido: a pista ocupa a largura toda */
+.cartao-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.cartao-topo h2 { margin: 0; }
+html.sem-painel .layout { grid-template-columns: minmax(0, 1fr); }
+html.sem-painel .painel { display: none; }
 .avisos { border-left: 4px solid var(--alerta); background: var(--panel); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
 .avisos p { margin: 4px 0; }
 
@@ -304,6 +311,7 @@ details.cartao[open] summary { margin-bottom: 8px; }
 
 .rodape { padding: 8px clamp(16px, 3vw, 28px) 24px; font-size: 0.82rem; color: var(--muted); max-width: 90ch; }
 .rodape p { margin: 0 0 6px; }
+.rodape summary { cursor: pointer; width: max-content; margin-bottom: 6px; }
 .rodape .demo { margin: 0 0 8px; font-size: 0.9rem; color: var(--fg); }
 .rodape a { color: var(--led-azul); }
 kbd { font: 0.78rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }

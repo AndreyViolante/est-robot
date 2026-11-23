@@ -399,7 +399,8 @@ function dimensionar() {
   const quadro = $('quadro');
   const larg = quadro.clientWidth || 600;
   const W = pista.largura + 2 * MARGEM, H = pista.altura + 2 * MARGEM;
-  const maxAlt = Math.max(260, window.innerHeight * 0.62);    // sobra lugar para os botões embaixo
+  // sobra lugar para os botões embaixo; com o painel da direita escondido, a pista pode crescer mais
+  const maxAlt = Math.max(260, window.innerHeight * (document.documentElement.classList.contains('sem-painel') ? 0.72 : 0.62));
   let s = larg / W;
   if (H * s > maxAlt) s = maxAlt / H;
   const alt = Math.round(H * s);
@@ -873,6 +874,7 @@ function atualizarDica() {
   else texto = 'A pista que você desenhou, guardada neste navegador.' + arrastar;
   if (pista.id === MINHA && semGuardar) texto += ' Atenção: este navegador não deixa guardar, a pista some quando a página fechar.';
   $('dica').textContent = texto;
+  if (editando || (pista.id === MINHA && semGuardar)) $('dicaBloco').open = true;   // desenhando: o que cada ferramenta faz
 }
 
 function atualizarEditor() {
@@ -2463,6 +2465,18 @@ $('onde').addEventListener('change', ev => {
   marcarOnde();                    // se não deu para entrar, volta a mostrar onde está
 });
 montarSeletorPista();
+
+// ---------------------------------------------------------------- painel da direita: esconde e mostra (fica guardado)
+function mostrarPainel(mostrar) {
+  document.documentElement.classList.toggle('sem-painel', !mostrar);
+  $('btMostrarPainel').hidden = mostrar;
+  salvo.semPainel = !mostrar;
+  salvar();
+  if (mostrar) desenharGraficos(true);
+}
+$('btEsconderPainel').addEventListener('click', () => { mostrarPainel(false); $('btMostrarPainel').focus(); });
+$('btMostrarPainel').addEventListener('click', () => { mostrarPainel(true); $('btEsconderPainel').focus(); });
+if (salvo.semPainel === true) { document.documentElement.classList.add('sem-painel'); $('btMostrarPainel').hidden = false; }
 
 // ---------------------------------------------------------------- menu Opções
 function abrirOpcoes(abrir) {
