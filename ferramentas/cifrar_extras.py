@@ -4,14 +4,14 @@ o site, e o original fica fora do repositório (a pasta meus_programas não vai 
 No simulador, abra o endereço com #codigo no fim (ex.: .../simulador/#codigo), digite o código e os extras
 aparecem. Com "Lembrar neste computador", abrem sozinhos da próxima vez naquele navegador.
 
-Uso:  python ferramentas/cifrar_extras.py [arquivo.js]     (padrão: meus_programas/sala_secreta/resgate.js)
+Uso:  python ferramentas/cifrar_extras.py [arquivo.js]     (padrão: meus_programas/extras/extras.js)
 Precisa do node. O código não aparece na tela e não fica gravado em lugar nenhum: guarde-o bem, sem ele o arquivo
 não abre (para trocar o código, rode de novo).
 """
 import getpass, json, os, subprocess, sys
 
 RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-PADRAO = os.path.join(RAIZ, 'meus_programas', 'sala_secreta', 'resgate.js')
+PADRAO = os.path.join(RAIZ, 'meus_programas', 'extras', 'extras.js')
 SAIDA = os.path.join(RAIZ, 'simulador', 'extras.dat')
 
 
