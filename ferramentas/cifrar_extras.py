@@ -5,15 +5,16 @@ No simulador, abra o endereço com #codigo no fim (ex.: .../simulador/#codigo), 
 aparecem. Com "Lembrar neste computador", abrem sozinhos da próxima vez naquele navegador.
 
 Uso:  python ferramentas/cifrar_extras.py [arquivo.js]     (padrão: meus_programas/extras/extras.js)
-Precisa do node. O código (pelo menos 8 letras ou números, nada fácil de chutar) não aparece na tela e não fica
-gravado em lugar nenhum: guarde-o bem, sem ele o arquivo não abre (para trocar o código, rode de novo).
+Precisa do node. O código (pelo menos 6 letras ou números; se for fácil de chutar, ela avisa) não aparece na tela
+e não fica gravado em lugar nenhum: guarde-o bem, sem ele o arquivo não abre (para trocar o código, rode de novo).
+Rode numa janela do PowerShell do Windows: em alguns terminais embutidos o que se digita não chega ao campo escondido.
 """
 import getpass, json, os, subprocess, sys
 
 RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 PADRAO = os.path.join(RAIZ, 'meus_programas', 'extras', 'extras.js')
 SAIDA = os.path.join(RAIZ, 'simulador', 'extras.dat')
-MINIMO = 8
+MINIMO = 6
 COMUNS = {'senha123', 'password', 'qwertyui', 'robotica', 'robotica1', 'est-robot', 'estrobot', 'obr2026'}
 
 
@@ -31,8 +32,9 @@ def pedir_codigo(tentativas=3):
         codigo = getpass.getpass('Código (não aparece enquanto digita, Enter no fim): ')
         if len(codigo) < MINIMO:
             print(f'Muito curto: use pelo menos {MINIMO} letras ou números. Tente de novo.')
-        elif facil_demais(codigo):
-            print('Fácil de adivinhar: misture letras e números. Tente de novo.')
+        elif facil_demais(codigo) and input('Esse código é fácil de chutar (um aluno pode tentar). Usar mesmo assim? '
+                                            '(s/n) ').strip().lower() not in ('s', 'sim'):
+            print('Então escolha outro.')
         elif getpass.getpass('Digite o mesmo código de novo: ') != codigo:
             print('Os dois não são iguais. Tente de novo.')
         else:
@@ -56,4 +58,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit('\nCancelado. Nada foi cifrado.')

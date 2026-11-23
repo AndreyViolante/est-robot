@@ -46,6 +46,7 @@
   "simulador/cifra.js",
   "simulador/desafios.js",
   "simulador/estilo.css",
+  "simulador/extras.dat",
   "simulador/grafico.js",
   "simulador/imprimir.js",
   "simulador/index.html",
