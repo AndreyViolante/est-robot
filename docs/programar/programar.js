@@ -62,10 +62,25 @@ function nomesDoPrograma(texto, conhecidos) {
   return [...achados.values()].filter(([nome]) => !conhecidos.has(nome));
 }
 
+const PALAVRAS_DO_PYTHON = new Set(['and', 'as', 'break', 'continue', 'False', 'global', 'import', 'in', 'is', 'lambda',
+  'None', 'not', 'or', 'pass', 'print', 'range', 'return', 'True', 'with']);
+
+/** A palavra já está inteira (é do Python, ou é um nome que o programa usa em outro lugar)? Aí a lista não abre
+    sozinha: senão o Enter no fim de "erro_anterior = erro" trocaria erro por erro_anterior. Um comando do robô só
+    conta como nome do programa se aparece sem os parênteses (uma variável chamada luz). */
+function palavraInteira(cm, palavra, de, ate) {
+  if (PALAVRAS_DO_PYTHON.has(palavra)) return true;
+  const C = globalThis.ESTComandos;
+  if (!palavra || C.PYTHON.some(i => i[0] === palavra && !i[1].startsWith(`${palavra}(`))) return false;
+  const texto = cm.getValue(), ini = cm.indexFromPos(de), fim = cm.indexFromPos(ate);
+  const resto = (texto.slice(0, ini) + ' ' + texto.slice(fim)).replace(/'[^'\n]*'|"[^"\n]*"|#.*$/gm, ' ');
+  return new RegExp(`\\b${palavra}\\b${conhecidos.has(palavra) ? '(?!\\s*\\()' : ''}`).test(resto);
+}
+
 let conhecidos = null;
 /** As sugestões para a palavra no cursor: primeiro as que começam com ela, depois as que têm uma parte que começa
     com ela ("dir" acha virar_direita). Nada dentro de texto entre aspas ou de comentário. */
-function sugestoes(cm) {
+function sugestoes(cm, opcoes) {
   const C = globalThis.ESTComandos;
   if (!C) return null;
   conhecidos = conhecidos || new Set(C.TODOS.map(i => i[0]));
@@ -75,6 +90,8 @@ function sugestoes(cm) {
   let ini = cur.ch;
   while (ini > 0 && /\w/.test(linha[ini - 1])) ini--;
   if (linha[ini - 1] === '.') return null;
+  const pos = CodeMirror.Pos(cur.line, ini);
+  if (!(opcoes && opcoes.pedida) && palavraInteira(cm, linha.slice(ini, cur.ch), pos, cur)) return null;
   const palavra = linha.slice(ini, cur.ch).toLowerCase();
   const doPrograma = nomesDoPrograma(cm.getValue(), conhecidos).filter(([nome]) => nome.toLowerCase() !== palavra);
   const comeca = [], parte = [];
@@ -85,7 +102,7 @@ function sugestoes(cm) {
     else if (palavra && nome.split('_').slice(1).some(p => p.startsWith(palavra))) parte.push(item);
   }
   const lista = [...comeca, ...parte].slice(0, 50).map(item => ({text: item[0], item, render: desenharSugestao, hint: usarSugestao}));
-  return lista.length ? {list: lista, from: CodeMirror.Pos(cur.line, ini), to: cur} : null;
+  return lista.length ? {list: lista, from: pos, to: cur} : null;
 }
 
 function desenharSugestao(el, dados, s) {
@@ -110,6 +127,7 @@ function usarSugestao(cm, dados, s) {
   });
 }
 
+// "pedida": aberta com Ctrl+Espaço, mostra mesmo com a palavra inteira
 const OPCOES_DAS_SUGESTOES = {hint: sugestoes, completeSingle: false, closeCharacters: /[\s()[\]{};:>,.=<+\-*/'"#]/};
 
 function criarEditor(caixa, somenteLeitura = false) {
@@ -164,7 +182,7 @@ function criarEditor(caixa, somenteLeitura = false) {
     extraKeys: {
       Tab: c => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    ', 'end'),
       'Shift-Tab': c => c.indentSelection('subtract'),
-      'Ctrl-Space': c => { if (c.showHint) c.showHint(OPCOES_DAS_SUGESTOES); },
+      'Ctrl-Space': c => { if (c.showHint) c.showHint({...OPCOES_DAS_SUGESTOES, pedida: true}); },
     },
   });
   const inserir = modelo => {
@@ -177,6 +195,13 @@ function criarEditor(caixa, somenteLeitura = false) {
     }
   };
   cm.inserirModelo = inserir;
+  // o show-hint só atualiza a lista no quadro seguinte e, até lá, engole o Enter: atualiza na hora
+  cm.on('startCompletion', () => {
+    const atualizar = () => { if (cm.state.completionActive) cm.state.completionActive.update(); };
+    const parar = () => { cm.off('cursorActivity', atualizar); cm.off('endCompletion', parar); };
+    cm.on('cursorActivity', atualizar);
+    cm.on('endCompletion', parar);
+  });
   // as sugestões aparecem sozinhas a partir da 2ª letra de uma palavra
   if (!somenteLeitura && cm.showHint) {
     cm.on('inputRead', (c, mudanca) => {

@@ -3,6 +3,14 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.16 (24/11/2026)
+
+- **Correção no autocompletar:** o Enter no fim de uma linha como `erro_anterior = erro` trocava `erro` por
+  `erro_anterior` (e uma variável `luz` por `luz_refletida`). Agora, quando a palavra já é um nome do programa ou
+  uma palavra do Python, a lista não abre sozinha e o Enter só pula a linha. Quem usou a 0.1.15 deve conferir as
+  linhas que terminam com o nome de uma variável.
+- O Enter apertado logo depois da última letra não se perde mais.
+
 ## 0.1.15 (24/11/2026)
 
 - **Autocompletar no editor de Python** da página de programar: a partir da segunda letra aparecem os comandos

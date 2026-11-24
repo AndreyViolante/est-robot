@@ -208,12 +208,10 @@ async function main() {
     confere('erro de escrita vira mensagem em português com a linha', /linha 3/.test(erro) && erro.includes('Você quis dizer "andar"'), erro);
 
     // ---- autocompletar: "andar_" sugere andar_cm; Enter escreve andar_cm(20) com o 20 selecionado; num bloco
-    // "with", a linha de baixo já vem com o recuo; Esc fecha a lista sem sair da tela cheia
+    // "with", a linha de baixo já vem com o recuo. O Enter vem logo depois da última letra, sem esperar a lista
     await escrever('from robo import *\n\n');
     await pagina.evaluate(() => { const cm = document.querySelector('.CodeMirror').CodeMirror; cm.focus(); cm.setCursor(2, 0); });
     await pagina.keyboard.type('andar_');
-    // a lista se atualiza no quadro seguinte da tela: espera a sugestão certa antes do Enter
-    await pagina.locator('.CodeMirror-hint-active', {hasText: 'andar_cm'}).waitFor({timeout: 5000});
     const sugeriu = await pagina.locator('.CodeMirror-hint-active').innerText();
     await pagina.keyboard.press('Enter');
     const completou = await pagina.evaluate(() => {
@@ -223,7 +221,6 @@ async function main() {
     await pagina.keyboard.press('End');
     await pagina.keyboard.press('Enter');
     await pagina.keyboard.type('repet');
-    await pagina.locator('.CodeMirror-hint-active', {hasText: 'repetir(4)'}).waitFor({timeout: 5000});
     await pagina.keyboard.press('Enter');
     const bloco = await pagina.evaluate(() => document.querySelector('.CodeMirror').CodeMirror.getValue());
     await pagina.keyboard.type('xyz');
@@ -232,6 +229,24 @@ async function main() {
       /^andar_cm/.test(sugeriu) && completou.linha === 'andar_cm(20)' && completou.selecionado === '20' &&
       bloco.endsWith('andar_cm(20)\nwith repetir(4):\n    ') && semLista === 0,
       JSON.stringify({sugeriu, completou, bloco: bloco.slice(-50), semLista}));
+
+    // com a palavra inteira, o Enter só pula a linha (não troca por um nome mais comprido)
+    const aoTeclarEnter = async (antes, digitado) => {
+      await escrever(antes);
+      await pagina.evaluate(() => { const cm = document.querySelector('.CodeMirror').CodeMirror; cm.focus(); cm.setCursor(cm.lineCount(), 0); });
+      await pagina.keyboard.type(digitado);
+      await pagina.keyboard.press('Enter');
+      await pagina.keyboard.type('z');
+      return (await pagina.evaluate(() => document.querySelector('.CodeMirror').CodeMirror.getValue())).slice(antes.length);
+    };
+    const trocados = [];
+    for (const [antes, digitado] of [['erro = 0\nerro_anterior = 0\n', 'erro_anterior = erro'], ['vel = 1\nvelocidade = 2\n', 'y = vel'],
+      ['luz = 1\n', 'y = luz'], ['velocidade = 1\ndef f(vel):\n    bip()\n', 'y = vel'], ['passo = 1\n', 'pass'],
+      ['velocidade = 1\na, vel = 1, 2\n', 'y = vel'], ['bip()\n', 'contador']]) {
+      const ficou = await aoTeclarEnter(antes, digitado);
+      if (ficou.replace(/\n\s*/, '\n') !== `${digitado}\nz`) trocados.push(`${digitado} -> ${ficou}`);
+    }
+    confere('autocompletar: com a palavra inteira, o Enter não troca o nome', !trocados.length, JSON.stringify(trocados));
 
     // ---- blocos: trazer do Python e compilar de novo, com os mesmos bytes
     await escrever(PROGRAMA);
