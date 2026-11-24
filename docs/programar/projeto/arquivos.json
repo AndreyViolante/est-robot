@@ -17,6 +17,7 @@
   }
  ],
  "offline": [
+  "comandos.js",
   "compilador.js",
   "exemplos/11_seguidor_dois_sensores.py",
   "icones/icone-180.png",

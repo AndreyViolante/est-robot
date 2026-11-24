@@ -158,6 +158,18 @@ html.projetor body { font-size: 19px; }
 .CodeMirror-activeline-background { background: rgba(255, 255, 255, 0.04); }
 .CodeMirror-matchingbracket { color: #fff !important; background: rgba(97, 135, 255, 0.35); }
 .CodeMirror-nonmatchingbracket { color: #ffb4b6 !important; }
+
+/* sugestões do autocompletar (o show-hint do CodeMirror põe a lista no body, embaixo do cursor) */
+.CodeMirror-hints { position: absolute; z-index: 30; margin: 0; padding: 3px; list-style: none; overflow-y: auto;
+                    max-height: 15em; max-width: min(34em, calc(100vw - 16px)); box-sizing: border-box;
+                    background: #151b2e; border: 1px solid #2c3552; border-radius: var(--raio);
+                    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font: 0.88rem/1.35 var(--body); color: var(--code-fg); }
+.CodeMirror-hint { display: flex; gap: 12px; align-items: baseline; padding: 3px 8px; border-radius: 4px;
+                   white-space: nowrap; cursor: pointer; }
+.CodeMirror-hint code { font-family: var(--mono); }
+.CodeMirror-hint span { color: var(--code-muted); overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
+li.CodeMirror-hint-active { background: rgba(97, 135, 255, 0.3); }
+li.CodeMirror-hint-active span { color: var(--code-fg); }
 .cm-s-default .cm-keyword { color: #9fb4ff; }
 .cm-s-default .cm-def, .cm-s-default .cm-builtin { color: #fff; font-weight: 600; }
 .cm-s-default .cm-variable, .cm-s-default .cm-variable-2, .cm-s-default .cm-property { color: var(--code-fg); }
@@ -189,6 +201,8 @@ html.projetor body { font-size: 19px; }
                                  transform: translateY(-1px); }
 .robo:empty { display: none; }
 .robo.ligado::before, .python.pronto::before { background: var(--ok); }
+.robo.fraca { color: var(--alerta); }
+.robo.fraca::before { background: var(--alerta); }
 .python.carregando::before { background: var(--alerta); animation: pisca 1s infinite alternate; }
 .python.falhou::before { background: var(--erro); }
 @keyframes pisca { to { opacity: 0.25; } }

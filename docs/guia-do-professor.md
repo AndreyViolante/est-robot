@@ -28,7 +28,8 @@ programa curto, que a turma digita, e introduz um conceito de programação. A i
 - Imprima a [cola de comandos](cola-do-aluno.pdf) (uma folha frente e verso) e deixe uma em cada bancada.
 - **Escola com tablets ou celulares Android:** abra a [página de programar](https://andreyviolante.github.io/est-robot/programar/)
   no Chrome e toque em **📲 Instalar**: ela fica na tela inicial e funciona sem internet. No aparelho os
-  alunos começam pelos blocos; na aba Python há uma barra com os símbolos e os comandos acima do teclado.
+  alunos começam pelos blocos; na aba Python há uma barra com os símbolos e os comandos acima do teclado, e o
+  editor sugere os comandos enquanto o aluno escreve.
   Para enviar, pareie o robô no Bluetooth do aparelho (senha 1234) e use **Enviar por Bluetooth**. O envio
   por Bluetooth ainda não foi conferido no robô: antes da aula, confira com a tarefa **Testar o Bluetooth do
   robô** num computador.

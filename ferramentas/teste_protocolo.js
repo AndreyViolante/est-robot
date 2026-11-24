@@ -75,6 +75,28 @@ function roboDeMentira({semRun = false, velhaAntes = ''} = {}) {
   const gravar = await P.enviarPorCanal(roboDeMentira(), new Uint8Array(10), '/vscode/t', false);
   confere('só gravar: rodou fica null', gravar.rodou === null && !gravar.semResposta.length, JSON.stringify(gravar));
 
+  // bateria: a resposta do 0C 01 traz o nível (0 a 4) no primeiro byte depois do tamanho (ler_info do est_protocol.py)
+  const respostaBateria = (nivel, soma = true) => {
+    const r = P.frame(0x0C, [0x04, 0x00, nivel, 0x56, 0x31, 0x00]);
+    r[1] = 0x21;
+    r[r.length - 2] = soma ? P.checksum(r.subarray(0, r.length - 2)) : 0;
+    return r;
+  };
+  confere('bateria: lê o nível da resposta', P.lerBateria(Uint8Array.from([0, 0, ...respostaBateria(3), 0, 0])) === 3);
+  confere('bateria: resposta com a soma errada não vale', P.lerBateria(respostaBateria(3, false)) === null);
+  confere('bateria: resposta de outro comando não vale', P.lerBateria(Uint8Array.from([0x68, 0x21, 0x02, 1, 0, 4, 0x70, 0x16])) === null);
+  const roboComBateria = nivel => {
+    const fila = [];
+    return {
+      async mandar(pacote) { fila.push(pacote[2] === 0x0C ? respostaBateria(nivel) : Uint8Array.from([0x68, 0x21, pacote[2], 1, 0, 1, 0, 0x16])); },
+      resposta: async () => fila.shift() || null,
+      fechar() {},
+    };
+  };
+  confere('bateria: consulta pelo canal', await P.consultarBateria(roboComBateria(1), 50) === 1);
+  const comNivel = await P.enviarPorCanal(roboComBateria(4), new Uint8Array(10), '/vscode/t', true);
+  confere('o envio também traz a bateria (da resposta do DOWNLOAD)', comNivel.bateria === 4, JSON.stringify(comNivel));
+
   console.log(`\nprotocolo do navegador: ${falhas ? `${falhas} FALHA(S)` : 'OK'}`);
   process.exit(falhas ? 1 : 0);
 })();

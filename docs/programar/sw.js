@@ -16,7 +16,7 @@ const DAS_BIBLIOTECAS = [
   PYODIDE + 'python_stdlib.zip', PYODIDE + 'pyodide-lock.json',
   BLOCKLY + 'blockly_compressed.js', BLOCKLY + 'blocks_compressed.js', BLOCKLY + 'msg/pt-br.js',
   CODEMIRROR + 'codemirror.min.css', CODEMIRROR + 'codemirror.min.js', CODEMIRROR + 'mode/python/python.min.js',
-  CODEMIRROR + 'addon/edit/matchbrackets.min.js',
+  CODEMIRROR + 'addon/edit/matchbrackets.min.js', CODEMIRROR + 'addon/hint/show-hint.min.js',
 ];
 const CACHE_PAGINA = 'est-programar-pagina';
 const CACHE_BIBLIOTECAS = 'est-programar-bibliotecas ' + BIBLIOTECAS.join(' ');   // versão nova = cópia nova

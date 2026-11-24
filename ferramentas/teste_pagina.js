@@ -1,10 +1,12 @@
 'use strict';
 /* Teste da página inteira, num Chrome sem janela: abre a página de programar (servida da pasta docs/, como no
-   site), compila com o Python do navegador, abre o simulador e executa, mostra um erro em português, passa o
+   site), compila com o Python do navegador, abre o simulador e executa, mostra um erro em português, completa
+   comandos no editor (autocompletar), passa o
    programa para blocos (com uma função em "Meus blocos") e compila de novo (mesmos bytes), liga a tela cheia, manda o programa por
    link (com o modo blocos e o desafio aberto), salva e carrega o progresso e abre o simulador sozinho (grava um
    vídeo da pista). Depois, num celular (390 x 844, toque): a página começa nos blocos, não
    rola para o lado, o teclado de programação aparece no código, o menu Arquivo cabe na tela e o simulador roda.
+   Por fim, com um robô de mentira no USB (WebHID), a Conexão mostra a bateria e avisa quando está fraca.
    Precisa de internet (Python do navegador, Blockly e o editor vêm da CDN) e do pacote playwright-core, que usa o
    Chrome instalado (não baixa navegador).
    Uso: npm install --prefix <pasta> playwright-core@1.59.1
@@ -108,6 +110,50 @@ async function celular(navegador, base, erros) {
   }
 }
 
+/* um robô de mentira no USB (WebHID) que responde o 0C 01 com o nível da bateria: a Conexão tem que mostrar */
+async function roboNoUsb(navegador, base, erros) {
+  const contexto = await navegador.newContext({serviceWorkers: 'block'});
+  await contexto.addInitScript(() => {
+    const ouvintes = [];
+    const robo = {
+      vendorId: 0x0483, productId: 0x5750, productName: 'EST robô', opened: false, perguntas: 0,
+      async open() { this.opened = true; },
+      async close() { this.opened = false; },
+      addEventListener(tipo, f) { if (tipo === 'inputreport') ouvintes.push(f); },
+      removeEventListener(tipo, f) { const i = ouvintes.indexOf(f); if (i >= 0) ouvintes.splice(i, 1); },
+      async sendReport(id, report) {
+        if (report[2] !== 0x0C) return;
+        this.perguntas++;
+        const P = window.ESTProtocolo;
+        const r = P.frame(0x0C, [0x04, 0x00, 1, 0x56, 0x31, 0x00]);        // nível 1 de 4: fraca
+        r[1] = 0x21;
+        r[r.length - 2] = P.checksum(r.subarray(0, r.length - 2));
+        setTimeout(() => ouvintes.slice().forEach(f => f({data: new DataView(r.buffer)})), 20);
+      },
+    };
+    window.roboDeMentira = robo;
+    Object.defineProperty(navigator, 'hid', {configurable: true, value: {
+      getDevices: async () => [robo], requestDevice: async () => [robo], addEventListener() {}, removeEventListener() {}}});
+  });
+  const pagina = await contexto.newPage();
+  pagina.on('console', m => { if (m.type() === 'error') erros.push(m.text()); });
+  try {
+    await pagina.goto(`${base}/programar/`);
+    const linha = pagina.locator('#estadoRobo', {hasText: 'Bateria'});
+    await linha.waitFor({timeout: 15000});
+    const estado = await pagina.evaluate(() => {
+      const p = document.getElementById('estadoRobo');
+      return {texto: p.textContent, classe: p.className, aberto: window.roboDeMentira.opened};
+    });
+    confere('robô no USB: a Conexão mostra a bateria, avisa que está fraca e fecha o robô',
+      /Bateria 1 de 4: carregue o robô/.test(estado.texto) && /fraca/.test(estado.classe) && !estado.aberto, JSON.stringify(estado));
+  } catch (e) {
+    confere('robô no USB: o teste chegou até o fim', false, e.message.split('\n')[0]);
+  } finally {
+    await contexto.close();
+  }
+}
+
 async function main() {
   const servidor = await servir();
   const base = `http://127.0.0.1:${servidor.address().port}`;
@@ -160,6 +206,32 @@ async function main() {
     await pagina.click('#btSimular');
     const erro = await ultimaMensagem('erro', 'linha');
     confere('erro de escrita vira mensagem em português com a linha', /linha 3/.test(erro) && erro.includes('Você quis dizer "andar"'), erro);
+
+    // ---- autocompletar: "andar_" sugere andar_cm; Enter escreve andar_cm(20) com o 20 selecionado; num bloco
+    // "with", a linha de baixo já vem com o recuo; Esc fecha a lista sem sair da tela cheia
+    await escrever('from robo import *\n\n');
+    await pagina.evaluate(() => { const cm = document.querySelector('.CodeMirror').CodeMirror; cm.focus(); cm.setCursor(2, 0); });
+    await pagina.keyboard.type('andar_');
+    // a lista se atualiza no quadro seguinte da tela: espera a sugestão certa antes do Enter
+    await pagina.locator('.CodeMirror-hint-active', {hasText: 'andar_cm'}).waitFor({timeout: 5000});
+    const sugeriu = await pagina.locator('.CodeMirror-hint-active').innerText();
+    await pagina.keyboard.press('Enter');
+    const completou = await pagina.evaluate(() => {
+      const cm = document.querySelector('.CodeMirror').CodeMirror;
+      return {linha: cm.getLine(2), selecionado: cm.getSelection()};
+    });
+    await pagina.keyboard.press('End');
+    await pagina.keyboard.press('Enter');
+    await pagina.keyboard.type('repet');
+    await pagina.locator('.CodeMirror-hint-active', {hasText: 'repetir(4)'}).waitFor({timeout: 5000});
+    await pagina.keyboard.press('Enter');
+    const bloco = await pagina.evaluate(() => document.querySelector('.CodeMirror').CodeMirror.getValue());
+    await pagina.keyboard.type('xyz');
+    const semLista = await pagina.locator('.CodeMirror-hints').count();
+    confere('autocompletar: sugere, completa com o número selecionado e escreve o bloco "with" com o recuo',
+      /^andar_cm/.test(sugeriu) && completou.linha === 'andar_cm(20)' && completou.selecionado === '20' &&
+      bloco.endsWith('andar_cm(20)\nwith repetir(4):\n    ') && semLista === 0,
+      JSON.stringify({sugeriu, completou, bloco: bloco.slice(-50), semLista}));
 
     // ---- blocos: trazer do Python e compilar de novo, com os mesmos bytes
     await escrever(PROGRAMA);
@@ -282,8 +354,9 @@ async function main() {
             opcoes && !(await pagina.isVisible('#btZerar')));
 
     await celular(navegador, base, erros);
+    await roboNoUsb(navegador, base, erros);
   } catch (e) {
-    confere('o teste chegou até o fim', false, e.message.split('\n')[0]);
+    confere('o teste chegou até o fim', false, e.message.split('\n').filter(l => l.trim()).slice(0, 3).join(' | '));
   } finally {
     const reais = erros.filter(t => !/favicon|WebHID|navigator\.(hid|bluetooth)/i.test(t));
     confere('nenhum erro no console', !reais.length, reais.slice(0, 3).join(' | '));

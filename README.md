@@ -22,7 +22,9 @@ programa com blocos, vendo ao lado o Python que os blocos geram; **Trazer da aba
 volta e transforma o programa escrito em blocos (o que ainda não tem bloco vira um bloco cinza "Python",
 com a linha como está, e o programa continua fazendo o mesmo). A página compila no próprio
 navegador, com os mesmos arquivos do projeto, mostra os erros em português, simula o robô, confere as
-portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O mesmo
+portas e envia o programa pelo cabo USB (o envio pelo navegador ainda não foi testado no robô). O editor de
+Python sugere os comandos enquanto o aluno escreve (Enter escolhe, Ctrl+Espaço abre a lista) e, com o robô no
+USB, a Conexão mostra a bateria de 0 a 4 e avisa quando está fraca. O mesmo
 arquivo `.py` funciona no VS Code. Depois da primeira visita, a página funciona sem internet naquele
 navegador, e **Arquivo → Copiar link do programa** gera um link com o programa dentro (quem abre já vê o
 programa no simulador, nos blocos se ele foi feito em blocos e no desafio que estava aberto; nada fica guardado
@@ -414,6 +416,7 @@ programa só de blocos define `PROGRAMA = [start(), ...]` (veja os testes em
 | [importar_est.py](importar_est.py) / [exportar_est.py](exportar_est.py) | abre um projeto da IDE EST em Python / salva o programa no formato da IDE |
 | [simulador/grafico.js](simulador/grafico.js) | guarda a leitura dos sensores no tempo e prepara os pontos do gráfico do simulador |
 | [docs/programar/versoes.js](docs/programar/versoes.js) | as versões do programa guardadas no navegador (página de programar) |
+| [docs/programar/comandos.js](docs/programar/comandos.js) | os comandos que o autocompletar do editor sugere (o `verificar_gabaritos.py` confere com o `robo.py`) |
 | [ferramentas/teste_versoes.js](ferramentas/teste_versoes.js) | testa as versões do programa sem navegador |
 | [ferramentas/icones.py](ferramentas/icones.py) | desenha os ícones da página instalável (precisa do Pillow) |
 | [ferramentas/rodar.cmd](ferramentas/rodar.cmd) | as tarefas do VS Code usam o Python do pacote, se houver, ou o do computador |

@@ -1127,6 +1127,9 @@ def verificar_offline():
         if not urls:
             falhas.append(f'não achei a biblioteca do {arquivo}')
         falhas += [f'o sw.js não guarda {u} (usado no {arquivo})' for u in set(urls) if u not in sw]
+    for arq in re.findall(r'https://cdnjs\.cloudflare\.com/ajax/libs/codemirror/[\d.]+/([^"\']+)', ler('index.html')):
+        if f"CODEMIRROR + '{arq}'" not in sw:
+            falhas.append(f'o sw.js não guarda o {arq} do CodeMirror (usado no index.html)')
     lista = json.loads(ler(os.path.join('projeto', 'arquivos.json'))).get('offline', [])
     na_pasta = sorted(os.path.relpath(os.path.join(r, a), pasta).replace(os.sep, '/')
                       for r, subpastas, arquivos in os.walk(pasta) if '__pycache__' not in r for a in arquivos)
@@ -1138,6 +1141,62 @@ def verificar_offline():
     for f in falhas:
         print(f'  FALHA {f}')
     print(f'  {"OK   " if not falhas else "FALHA"} página de programar sem internet (sw.js)')
+    return not falhas
+
+
+FORA_DO_AUTOCOMPLETAR = {'novo_programa', 'programa', 'ajustes', 'medir_laco'}
+
+
+def verificar_comandos():
+    """O autocompletar da página de programar (docs/programar/comandos.js) sugere todos os comandos e nomes do
+    robo.py (menos os de FORA_DO_AUTOCOMPLETAR), nenhum que não existe, e cada modelo compila."""
+    import ast, inspect, tempfile
+    import robo
+    from enviar import carregar
+    texto = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs', 'programar', 'comandos.js'),
+                 encoding='utf-8').read()
+    literal = r"('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\")"
+    secao = lambda de, ate: texto[texto.index(de):texto.index(ate)]
+    itens = lambda s: [(n, ast.literal_eval(m), ast.literal_eval(t))
+                       for n, m, t in re.findall(r"\['(\w+)',\s*" + literal + r",\s*" + literal + r"\]", s)]
+    comandos = itens(secao('const ROBO = [', 'const NOMES'))
+    nomes = re.findall(r"\['(\w+)', '[^']*'\]", secao('const NOMES', 'const PYTHON'))
+    funcoes = {n for n in robo.__all__ if callable(getattr(robo, n))} - FORA_DO_AUTOCOMPLETAR
+    constantes = {n for n in robo.__all__ if not callable(getattr(robo, n))}
+    falhas = []
+    ditos = [n for n, _, _ in comandos]
+    falhas += [f'o autocompletar não sugere {n}()' for n in sorted(funcoes - set(ditos))]
+    falhas += [f'o autocompletar sugere {n}, que não é do robo.py' for n in ditos if n not in funcoes]
+    falhas += [f'{n} aparece duas vezes no autocompletar' for n in sorted({n for n in ditos if ditos.count(n) > 1})]
+    falhas += [f'o autocompletar não sugere {n}' for n in sorted(constantes - set(nomes))]
+    falhas += [f'o autocompletar sugere {n}, que não é do robo.py' for n in nomes if n not in constantes]
+    with tempfile.TemporaryDirectory() as pasta:
+        for nome, modelo, _ in comandos:
+            trecho = modelo.replace('«', '').replace('»', '')
+            if nome == 'senao':                     # só depois de um "with se_..."
+                trecho = 'with se_tocado(1):\n    bip()\n' + trecho + 'bip()'
+            elif nome == 'tarefa':                  # só dentro de um "with ao_mesmo_tempo():", com outra tarefa
+                trecho = ('with ao_mesmo_tempo():\n    with tarefa():\n        bip()\n' +
+                          '\n'.join('    ' + l for l in (trecho + 'bip()').split('\n')))
+            elif trecho.startswith('with '):
+                trecho += '' if trecho.endswith(')') else 'bip()'
+            else:
+                volta = inspect.signature(getattr(robo, nome, None) or (lambda: None)).return_annotation
+                if 'Condicao' in str(volta):
+                    trecho = f'if {trecho}:\n    bip()'
+                elif volta is not inspect.Signature.empty:
+                    trecho = f'mostrar({trecho})'
+            arq = os.path.join(pasta, f'{nome}.py')
+            with open(arq, 'w', encoding='utf-8') as f:
+                f.write(f'from robo import *\n\nx = luz_refletida(1)\n{trecho}\nmostrar(x)\n')
+            try:
+                compilar(carregar(arq))
+            except Exception as e:
+                falhas.append(f'o modelo de {nome} ({modelo!r}) não compila: {e}')
+    for f in falhas:
+        print(f'  FALHA {f}')
+    print(f'  {"OK   " if not falhas else "FALHA"} autocompletar da página: {len(comandos)} comandos e {len(nomes)} '
+          'nomes do robo.py, cada modelo compila')
     return not falhas
 
 
@@ -1159,6 +1218,7 @@ def main():
     robo_ok &= verificar_sintaxe()
     robo_ok &= verificar_atalhos()
     robo_ok &= verificar_offline()
+    robo_ok &= verificar_comandos()
     robo_ok &= verificar_guias()
     robo_ok &= verificar_importar()
     robo_ok &= verificar_portas()

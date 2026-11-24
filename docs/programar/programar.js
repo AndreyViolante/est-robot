@@ -48,6 +48,70 @@ function prepararTrecho(modelo, recuo) {
   return {texto: texto.replace(/[«»]/g, ''), selecao: ini >= 0 && fim > ini ? [ini, fim - 1] : null};
 }
 
+// ---------------------------------------------------------------- autocompletar (CodeMirror show-hint)
+// Sugere os comandos do robô (comandos.js), os blocos do Python e os nomes do próprio programa enquanto o aluno
+// escreve (2 letras ou mais) ou com Ctrl+Espaço. Enter ou Tab escolhe, Esc fecha.
+
+/** Os blocos (def) e variáveis que o programa já tem. */
+function nomesDoPrograma(texto, conhecidos) {
+  const achados = new Map();
+  for (const [, nome] of texto.matchAll(/^[ \t]*def[ \t]+(\w+)/gm)) achados.set(nome, [nome, `${nome}()`, 'bloco do seu programa']);
+  for (const [, nome] of texto.matchAll(/^[ \t]*(\w+)[ \t]*[-+*/]?=(?!=)/gm)) {
+    if (!achados.has(nome)) achados.set(nome, [nome, nome, 'variável do seu programa']);
+  }
+  return [...achados.values()].filter(([nome]) => !conhecidos.has(nome));
+}
+
+let conhecidos = null;
+/** As sugestões para a palavra no cursor: primeiro as que começam com ela, depois as que têm uma parte que começa
+    com ela ("dir" acha virar_direita). Nada dentro de texto entre aspas ou de comentário. */
+function sugestoes(cm) {
+  const C = globalThis.ESTComandos;
+  if (!C) return null;
+  conhecidos = conhecidos || new Set(C.TODOS.map(i => i[0]));
+  const cur = cm.getCursor(), linha = cm.getLine(cur.line);
+  const tipo = cm.getTokenTypeAt(cur) || '';
+  if (/string|comment/.test(tipo)) return null;
+  let ini = cur.ch;
+  while (ini > 0 && /\w/.test(linha[ini - 1])) ini--;
+  if (linha[ini - 1] === '.') return null;
+  const palavra = linha.slice(ini, cur.ch).toLowerCase();
+  const doPrograma = nomesDoPrograma(cm.getValue(), conhecidos).filter(([nome]) => nome.toLowerCase() !== palavra);
+  const comeca = [], parte = [];
+  for (const item of [...doPrograma, ...C.TODOS]) {
+    const nome = item[0].toLowerCase();
+    if (nome === palavra && item[1] === item[0]) continue;      // já está escrito e não há o que completar
+    if (nome.startsWith(palavra)) comeca.push(item);
+    else if (palavra && nome.split('_').slice(1).some(p => p.startsWith(palavra))) parte.push(item);
+  }
+  const lista = [...comeca, ...parte].slice(0, 50).map(item => ({text: item[0], item, render: desenharSugestao, hint: usarSugestao}));
+  return lista.length ? {list: lista, from: CodeMirror.Pos(cur.line, ini), to: cur} : null;
+}
+
+function desenharSugestao(el, dados, s) {
+  const exemplo = s.item[1].replace(/[«»]/g, '').split('\n')[0];
+  el.append(Object.assign(document.createElement('code'), {textContent: exemplo}),
+            Object.assign(document.createElement('span'), {textContent: s.item[2]}));
+}
+
+/** Escreve o modelo no lugar da palavra, com o recuo da linha e o « » selecionado. Depois de um "with" já escrito,
+    um bloco "with" entra sem ele; no meio de uma linha, entra só a chamada. */
+function usarSugestao(cm, dados, s) {
+  let modelo = s.item[1];
+  const antes = cm.getLine(dados.from.line).slice(0, dados.from.ch);
+  if (modelo.startsWith('with ') && antes.trim()) {
+    modelo = modelo.slice(5);
+    if (!/\bwith\s+$/.test(antes)) modelo = modelo.replace(/:\n[\s\S]*$/, '');
+  }
+  cm.operation(() => {
+    cm.replaceRange('', dados.from, dados.to);
+    cm.setCursor(dados.from);
+    cm.inserirModelo(modelo);
+  });
+}
+
+const OPCOES_DAS_SUGESTOES = {hint: sugestoes, completeSingle: false, closeCharacters: /[\s()[\]{};:>,.=<+\-*/'"#]/};
+
 function criarEditor(caixa, somenteLeitura = false) {
   if (!globalThis.CodeMirror) {
     const inserir = modelo => {
@@ -100,8 +164,27 @@ function criarEditor(caixa, somenteLeitura = false) {
     extraKeys: {
       Tab: c => c.somethingSelected() ? c.indentSelection('add') : c.replaceSelection('    ', 'end'),
       'Shift-Tab': c => c.indentSelection('subtract'),
+      'Ctrl-Space': c => { if (c.showHint) c.showHint(OPCOES_DAS_SUGESTOES); },
     },
   });
+  const inserir = modelo => {
+    const de = cm.getCursor('from');
+    const {texto, selecao} = prepararTrecho(modelo, cm.getLine(de.line).match(/^\s*/)[0]);
+    cm.replaceSelection(texto);
+    if (selecao) {
+      const pos = i => cm.posFromIndex(cm.indexFromPos(de) + i);
+      cm.setSelection(pos(selecao[0]), pos(selecao[1]));
+    }
+  };
+  cm.inserirModelo = inserir;
+  // as sugestões aparecem sozinhas a partir da 2ª letra de uma palavra
+  if (!somenteLeitura && cm.showHint) {
+    cm.on('inputRead', (c, mudanca) => {
+      if (c.state.completionActive || !/^\w+$/.test(mudanca.text.join(''))) return;
+      const cur = c.getCursor(), antes = c.getLine(cur.line).slice(0, cur.ch);
+      if (/(^|[^\w])\w{2,}$/.test(antes) && !/(^|[^\w])\d+$/.test(antes)) c.showHint(OPCOES_DAS_SUGESTOES);
+    });
+  }
   let marcada = null;
   const limparErro = () => {
     if (marcada === null) return;
@@ -133,13 +216,7 @@ function criarEditor(caixa, somenteLeitura = false) {
     focar: () => cm.focus(),
     atualizar: () => cm.refresh(),
     inserir: modelo => {
-      const de = cm.getCursor('from');
-      const {texto, selecao} = prepararTrecho(modelo, cm.getLine(de.line).match(/^\s*/)[0]);
-      cm.replaceSelection(texto);
-      if (selecao) {
-        const pos = i => cm.posFromIndex(cm.indexFromPos(de) + i);
-        cm.setSelection(pos(selecao[0]), pos(selecao[1]));
-      }
+      inserir(modelo);
       cm.focus();
     },
     comando: nome => {
@@ -432,16 +509,37 @@ function mostrarResultado(res, executar, r, log, via) {
   } else {
     mensagem('ok', 'Gravado no robô', `<p>Gravado como <code>vscode/${escapar(r.nome_no_robo)}</code>: inicie pelo menu do robô.</p>` + detalhes);
   }
+  if (bateriaFraca(res.bateria)) mensagem('aviso', 'Bateria fraca', `<p>${AVISO_BATERIA}</p>`);
 }
 
-async function atualizarRobo() {
+// ---------------------------------------------------------------- bateria: lida como a IDE faz (ao conectar) e a cada envio
+
+const AVISO_BATERIA = 'Carregue o robô: com a bateria fraca os motores ficam fracos e os sensores leem errado.';
+const bateriaFraca = n => n !== null && n !== undefined && n <= P.NIVEL_FRACO;
+let nivelBateria = null;                       // último nível lido pelo USB (0 a 4), null se não sei
+let leituraDaBateria = Promise.resolve();      // o envio espera a leitura terminar antes de abrir o robô
+
+/** Lê a bateria pelo USB, se ninguém está usando o robô. Se falhar (IDE EST aberta, robô ocupado), fica o último nível. */
+function lerBateria(d) {
+  if (ocupado || d.opened) return leituraDaBateria;
+  leituraDaBateria = P.bateria(d).then(n => { if (n !== null) nivelBateria = n; }, e => console.warn('bateria:', e));
+  return leituraDaBateria;
+}
+
+/** A linha do robô em Conexão. lerAgora: pergunta a bateria (ao abrir a página e quando o robô é ligado no USB). */
+async function atualizarRobo(lerAgora = true) {
   if (!temUsb) return;
   const p = $('estadoRobo');
   let d = null;
   try { d = await P.roboPermitido(); } catch (e) { /* sem permissão para listar */ }
-  p.className = d ? 'robo ligado' : 'robo';
-  p.textContent = d ? `Robô no USB${d.productName ? `: ${d.productName}` : ''}.`
-                    : 'Na primeira vez o navegador pergunta qual é o robô.';
+  if (!d) nivelBateria = null;
+  else if (lerAgora) await lerBateria(d);
+  const fraca = !!d && bateriaFraca(nivelBateria);
+  p.className = d ? `robo ligado${fraca ? ' fraca' : ''}` : 'robo';
+  p.title = fraca ? AVISO_BATERIA : '';
+  p.textContent = !d ? 'Na primeira vez o navegador pergunta qual é o robô.'
+    : `Robô no USB${d.productName ? `: ${d.productName}` : ''}.` +
+      (nivelBateria === null ? '' : ` Bateria ${nivelBateria} de 4${fraca ? ': carregue o robô' : ''}.`);
 }
 
 const ehLinux = () => /Linux/.test(navigator.userAgent) && !/CrOS|Android/.test(navigator.userAgent);
@@ -468,6 +566,7 @@ async function enviarAoRobo(executar) {
       if (!r) return;
     }
     let robo = await P.roboPermitido();
+    await leituraDaBateria;                    // não abre o robô no meio da pergunta da bateria
     if (!robo) {
       const pedido = mensagem('info', 'Escolha o robô na janela do navegador', '<p>Depois clique em <b>Conectar</b>.</p>');
       try {
@@ -482,7 +581,7 @@ async function enviarAoRobo(executar) {
         mensagem('erro', 'Não enviei', '<p>Nenhum robô escolhido. Ligue o robô no USB, clique de novo e escolha o robô na lista.</p>');
         return;
       }
-      atualizarRobo();
+      atualizarRobo(false);                    // a bateria vem na resposta do envio
     }
     if (!r) {
       r = await compilarComMensagens(executar ? 'enviou ao robô' : 'gravou no robô');
@@ -516,6 +615,8 @@ async function enviarAoRobo(executar) {
       return;
     }
     caixa.remove();
+    if (respostas.bateria !== null) nivelBateria = respostas.bateria;
+    atualizarRobo(false);
     mostrarResultado(respostas, executar, r, log, 'pelo USB');
   } catch (e) {
     mensagem('erro', 'Não enviei', `<p>${escapar(explicarErroUsb(e))}</p>`);
@@ -596,7 +697,9 @@ async function enviarPorBluetooth(executar) {
     caixa.remove();
     mostrarResultado(respostas, executar, r, log, 'pelo Bluetooth');
     $('estadoBluetooth').className = respostas.respostas ? 'robo ligado' : 'robo';
-    $('estadoBluetooth').textContent = respostas.respostas ? 'O robô respondeu pelo Bluetooth.' : 'O robô não respondeu pelo Bluetooth.';
+    $('estadoBluetooth').textContent = !respostas.respostas ? 'O robô não respondeu pelo Bluetooth.'
+      : 'O robô respondeu pelo Bluetooth.' + (respostas.bateria === null ? '' : ` Bateria ${respostas.bateria} de 4.`);
+    $('estadoBluetooth').classList.toggle('fraca', bateriaFraca(respostas.bateria));
   } catch (e) {
     mensagem('erro', 'Não enviei', `<p>${escapar(explicarErroBluetooth(e))}</p>`);
     console.error(e);
@@ -623,8 +726,8 @@ $('btSimular').addEventListener('click', simular);
 if (temUsb) {
   $('btEnviar').addEventListener('click', () => enviarAoRobo(true));
   $('btGravar').addEventListener('click', () => enviarAoRobo(false));
-  navigator.hid.addEventListener('connect', atualizarRobo);
-  navigator.hid.addEventListener('disconnect', atualizarRobo);
+  navigator.hid.addEventListener('connect', () => atualizarRobo());
+  navigator.hid.addEventListener('disconnect', () => atualizarRobo(false));
   atualizarRobo();
 } else {
   $('blocoEnvio').hidden = true;
@@ -961,7 +1064,8 @@ document.addEventListener('fullscreenchange', () => {
 // sem a tela cheia do navegador, o Esc também sai. Com o simulador aberto, o Esc fecha só o simulador: este ouvinte
 // roda antes (capture) do que fecha o simulador, então ainda o vê aberto.
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && emTelaCheia() && !document.fullscreenElement && $('sim').hidden) telaCheia(false, {navegador: false});
+  if (e.key === 'Escape' && emTelaCheia() && !document.fullscreenElement && $('sim').hidden &&
+      !document.querySelector('.CodeMirror-hints')) telaCheia(false, {navegador: false});
 }, {capture: true});
 $('btFecharMensagens').addEventListener('click', limparMensagens);
 try { if (localStorage.getItem(CHAVE_TELA_CHEIA) === '1') telaCheia(true, {navegador: false}); } catch (e) { /* sem armazenamento */ }

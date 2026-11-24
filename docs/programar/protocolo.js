@@ -178,6 +178,49 @@ async function portasLigadas(dispositivo, ms = 400) {
   }
 }
 
+// ---------------------------------------------------------------- bateria
+// O robô responde o 0C 01 (o DOWNLOAD que o envio já manda) com 68 21 0C [tamanho] [nível] [texto] [soma] 16. O nível
+// é o número de tracinhos da pilha na IDE, de 0 a 4 (ler_info do est_protocol.py, conferido no robô). Fraca: 0 ou 1.
+const NIVEL_FRACO = 1;
+
+/** O nível da bateria (0 a 4) que vem numa resposta do robô, ou null se ela não traz. */
+function lerBateria(resposta) {
+  if (!resposta) return null;
+  for (let i = 0; i + 7 <= resposta.length; i++) {
+    if (resposta[i] !== 0x68 || resposta[i + 1] !== 0x21 || resposta[i + 2] !== 0x0C) continue;
+    const fim = i + 5 + resposta[i + 3] + (resposta[i + 4] << 8);
+    if (fim + 2 > resposta.length || resposta[fim + 1] !== 0x16 || checksum(resposta.subarray(i, fim)) !== resposta[fim]) continue;
+    if (fim > i + 5) return resposta[i + 5];
+  }
+  return null;
+}
+
+/** Pergunta a bateria pelo canal (até 3 vezes). null se o robô não responder. */
+async function consultarBateria(canal, ms = 600) {
+  while (await canal.resposta(50)) { /* descarta respostas velhas */ }
+  for (let i = 0; i < 3; i++) {
+    await canal.mandar(DOWNLOAD);
+    const ate = Date.now() + ms;
+    let rx;
+    while ((rx = await canal.resposta(Math.max(1, ate - Date.now())))) {
+      const nivel = lerBateria(rx);
+      if (nivel !== null) return nivel;
+    }
+  }
+  return null;
+}
+
+/** Pelo USB: o nível da bateria (0 a 4), e fecha o robô. */
+async function bateria(dispositivo, ms = 600) {
+  const canal = await abrirCanal(dispositivo);
+  try {
+    return await consultarBateria(canal, ms);
+  } finally {
+    canal.fechar();
+    try { await dispositivo.close(); } catch (e) { /* já fechado */ }
+  }
+}
+
 /** rx é a resposta do robô a este pacote? 68 21 e o mesmo comando (no USB, o robô responde o RUN com
     68 21 0A 01 00 01: visto no envio pelo VS Code). */
 const respondeu = (pacote, rx) => !!rx && rx[0] === 0x68 && rx[1] === 0x21 && rx[2] === pacote[2];
@@ -187,10 +230,11 @@ const PRECISA_DE_RESPOSTA = /^(SEND FILENAME|SEND DATA|RUN)/;
 /** Envia o programa pelo canal, lendo a resposta depois de cada pacote (como upload() de est_protocol.py).
     Uma resposta que não é a deste pacote (atrasada, de outro pedido) é deixada de lado e a espera continua.
     aoAndar({passo, total, nome, tx, rx, ok}) é chamado a cada pacote. Devolve {respostas (quantos pacotes o robô
-    respondeu), semResposta (os que precisavam e não tiveram), rodou (o robô confirmou o RUN; null se só gravou)}. */
+    respondeu), semResposta (os que precisavam e não tiveram), rodou (o robô confirmou o RUN; null se só gravou),
+    bateria (o nível que veio na resposta do DOWNLOAD, ou null)}. */
 async function enviarPorCanal(canal, programa, caminho, executar, aoAndar = () => {}) {
   const lista = sequencia(programa, caminho, executar);
-  let respostas = 0;
+  let respostas = 0, nivel = null;
   const semResposta = [];
   for (let i = 0; i < lista.length; i++) {
     const {pacote, nome, espera} = lista[i];
@@ -204,10 +248,11 @@ async function enviarPorCanal(canal, programa, caminho, executar, aoAndar = () =
     const ok = respondeu(pacote, rx);
     if (ok) respostas++;
     else if (PRECISA_DE_RESPOSTA.test(nome)) semResposta.push(nome);
+    if (nivel === null && pacote[2] === 0x0C) nivel = lerBateria(rx);
     const visto = ok ? rx : rx || outra;
     aoAndar({passo: i + 1, total: lista.length, nome, tx: hex(pacote), rx: visto ? hex(visto) : null, ok});
   }
-  return {respostas, semResposta, rodou: executar ? !semResposta.includes('RUN') : null};
+  return {respostas, semResposta, rodou: executar ? !semResposta.includes('RUN') : null, bateria: nivel};
 }
 
 /** Pelo USB: envia e fecha o robô no fim. */
@@ -323,6 +368,7 @@ async function abrirCanalBluetooth(porta) {
 const API = {VID, PID, TAMANHO_REPORT, PEDACO, checksum, frame, HEARTBEAT, DOWNLOAD, CONSULTA_ESTADO, pacoteSelect,
              pacoteRun, pacoteNome, pacoteDados, pacotesDeDados, sequencia, lerPortas, temWebHID, roboPermitido,
              escolherRobo, consultarPortas, portasLigadas, respondeu, enviarPorCanal, enviar, SPP, linhaDeApresentacao,
+             NIVEL_FRACO, lerBateria, consultarBateria, bateria,
              temWebSerial, portaBluetoothPermitida, escolherPortaBluetooth, separarPacotes, abrirCanalBluetooth};
 if (typeof module === 'object' && module.exports) module.exports = API;     // para testar no Node
 else raiz.ESTProtocolo = API;

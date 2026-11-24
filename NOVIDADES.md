@@ -3,6 +3,18 @@
 Cada versão publicada fica em [Releases](https://github.com/AndreyViolante/est-robot/releases).
 O "Atualizar o projeto" mostra daqui o que mudou desde a versão que você tem.
 
+## 0.1.15 (24/11/2026)
+
+- **Autocompletar no editor de Python** da página de programar: a partir da segunda letra aparecem os comandos
+  do robô que combinam, com o que cada um faz (escrever `vir` mostra `virar_direita(90)` e `virar_esquerda(90)`).
+  Enter ou Tab escolhe, e o número fica selecionado para trocar; os blocos `with` e o `if`, `while`, `for` e `def`
+  já vêm com a linha de baixo recuada. Também sugere as variáveis e os blocos do próprio programa.
+  **Ctrl+Espaço** abre a lista quando quiser; Esc fecha.
+- **Bateria do robô na página de programar.** Com o robô no USB, a Conexão mostra a bateria de 0 a 4, como os
+  tracinhos da IDE, lida ao abrir a página, ao ligar o robô e a cada envio. Com 0 ou 1, a linha fica laranja e
+  o envio avisa para carregar o robô (bateria fraca deixa os motores fracos e os sensores lendo errado). Pelo
+  Bluetooth, o nível aparece depois do envio.
+
 ## 0.1.14 (23/11/2026)
 
 - O simulador não tem mais o modo **Dirigir** (andar com o robô pelas setas e o programa se escrever): a barra de
